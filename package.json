@@ -1,0 +1,32 @@
+{
+  "name": "Motify",
+  "version": "0.1.0",
+  "description": "Mo' Spotify with yo' Spotify",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "debug": "electron --inspect=7070 .",
+    "break": "electron --inspect-brk=7070 ."
+  },
+  "repository": "https://github.com/jtvberg/Motify",
+  "keywords": [
+    "Electron",
+    "Spotify"
+  ],
+  "author": "jtvberg",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^13.1.7",
+    "electron-builder": "^22.11.7",
+    "electron-reload": "^1.5.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-import": "^2.23.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.3",
+    "electron-updater": "^4.3.9",
+    "jquery": "^3.6.0"
+  }
+}
