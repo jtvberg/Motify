@@ -26,7 +26,7 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 4. Fill in the app details:
    - **App Name**: Motify (or any name you prefer)
    - **App Description**: Spotify Playlist Manager
-   - **Redirect URI**: `http://localhost:5173/callback`
+   - **Redirect URI**: `http://127.0.0.1:8181/callback`
    - **API/SDK**: Web API
 5. Save the app and note down your **Client ID**
 
