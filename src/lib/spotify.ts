@@ -290,13 +290,121 @@ class SpotifyAPI {
 	}
 
 	async getUserPlaylists(): Promise<SpotifyPlaylist[]> {
-		const response = await this.makeRequest('/me/playlists?limit=50');
-		return response.items;
+		let allPlaylists: SpotifyPlaylist[] = [];
+		let url: string | null = '/me/playlists?limit=50';
+		let pageCount = 0;
+		
+		console.log('Fetching user playlists...');
+		
+		try {
+			while (url) {
+				pageCount++;
+				console.log(`Fetching playlist page ${pageCount}: ${url}`);
+				
+				const response = await this.makeRequest(url);
+				
+				if (!response || !response.items) {
+					console.error('Invalid playlists response format:', response);
+					throw new Error('Invalid response format from Spotify API');
+				}
+				
+				allPlaylists = allPlaylists.concat(response.items);
+				
+				console.log(`Page ${pageCount}: Fetched ${response.items.length} playlists (total so far: ${allPlaylists.length})`);
+				
+				// Check if there are more pages
+				if (response.next) {
+					try {
+						// Extract the path from the full URL
+						const nextUrl = new URL(response.next);
+						// Remove /v1 from the pathname since makeRequest adds it
+						let path = nextUrl.pathname;
+						if (path.startsWith('/v1')) {
+							path = path.substring(3);
+						}
+						url = path + nextUrl.search;
+					} catch (urlError) {
+						console.error('Failed to parse next playlist URL:', response.next, urlError);
+						break;
+					}
+				} else {
+					url = null;
+				}
+				
+				// Safety check
+				if (pageCount > 20) {
+					console.warn('Too many playlist pages, stopping pagination');
+					break;
+				}
+			}
+		} catch (error) {
+			console.error('Error during playlists pagination:', error);
+			throw error;
+		}
+		
+		console.log(`Finished fetching all ${allPlaylists.length} playlists in ${pageCount} pages`);
+		return allPlaylists;
 	}
 
 	async getPlaylistTracks(playlistId: string): Promise<SpotifyTrack[]> {
-		const response = await this.makeRequest(`/playlists/${playlistId}/tracks`);
-		return response.items.map((item: any) => item.track);
+		let allTracks: SpotifyTrack[] = [];
+		let url: string | null = `/playlists/${playlistId}/tracks?limit=100`;
+		let pageCount = 0;
+		
+		console.log(`Fetching tracks for playlist ${playlistId}...`);
+		
+		try {
+			while (url) {
+				pageCount++;
+				console.log(`Fetching page ${pageCount}: ${url}`);
+				
+				const response = await this.makeRequest(url);
+				
+				if (!response || !response.items) {
+					console.error('Invalid response format:', response);
+					throw new Error('Invalid response format from Spotify API');
+				}
+				
+				const tracks = response.items
+					.map((item: any) => item.track)
+					.filter((track: any) => track !== null && track !== undefined);
+				
+				allTracks = allTracks.concat(tracks);
+				
+				console.log(`Page ${pageCount}: Fetched ${tracks.length} tracks (total so far: ${allTracks.length})`);
+				
+				// Check if there are more pages
+				if (response.next) {
+					try {
+						// Extract the path from the full URL
+						const nextUrl = new URL(response.next);
+						// Remove /v1 from the pathname since makeRequest adds it
+						let path = nextUrl.pathname;
+						if (path.startsWith('/v1')) {
+							path = path.substring(3);
+						}
+						url = path + nextUrl.search;
+					} catch (urlError) {
+						console.error('Failed to parse next URL:', response.next, urlError);
+						break;
+					}
+				} else {
+					url = null;
+				}
+				
+				// Safety check to prevent infinite loops
+				if (pageCount > 50) {
+					console.warn('Too many pages, stopping pagination');
+					break;
+				}
+			}
+		} catch (error) {
+			console.error('Error during playlist tracks pagination:', error);
+			throw error;
+		}
+		
+		console.log(`Finished fetching all ${allTracks.length} tracks for playlist ${playlistId} in ${pageCount} pages`);
+		return allTracks;
 	}
 
 	async addTrackToPlaylist(playlistId: string, trackUri: string): Promise<void> {

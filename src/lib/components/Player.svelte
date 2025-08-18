@@ -8,6 +8,7 @@
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
 	let updateInterval: number;
+	let positionUpdateInterval: number = 0;
 	let isPlayerReady = false;
 
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
@@ -18,6 +19,9 @@
 			await webPlaybackService.initialize();
 			isPlayerReady = true;
 			console.log('Web Playback SDK initialized');
+			
+			// Start position updates for Web Playback SDK
+			startPositionUpdates();
 		} catch (error) {
 			console.error('Failed to initialize Web Playback SDK:', error);
 			// Fallback to regular API polling
@@ -28,6 +32,9 @@
 	onDestroy(() => {
 		if (updateInterval) {
 			clearInterval(updateInterval);
+		}
+		if (positionUpdateInterval) {
+			clearInterval(positionUpdateInterval);
 		}
 	});
 
@@ -44,6 +51,41 @@
 			}
 		} catch (error) {
 			console.error('Failed to get playback state:', error);
+		}
+	}
+
+	function startPositionUpdates() {
+		// Update position every second when playing and using Web Playback SDK
+		positionUpdateInterval = setInterval(async () => {
+			if (isDragging || !isPlayerReady || !$isPlaying) return;
+			
+			try {
+				const state = await webPlaybackService.getCurrentState();
+				if (state && state.track_window.current_track) {
+					// Only update position, don't change other state
+					playbackPosition.set(state.position / 1000);
+				}
+			} catch (error) {
+				console.error('Failed to get current position:', error);
+			}
+		}, 1000);
+	}
+
+	function stopPositionUpdates() {
+		if (positionUpdateInterval) {
+			clearInterval(positionUpdateInterval);
+			positionUpdateInterval = 0;
+		}
+	}
+
+	// React to play/pause changes to start/stop position updates
+	$: if (isPlayerReady) {
+		if ($isPlaying) {
+			if (!positionUpdateInterval) {
+				startPositionUpdates();
+			}
+		} else {
+			stopPositionUpdates();
 		}
 	}
 

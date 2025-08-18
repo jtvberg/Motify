@@ -17,12 +17,21 @@
 		if (!$selectedPlaylist) return;
 		
 		loading = true;
+		// Reset tracks immediately to prevent showing stale data
+		tracks = [];
+		currentTracks.set([]);
+		
 		try {
+			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
 			const tracksData = await spotifyAPI.getPlaylistTracks($selectedPlaylist.id);
 			tracks = tracksData;
 			currentTracks.set(tracks);
+			console.log(`Successfully loaded ${tracks.length} tracks`);
 		} catch (error) {
 			console.error('Failed to load tracks:', error);
+			// Ensure tracks remain empty on error
+			tracks = [];
+			currentTracks.set([]);
 		} finally {
 			loading = false;
 		}
@@ -146,7 +155,7 @@
 		{#if loading}
 			<div class="loading">
 				<i class="fas fa-spinner fa-spin"></i>
-				Loading tracks...
+				Loading all tracks from playlist...
 			</div>
 		{:else if tracks.length === 0}
 			<div class="empty-state">
