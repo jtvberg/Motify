@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { selectedPlaylist, targetPlaylist, currentTracks } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { formatDuration } from '$lib/utils';
@@ -35,6 +35,10 @@
 		const deviceId = webPlaybackService.getDeviceId();
 		console.log('Device ID:', deviceId);
 		
+		// Find track index for proper playlist navigation
+		const trackIndex = tracks.findIndex(t => t.id === track.id);
+		console.log(`Track index: ${trackIndex} for track: ${track.name}`);
+		
 		let playSuccessful = false;
 		let lastError: any = null;
 		
@@ -50,9 +54,19 @@
 				playSuccessful = true;
 				console.log('✅ Track started successfully via fallback');
 			}
+			
+			// Only update stores after successful playback start
+			if (playSuccessful) {
+				currentTrackIndex.set(trackIndex);
+				console.log(`Updated current track index to ${trackIndex}`);
+			}
 		} catch (error) {
 			lastError = error;
 			console.error('❌ Play request failed:', error);
+			
+			// If playback failed immediately, revert the store changes
+			currentTrack.set(null);
+			currentTrackIndex.set(-1);
 			
 			// Wait a moment and check if playback actually started
 			console.log('Checking if playback started despite error...');
@@ -63,6 +77,9 @@
 				if (state && !state.paused && state.track_window?.current_track?.uri === track.uri) {
 					console.log('✅ Playback actually started despite API error');
 					playSuccessful = true;
+					// Restore the store values
+					currentTrack.set(track);
+					currentTrackIndex.set(trackIndex);
 				}
 			} catch (stateError) {
 				console.log('Could not check playback state:', stateError);

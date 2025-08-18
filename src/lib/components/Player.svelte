@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { formatTime } from '$lib/utils';
@@ -67,10 +67,28 @@
 
 	async function previousTrack() {
 		try {
+			const tracks = $currentTracks;
+			const currentIndex = $currentTrackIndex;
+			
+			if (tracks.length === 0 || currentIndex < 0) {
+				console.log('No playlist context for previous track');
+				return;
+			}
+			
+			// Calculate previous track index (wrap around to end if at beginning)
+			const previousIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
+			const previousTrack = tracks[previousIndex];
+			
+			console.log(`Playing previous track: ${previousTrack.name} (index ${previousIndex})`);
+			
+			// Only update the index, let the player state change event update the track
+			currentTrackIndex.set(previousIndex);
+			
+			// Play the track
 			if (isPlayerReady) {
-				await webPlaybackService.previousTrack();
+				await webPlaybackService.play(previousTrack.uri);
 			} else {
-				await spotifyAPI.previousTrack();
+				await spotifyAPI.playTrack(previousTrack.uri);
 				setTimeout(updatePlaybackState, 500);
 			}
 		} catch (error) {
@@ -80,10 +98,28 @@
 
 	async function nextTrack() {
 		try {
+			const tracks = $currentTracks;
+			const currentIndex = $currentTrackIndex;
+			
+			if (tracks.length === 0 || currentIndex < 0) {
+				console.log('No playlist context for next track');
+				return;
+			}
+			
+			// Calculate next track index (wrap around to beginning if at end)
+			const nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
+			const nextTrack = tracks[nextIndex];
+			
+			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
+			
+			// Only update the index, let the player state change event update the track
+			currentTrackIndex.set(nextIndex);
+			
+			// Play the track
 			if (isPlayerReady) {
-				await webPlaybackService.nextTrack();
+				await webPlaybackService.play(nextTrack.uri);
 			} else {
-				await spotifyAPI.nextTrack();
+				await spotifyAPI.playTrack(nextTrack.uri);
 				setTimeout(updatePlaybackState, 500);
 			}
 		} catch (error) {
@@ -125,6 +161,11 @@
 			<div class="track-details">
 				<div class="track-name">{$currentTrack.name}</div>
 				<div class="artist-name">{$currentTrack.artists.map(a => a.name).join(', ')}</div>
+				{#if $currentTracks.length > 0 && $currentTrackIndex >= 0}
+					<div class="playlist-position">
+						Track {$currentTrackIndex + 1} of {$currentTracks.length}
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -207,6 +248,12 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.playlist-position {
+		color: #1db954;
+		font-size: 0.8rem;
+		margin-top: 0.25rem;
 	}
 
 	.player-controls {

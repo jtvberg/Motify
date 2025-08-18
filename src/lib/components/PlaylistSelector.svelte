@@ -42,7 +42,13 @@
 	<div class="header">
 		<div class="user-info">
 			{#if $user}
-				<img src={$user.images[0]?.url || ''} alt="Profile" class="profile-pic" />
+				{#if $user.images && $user.images.length > 0 && $user.images[0]?.url}
+					<img src={$user.images[0].url} alt="Profile" class="profile-pic" />
+				{:else}
+					<div class="profile-pic profile-pic-fallback">
+						{$user.display_name ? $user.display_name.charAt(0).toUpperCase() : 'U'}
+					</div>
+				{/if}
 				<span class="username">{$user.display_name}</span>
 			{/if}
 		</div>
@@ -117,6 +123,17 @@
 		height: 40px;
 		border-radius: 50%;
 		object-fit: cover;
+	}
+
+	.profile-pic-fallback {
+		background: linear-gradient(45deg, #1db954, #1ed760);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: bold;
+		font-size: 1.2rem;
+		color: white;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.username {

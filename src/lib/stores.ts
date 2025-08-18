@@ -6,6 +6,7 @@ export const playlists = writable<SpotifyPlaylist[]>([]);
 export const selectedPlaylist = writable<SpotifyPlaylist | null>(null);
 export const targetPlaylist = writable<SpotifyPlaylist | null>(null);
 export const currentTracks = writable<SpotifyTrack[]>([]);
+export const currentTrackIndex = writable<number>(-1);
 export const isPlaying = writable(false);
 export const currentTrack = writable<SpotifyTrack | null>(null);
 export const playbackPosition = writable(0);
