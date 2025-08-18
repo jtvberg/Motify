@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { formatDuration } from '$lib/utils';
@@ -107,14 +107,65 @@
 		console.log('=== PLAY TRACK END ===');
 	}
 
+	async function togglePlayPause(track: SpotifyTrack) {
+		const isCurrentTrack = $currentTrack && $currentTrack.id === track.id;
+		
+		if (isCurrentTrack && $isPlaying) {
+			// Track is currently playing, pause it
+			try {
+				const deviceId = webPlaybackService.getDeviceId();
+				if (deviceId) {
+					await webPlaybackService.pause();
+				} else {
+					await spotifyAPI.pausePlayback();
+				}
+			} catch (error) {
+				console.error('Failed to pause track:', error);
+			}
+		} else if (isCurrentTrack && !$isPlaying) {
+			// Track is current but paused, resume it
+			try {
+				const deviceId = webPlaybackService.getDeviceId();
+				if (deviceId) {
+					await webPlaybackService.play();
+				} else {
+					await spotifyAPI.resumePlayback();
+				}
+			} catch (error) {
+				console.error('Failed to resume track:', error);
+			}
+		} else {
+			// Different track, play it
+			await playTrack(track);
+		}
+	}
+
 	async function removeTrack(track: SpotifyTrack) {
 		if (!$selectedPlaylist) return;
+		
+		const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
+		const currentIndex = tracks.findIndex(t => t.id === track.id);
 		
 		try {
 			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, track.uri);
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
+			
+			// If we removed the currently playing track, play the next one
+			if (isCurrentlyPlaying && tracks.length > 0) {
+				// Determine next track to play
+				let nextTrackIndex = currentIndex;
+				if (nextTrackIndex >= tracks.length) {
+					nextTrackIndex = 0; // Loop to beginning if we removed the last track
+				}
+				
+				const nextTrack = tracks[nextTrackIndex];
+				if (nextTrack) {
+					console.log(`Auto-playing next track: ${nextTrack.name}`);
+					await playTrack(nextTrack);
+				}
+			}
 		} catch (error) {
 			console.error('Failed to remove track:', error);
 		}
@@ -122,6 +173,9 @@
 
 	async function moveTrack(track: SpotifyTrack) {
 		if (!$targetPlaylist || !$selectedPlaylist) return;
+		
+		const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
+		const currentIndex = tracks.findIndex(t => t.id === track.id);
 		
 		try {
 			// Add to target playlist
@@ -131,6 +185,21 @@
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
+			
+			// If we moved the currently playing track, play the next one
+			if (isCurrentlyPlaying && tracks.length > 0) {
+				// Determine next track to play
+				let nextTrackIndex = currentIndex;
+				if (nextTrackIndex >= tracks.length) {
+					nextTrackIndex = 0; // Loop to beginning if we moved the last track
+				}
+				
+				const nextTrack = tracks[nextTrackIndex];
+				if (nextTrack) {
+					console.log(`Auto-playing next track after move: ${nextTrack.name}`);
+					await playTrack(nextTrack);
+				}
+			}
 		} catch (error) {
 			console.error('Failed to move track:', error);
 		}
@@ -174,7 +243,8 @@
 				</div>
 
 				{#each tracks as track, index}
-					<div class="track-item">
+					{@const isCurrentTrack = $currentTrack && $currentTrack.id === track.id}
+					<div class="track-item" class:current-track={isCurrentTrack}>
 						<span class="track-number">{index + 1}</span>
 						<div class="track-title">
 							<img 
@@ -182,7 +252,7 @@
 								alt="Album cover"
 								class="track-cover"
 							/>
-							<span>{track.name}</span>
+							<span class:current-track-title={isCurrentTrack}>{track.name}</span>
 						</div>
 						<span class="track-artist">{track.artists.map(a => a.name).join(', ')}</span>
 						<span class="track-album">{track.album.name}</span>
@@ -190,10 +260,11 @@
 						<div class="track-actions">
 							<button 
 								class="action-btn play-btn" 
-								on:click={() => playTrack(track)}
-								aria-label="Play track"
+								class:pause-btn={isCurrentTrack && $isPlaying}
+								on:click={() => togglePlayPause(track)}
+								aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
 							>
-								<i class="fas fa-play"></i>
+								<i class="fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}"></i>
 							</button>
 							<button 
 								class="action-btn remove-btn" 
@@ -305,6 +376,15 @@
 		background: rgba(255, 255, 255, 0.05);
 	}
 
+	.track-item.current-track {
+		background: rgba(29, 185, 84, 0.1);
+		border-left: 3px solid #1db954;
+	}
+
+	.track-item.current-track:hover {
+		background: rgba(29, 185, 84, 0.15);
+	}
+
 	.track-item:last-child {
 		border-bottom: none;
 	}
@@ -326,6 +406,11 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		font-weight: 600;
+	}
+
+	.current-track-title {
+		color: #1db954 !important;
+		font-weight: 700;
 	}
 
 	.track-cover {
@@ -375,6 +460,14 @@
 	.play-btn:hover {
 		background: #1ed760;
 		transform: scale(1.1);
+	}
+
+	.pause-btn {
+		background: #ff9500 !important;
+	}
+
+	.pause-btn:hover {
+		background: #ffad33 !important;
 	}
 
 	.remove-btn {

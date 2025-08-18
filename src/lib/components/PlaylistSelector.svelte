@@ -78,7 +78,7 @@
 
 		<div class="selector-group">
 			<label for="target-playlist">
-				<i class="fas fa-target"></i>
+				<i class="fas fa-bullseye"></i>
 				Target Playlist
 			</label>
 			<select 
