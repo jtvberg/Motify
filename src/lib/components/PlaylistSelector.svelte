@@ -71,7 +71,7 @@
 			>
 				<option value="">Select a playlist to manage</option>
 				{#each userPlaylists as playlist}
-					<option value={playlist.id}>{playlist.name}</option>
+					<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 				{/each}
 			</select>
 		</div>
@@ -88,7 +88,7 @@
 			>
 				<option value="">Select destination playlist</option>
 				{#each userPlaylists as playlist}
-					<option value={playlist.id}>{playlist.name}</option>
+					<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 				{/each}
 			</select>
 		</div>
@@ -161,13 +161,15 @@
 	.selectors {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 2rem;
+		gap: 1rem;
 	}
 
 	.selector-group {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		min-width: 0; /* Allow flex items to shrink below content size */
+		overflow: hidden; /* Prevent content from breaking out */
 	}
 
 	.selector-group label {
@@ -187,6 +189,11 @@
 		font-size: 1rem;
 		cursor: pointer;
 		transition: all 0.3s ease;
+		width: 100%;
+		max-width: 100%;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
 	}
 
 	select:hover {
@@ -202,6 +209,10 @@
 	option {
 		background: #2a2a2a;
 		color: #ffffff;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+		max-width: 100%;
 	}
 
 	@media (max-width: 768px) {
