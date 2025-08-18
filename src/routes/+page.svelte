@@ -9,18 +9,36 @@
 	import TrackList from '$lib/components/TrackList.svelte';
 
 	onMount(async () => {
-		// Check if user is already authenticated
-		const token = spotifyAPI.getAccessToken();
-		if (token) {
-			isAuthenticated.set(true);
-			
-			// Initialize Web Playback SDK after authentication
-			try {
-				await webPlaybackService.initialize();
-				console.log('Web Playback SDK ready');
-			} catch (error) {
-				console.error('Failed to initialize Web Playback SDK:', error);
+		console.log('Main app mounted, checking authentication...');
+		
+		// Check if user is already authenticated with valid token
+		try {
+			const token = await spotifyAPI.ensureValidToken();
+			if (token) {
+				console.log('User is authenticated with valid token');
+				isAuthenticated.set(true);
+				
+				// Initialize Web Playback SDK after authentication
+				try {
+					console.log('Initializing Web Playback SDK...');
+					await webPlaybackService.initialize();
+					console.log('Web Playback SDK ready');
+					
+					// Wait a bit for the device to be ready
+					setTimeout(() => {
+						const deviceId = webPlaybackService.getDeviceId();
+						console.log('Device ID after initialization:', deviceId);
+					}, 2000);
+				} catch (error) {
+					console.error('Failed to initialize Web Playback SDK:', error);
+				}
+			} else {
+				console.log('No valid token available, user needs to authenticate');
+				isAuthenticated.set(false);
 			}
+		} catch (error) {
+			console.error('Error checking authentication:', error);
+			isAuthenticated.set(false);
 		}
 	});
 </script>

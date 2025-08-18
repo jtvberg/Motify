@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { currentTrack, isPlaying, user } from '$lib/stores';
+	import { spotifyAPI } from '$lib/spotify';
 
 	let logs: string[] = [];
 	let playbackState: any = null;
+	let availableDevices: any = null;
 
 	function addLog(message: string) {
 		logs = [...logs, `${new Date().toLocaleTimeString()}: ${message}`];
@@ -88,6 +90,16 @@
 			addLog(`Error pausing: ${error}`);
 		}
 	}
+
+	async function getAvailableDevices() {
+		try {
+			const devices = await spotifyAPI.getAvailableDevices();
+			availableDevices = devices;
+			addLog(`Available devices retrieved: ${devices.devices?.length || 0} devices`);
+		} catch (error) {
+			addLog(`Error getting devices: ${error}`);
+		}
+	}
 </script>
 
 <div class="debug-container">
@@ -96,6 +108,7 @@
 	<div class="controls">
 		<button on:click={testWebPlaybackInit}>Initialize Web Playback SDK</button>
 		<button on:click={getPlaybackState}>Get Playback State</button>
+		<button on:click={getAvailableDevices}>Get Available Devices</button>
 		<button on:click={testPlay}>Test Play</button>
 		<button on:click={testPause}>Test Pause</button>
 	</div>
@@ -106,6 +119,13 @@
 			<div class="log-entry">{log}</div>
 		{/each}
 	</div>
+
+	{#if availableDevices}
+		<div class="available-devices">
+			<h2>Available Devices:</h2>
+			<pre>{JSON.stringify(availableDevices, null, 2)}</pre>
+		</div>
+	{/if}
 
 	{#if playbackState}
 		<div class="playback-state">
@@ -156,6 +176,13 @@
 		font-size: 12px;
 		margin: 5px 0;
 		color: #fff;
+	}
+
+	.available-devices {
+		margin: 20px 0;
+		background: #2a2a2a;
+		padding: 15px;
+		border-radius: 5px;
 	}
 
 	.playback-state {

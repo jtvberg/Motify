@@ -29,20 +29,56 @@
 	}
 
 	async function playTrack(track: SpotifyTrack) {
+		console.log('=== PLAY TRACK START ===');
+		console.log('Attempting to play track:', track.name);
+		
+		const deviceId = webPlaybackService.getDeviceId();
+		console.log('Device ID:', deviceId);
+		
+		let playSuccessful = false;
+		let lastError: any = null;
+		
 		try {
-			const deviceId = webPlaybackService.getDeviceId();
 			if (deviceId) {
-				// Use our web player
+				console.log('Using web player with device ID:', deviceId);
 				await webPlaybackService.play(track.uri);
+				playSuccessful = true;
+				console.log('✅ Track started successfully via web player');
 			} else {
-				// Fallback to system player
+				console.log('Web player not ready, using fallback');
 				await spotifyAPI.playTrack(track.uri);
+				playSuccessful = true;
+				console.log('✅ Track started successfully via fallback');
 			}
 		} catch (error) {
-			console.error('Failed to play track:', error);
-			// Show user-friendly error
-			alert('Failed to play track. Make sure you have Spotify Premium and try again.');
+			lastError = error;
+			console.error('❌ Play request failed:', error);
+			
+			// Wait a moment and check if playback actually started
+			console.log('Checking if playback started despite error...');
+			await new Promise(resolve => setTimeout(resolve, 500));
+			
+			try {
+				const state = await webPlaybackService.getCurrentState();
+				if (state && !state.paused && state.track_window?.current_track?.uri === track.uri) {
+					console.log('✅ Playback actually started despite API error');
+					playSuccessful = true;
+				}
+			} catch (stateError) {
+				console.log('Could not check playback state:', stateError);
+			}
 		}
+		
+		// Only show error if play was not successful
+		if (!playSuccessful && lastError) {
+			const errorMessage = typeof lastError === 'object' && lastError !== null && 'message' in lastError
+				? (lastError as { message: string }).message
+				: String(lastError);
+			console.error('Showing error to user:', errorMessage);
+			alert(`Failed to play track: ${errorMessage}. Make sure you have Spotify Premium and try again.`);
+		}
+		
+		console.log('=== PLAY TRACK END ===');
 	}
 
 	async function removeTrack(track: SpotifyTrack) {

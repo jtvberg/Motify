@@ -122,6 +122,17 @@ class SpotifyAPI {
 		}
 
 		const data = await response.json();
+		
+		// Store both access and refresh tokens
+		this.setAccessToken(data.access_token);
+		if (data.refresh_token) {
+			localStorage.setItem('spotify_refresh_token', data.refresh_token);
+		}
+		
+		// Store token expiry time
+		const expiresAt = Date.now() + (data.expires_in * 1000);
+		localStorage.setItem('spotify_token_expires_at', expiresAt.toString());
+		
 		localStorage.removeItem('spotify_code_verifier'); // Clean up
 		return data.access_token;
 	}
@@ -137,22 +148,102 @@ class SpotifyAPI {
 		return this.accessToken;
 	}
 
+	isTokenExpired(): boolean {
+		const expiresAt = localStorage.getItem('spotify_token_expires_at');
+		if (!expiresAt) return true;
+		
+		return Date.now() >= parseInt(expiresAt);
+	}
+
+	async refreshAccessToken(): Promise<string> {
+		const refreshToken = localStorage.getItem('spotify_refresh_token');
+		if (!refreshToken) {
+			throw new Error('No refresh token available');
+		}
+
+		const response = await fetch('https://accounts.spotify.com/api/token', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+				grant_type: 'refresh_token',
+				refresh_token: refreshToken,
+				client_id: CLIENT_ID
+			})
+		});
+
+		if (!response.ok) {
+			const error = await response.text();
+			throw new Error(`Token refresh failed: ${error}`);
+		}
+
+		const data = await response.json();
+		
+		// Update access token
+		this.setAccessToken(data.access_token);
+		
+		// Update refresh token if a new one is provided
+		if (data.refresh_token) {
+			localStorage.setItem('spotify_refresh_token', data.refresh_token);
+		}
+		
+		// Update expiry time
+		const expiresAt = Date.now() + (data.expires_in * 1000);
+		localStorage.setItem('spotify_token_expires_at', expiresAt.toString());
+		
+		return data.access_token;
+	}
+
+	async ensureValidToken(): Promise<string | null> {
+		let token = this.getAccessToken();
+		
+		// If no token, check localStorage
+		if (!token && typeof window !== 'undefined') {
+			token = localStorage.getItem('spotify_access_token');
+			if (token) {
+				this.accessToken = token;
+			}
+		}
+		
+		// If token exists but is expired, try to refresh it
+		if (token && this.isTokenExpired()) {
+			try {
+				console.log('Token expired, refreshing...');
+				token = await this.refreshAccessToken();
+				console.log('Token refreshed successfully');
+			} catch (error) {
+				console.error('Failed to refresh token:', error);
+				// Clear expired tokens
+				this.logout();
+				return null;
+			}
+		}
+		
+		return token;
+	}
+
 	logout(): void {
 		this.accessToken = null;
 		if (typeof window !== 'undefined') {
 			localStorage.removeItem('spotify_access_token');
+			localStorage.removeItem('spotify_refresh_token');
+			localStorage.removeItem('spotify_token_expires_at');
+			localStorage.removeItem('spotify_code_verifier');
 		}
 	}
 
 	private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
-		if (!this.accessToken) {
+		// Ensure we have a valid token
+		const token = await this.ensureValidToken();
+		if (!token) {
 			throw new Error('No access token available');
 		}
 
 		const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
 			...options,
 			headers: {
-				Authorization: `Bearer ${this.accessToken}`,
+				Authorization: `Bearer ${token}`,
 				'Content-Type': 'application/json',
 				...options.headers
 			}
@@ -160,13 +251,38 @@ class SpotifyAPI {
 
 		if (!response.ok) {
 			if (response.status === 401) {
+				// Try to refresh token once more
+				try {
+					const refreshedToken = await this.refreshAccessToken();
+					// Retry the request with the new token
+					const retryResponse = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+						...options,
+						headers: {
+							Authorization: `Bearer ${refreshedToken}`,
+							'Content-Type': 'application/json',
+							...options.headers
+						}
+					});
+					
+					if (retryResponse.ok) {
+						// Handle empty responses (like 204 No Content)
+						const text = await retryResponse.text();
+						return text ? JSON.parse(text) : {};
+					}
+				} catch (refreshError) {
+					console.error('Token refresh failed:', refreshError);
+				}
+				
+				// If refresh failed or retry failed, logout
 				this.logout();
-				throw new Error('Token expired');
+				throw new Error('Authentication failed');
 			}
 			throw new Error(`Spotify API error: ${response.status}`);
 		}
 
-		return response.json();
+		// Handle empty responses (like 204 No Content) that don't have JSON
+		const text = await response.text();
+		return text ? JSON.parse(text) : {};
 	}
 
 	async getCurrentUser(): Promise<SpotifyUser> {
@@ -202,18 +318,49 @@ class SpotifyAPI {
 	}
 
 	async playTrack(trackUri: string, deviceId?: string): Promise<void> {
-		const body: any = {
+		console.log('SpotifyAPI.playTrack called with:', { trackUri, deviceId });
+		
+		const body = {
 			uris: [trackUri]
 		};
 
+		// Build the URL with device_id as query parameter if provided
+		let url = '/me/player/play';
 		if (deviceId) {
-			body.device_id = deviceId;
+			url += `?device_id=${deviceId}`;
 		}
 
-		await this.makeRequest('/me/player/play', {
+		console.log('Sending play request to:', url);
+		console.log('Request body:', body);
+
+		try {
+			await this.makeRequest(url, {
+				method: 'PUT',
+				body: JSON.stringify(body)
+			});
+			console.log('Play request successful');
+		} catch (error) {
+			console.error('Play request failed:', error);
+			
+			// If we got a 404 and specified a device, the device might not be active
+			// Don't retry without device_id as this often doesn't work well
+			throw error;
+		}
+	}
+
+	async transferPlayback(deviceId: string): Promise<void> {
+		console.log('Transferring playback to device:', deviceId);
+		await this.makeRequest('/me/player', {
 			method: 'PUT',
-			body: JSON.stringify(body)
+			body: JSON.stringify({
+				device_ids: [deviceId],
+				play: false
+			})
 		});
+	}
+
+	async getAvailableDevices(): Promise<any> {
+		return this.makeRequest('/me/player/devices');
 	}
 
 	async pausePlayback(): Promise<void> {

@@ -55,15 +55,40 @@ class WebPlaybackService {
 	async initialize(): Promise<void> {
 		if (this.isInitialized) return;
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
+			// Check if SDK is already loaded
 			if (window.Spotify) {
-				this.setupPlayer();
-				resolve();
-			} else {
-				window.onSpotifyWebPlaybackSDKReady = () => {
+				try {
 					this.setupPlayer();
 					resolve();
+				} catch (error) {
+					reject(error);
+				}
+			} else {
+				// Wait for SDK to load - check periodically since we can't override the global callback
+				const checkSDK = () => {
+					if (window.Spotify) {
+						try {
+							this.setupPlayer();
+							resolve();
+						} catch (error) {
+							reject(error);
+						}
+					} else {
+						// Check again in 100ms
+						setTimeout(checkSDK, 100);
+					}
 				};
+				
+				// Start checking
+				setTimeout(checkSDK, 100);
+				
+				// Timeout after 10 seconds
+				setTimeout(() => {
+					if (!this.isInitialized) {
+						reject(new Error('Spotify Web Playback SDK failed to load'));
+					}
+				}, 10000);
 			}
 		});
 	}
@@ -141,15 +166,62 @@ class WebPlaybackService {
 		return this.deviceId;
 	}
 
+	async activateDevice(): Promise<void> {
+		if (!this.deviceId) return;
+		
+		try {
+			console.log('Activating Web Player device:', this.deviceId);
+			await spotifyAPI.transferPlayback(this.deviceId);
+			console.log('Device activated successfully');
+		} catch (error) {
+			console.warn('Failed to activate device, but continuing:', error);
+		}
+	}
+
 	async play(uri?: string): Promise<void> {
+		console.log('WebPlayback.play called with:', { uri, playerReady: !!this.player, deviceId: this.deviceId });
+		
 		if (!this.player || !this.deviceId) {
-			throw new Error('Player not ready');
+			const error = `Player not ready - player: ${!!this.player}, deviceId: ${this.deviceId}`;
+			console.error(error);
+			throw new Error(error);
 		}
 
 		if (uri) {
-			// Play specific track
-			await spotifyAPI.playTrack(uri, this.deviceId);
+			console.log('Playing specific track via Spotify API with device:', this.deviceId);
+			
+			try {
+				// First ensure the device is active by transferring playback to it
+				await this.activateDevice();
+				// Small delay to ensure transfer completes
+				await new Promise(resolve => setTimeout(resolve, 300));
+				
+				// Now try to play the track
+				await spotifyAPI.playTrack(uri, this.deviceId);
+			} catch (error) {
+				// If API call fails but the player is ready, try using the player directly
+				console.warn('API play failed, trying Web Player SDK directly:', error);
+				
+				// Use the Web Player SDK to start playback
+				try {
+					// First check if something is already playing and pause it
+					const state = await this.player.getCurrentState();
+					if (state && !state.paused) {
+						await this.player.pause();
+						await new Promise(resolve => setTimeout(resolve, 100));
+					}
+					
+					// Use Web API to queue the track, then resume with player
+					await spotifyAPI.playTrack(uri);
+					await new Promise(resolve => setTimeout(resolve, 100));
+					await this.player.resume();
+				} catch (fallbackError) {
+					console.error('Both API and SDK methods failed:', fallbackError);
+					throw error; // Throw the original error
+				}
+			}
 		} else {
+			console.log('Resuming current playback via Web Player');
 			// Resume current playback
 			await this.player.resume();
 		}
