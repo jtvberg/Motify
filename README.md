@@ -14,7 +14,7 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 ## Prerequisites
 
 1. **Spotify Developer Account**: You need to create a Spotify app to get client credentials
-2. **Node.js**: Version 18 or higher
+2. **Node.js**: Version 20 or higher
 
 ## Setup Instructions
 
