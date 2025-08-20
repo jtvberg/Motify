@@ -3,10 +3,13 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { currentTrack, isPlaying, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
+	import { scrapeEveryNoiseTrackIds } from '$lib/utils';
 
 	let logs: string[] = [];
 	let playbackState: any = null;
 	let availableDevices: any = null;
+	let everynoiseTrackIds: string[] = [];
+	let testPlaylistId = '37i9dQZEVXcQ9BlMOo4hbb'; // Default test playlist ID
 
 	function addLog(message: string) {
 		logs = [...logs, `${new Date().toLocaleTimeString()}: ${message}`];
@@ -100,6 +103,18 @@
 			addLog(`Error getting devices: ${error}`);
 		}
 	}
+
+	async function testEveryNoiseScraper() {
+		try {
+			addLog(`Testing EveryNoise scraper with playlist ID: ${testPlaylistId}`);
+			const trackIds = await scrapeEveryNoiseTrackIds(testPlaylistId);
+			everynoiseTrackIds = trackIds;
+			addLog(`Successfully scraped ${trackIds.length} track IDs`);
+			console.log('Track IDs array:', trackIds);
+		} catch (error) {
+			addLog(`Error scraping: ${error}`);
+		}
+	}
 </script>
 
 <div class="debug-container">
@@ -111,6 +126,31 @@
 		<button on:click={getAvailableDevices}>Get Available Devices</button>
 		<button on:click={testPlay}>Test Play</button>
 		<button on:click={testPause}>Test Pause</button>
+	</div>
+
+	<div class="everynoise-section">
+		<h2>EveryNoise Track Scraper Test</h2>
+		<div class="input-group">
+			<label for="playlist-id">Playlist ID:</label>
+			<input 
+				id="playlist-id"
+				type="text" 
+				bind:value={testPlaylistId} 
+				placeholder="Enter Spotify playlist ID"
+			/>
+		</div>
+		<button on:click={testEveryNoiseScraper}>Test EveryNoise Scraper</button>
+		
+		{#if everynoiseTrackIds.length > 0}
+			<div class="track-ids-result">
+				<h3>Scraped Track IDs ({everynoiseTrackIds.length}):</h3>
+				<div class="track-ids-list">
+					{#each everynoiseTrackIds as trackId, index}
+						<div class="track-id-item">{index + 1}. {trackId}</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<div class="logs">
@@ -200,5 +240,69 @@
 
 	h1, h2 {
 		color: #fff;
+	}
+
+	.everynoise-section {
+		margin: 20px 0;
+		padding: 20px;
+		background: #1a1a1a;
+		border-radius: 8px;
+		border: 1px solid #333;
+	}
+
+	.everynoise-section h2 {
+		margin-top: 0;
+		color: #1db954;
+	}
+
+	.input-group {
+		margin: 15px 0;
+	}
+
+	.input-group label {
+		display: block;
+		margin-bottom: 5px;
+		color: #fff;
+		font-weight: bold;
+	}
+
+	.input-group input {
+		width: 100%;
+		max-width: 400px;
+		padding: 10px;
+		border: 1px solid #444;
+		border-radius: 4px;
+		background: #2a2a2a;
+		color: #fff;
+		font-size: 14px;
+	}
+
+	.input-group input:focus {
+		outline: none;
+		border-color: #1db954;
+	}
+
+	.track-ids-result {
+		margin-top: 20px;
+		padding: 15px;
+		background: #2a2a2a;
+		border-radius: 6px;
+	}
+
+	.track-ids-result h3 {
+		margin-top: 0;
+		color: #1db954;
+	}
+
+	.track-ids-list {
+		max-height: 300px;
+		overflow-y: auto;
+		font-family: monospace;
+		font-size: 12px;
+	}
+
+	.track-id-item {
+		padding: 2px 0;
+		color: #ccc;
 	}
 </style>
