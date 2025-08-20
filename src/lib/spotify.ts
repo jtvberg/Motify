@@ -1,8 +1,16 @@
 // Spotify Web API utilities
 import { env } from '$env/dynamic/public';
+import { browser } from '$app/environment';
 
 const CLIENT_ID = env.PUBLIC_SPOTIFY_CLIENT_ID || '';
-const REDIRECT_URI = env.PUBLIC_SPOTIFY_REDIRECT_URI || '';
+
+// Dynamic redirect URI based on environment
+const getRedirectUri = (): string => {
+	if (browser) {
+		return `${window.location.origin}/callback`;
+	}
+	return env.PUBLIC_SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:8181/callback';
+};
 const SCOPES = [
 	'streaming',
 	'user-read-email',
@@ -86,7 +94,7 @@ class SpotifyAPI {
 		const params = new URLSearchParams({
 			client_id: CLIENT_ID,
 			response_type: 'code',
-			redirect_uri: REDIRECT_URI,
+			redirect_uri: getRedirectUri(),
 			scope: SCOPES.join(' '),
 			code_challenge_method: 'S256',
 			code_challenge: codeChallenge,
@@ -110,7 +118,7 @@ class SpotifyAPI {
 			body: new URLSearchParams({
 				grant_type: 'authorization_code',
 				code: code,
-				redirect_uri: REDIRECT_URI,
+				redirect_uri: getRedirectUri(),
 				client_id: CLIENT_ID,
 				code_verifier: storedVerifier
 			})

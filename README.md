@@ -139,6 +139,34 @@ The app requests the following Spotify scopes:
 - **Active Device**: Playback control requires an active Spotify device
 - **Rate Limits**: The app respects Spotify's API rate limits
 
+## Deployment
+
+### Netlify Deployment
+
+This app is configured for easy deployment to Netlify:
+
+1. **Configure Spotify App for Production**:
+   - In your [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), edit your app
+   - Add your production domain to the Redirect URIs: `https://your-netlify-domain.netlify.app/callback`
+   - Keep the local development URI as well: `http://127.0.0.1:8181/callback`
+
+2. **Set Environment Variables in Netlify**:
+   - Go to your Netlify site dashboard
+   - Navigate to Site settings → Environment variables
+   - Add the following variable:
+     ```
+     PUBLIC_SPOTIFY_CLIENT_ID = your_spotify_client_id_here
+     ```
+   - **Note**: You don't need to set `PUBLIC_SPOTIFY_REDIRECT_URI` in production as it's automatically determined from your domain
+
+3. **Deploy**:
+   - Connect your GitHub repository to Netlify
+   - The build settings are automatically configured via `netlify.toml`
+   - Build command: `npm run build`
+   - Publish directory: `build`
+
+The app will automatically detect the environment and use the correct redirect URI for authentication.
+
 ## Troubleshooting
 
 1. **Authentication Issues**: 
