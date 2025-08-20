@@ -181,8 +181,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
+		height: 34px;
+		width: 34px;
 	}
 	
 	.settings-btn:hover {

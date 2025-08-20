@@ -164,6 +164,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		height: 34px;
 	}
 
 	.logout-btn:hover {

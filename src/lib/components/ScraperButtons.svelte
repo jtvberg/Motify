@@ -167,6 +167,7 @@
 		font-size: 0.9rem;
 		font-weight: 600;
 		min-width: 60px;
+		height: 34px;
 	}
 	
 	.scraper-btn:hover:not(:disabled) {
