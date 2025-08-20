@@ -57,9 +57,8 @@
 		<div class="header-controls">
 			<ScraperButtons />
 			<Settings />
-			<button class="logout-btn" on:click={logout}>
+			<button class="logout-btn" on:click={logout} aria-label="Logout" title="Logout">
 				<i class="fas fa-sign-out-alt"></i>
-				Logout
 			</button>
 		</div>
 	</div>
@@ -157,9 +156,9 @@
 		background: rgba(255, 255, 255, 0.1);
 		color: #ffffff;
 		border: 1px solid rgba(255, 255, 255, 0.2);
-		padding: 0.5rem 1rem;
 		border-radius: 8px;
 		cursor: pointer;
+		padding-top: 3px;
 		transition: all 0.3s ease;
 		display: flex;
 		align-items: center;

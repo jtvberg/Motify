@@ -511,6 +511,7 @@
 		.track-header, .track-item {
 			grid-template-columns: 1fr 120px;
 			gap: 1rem;
+			align-items: unset;
 		}
 
 		.track-number, .track-artist, .track-duration {

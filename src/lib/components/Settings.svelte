@@ -79,7 +79,7 @@
 </script>
 
 <div class="settings-container">
-	<button class="settings-btn" on:click={toggleSettings} aria-label="Scraper Settings">
+	<button class="settings-btn" on:click={toggleSettings} aria-label="Scraper Settings" title="Scraper Settings">
 		<i class="fas fa-cog glyph-adj"></i>
 	</button>
 </div>
