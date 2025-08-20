@@ -11,6 +11,27 @@ export function formatTime(seconds: number): string {
 }
 
 /**
+ * Extracts a Spotify playlist ID from a Spotify URL
+ * @param url - The Spotify playlist URL
+ * @returns The playlist ID or empty string if not found
+ */
+export function extractPlaylistIdFromUrl(url: string): string {
+	if (!url) return '';
+
+	const match = url.match(/spotify\.com\/playlist\/([a-zA-Z0-9]{22})/);
+	return match ? match[1] : '';
+}
+
+/**
+ * Validates if a string is a valid Spotify playlist ID
+ * @param id - The playlist ID to validate
+ * @returns boolean indicating if the ID is valid
+ */
+export function isValidSpotifyPlaylistId(id: string): boolean {
+	return /^[a-zA-Z0-9]{22}$/.test(id);
+}
+
+/**
  * Scrapes track IDs from an everynoise.com playlist profile page using server-side endpoint
  * @param playlistId - The Spotify playlist ID
  * @returns Promise<string[]> - Array of track IDs

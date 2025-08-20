@@ -3,6 +3,8 @@
 	import { user, playlists, selectedPlaylist, targetPlaylist } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import type { SpotifyPlaylist } from '$lib/spotify';
+	import Settings from './Settings.svelte';
+	import ScraperButtons from './ScraperButtons.svelte';
 
 	let userPlaylists: SpotifyPlaylist[] = [];
 	let selectedId = '';
@@ -52,10 +54,14 @@
 				<span class="username">{$user.display_name}</span>
 			{/if}
 		</div>
-		<button class="logout-btn" on:click={logout}>
-			<i class="fas fa-sign-out-alt"></i>
-			Logout
-		</button>
+		<div class="header-controls">
+			<ScraperButtons />
+			<Settings />
+			<button class="logout-btn" on:click={logout}>
+				<i class="fas fa-sign-out-alt"></i>
+				Logout
+			</button>
+		</div>
 	</div>
 
 	<div class="selectors">
@@ -139,6 +145,12 @@
 	.username {
 		font-weight: 600;
 		font-size: 1.1rem;
+	}
+	
+	.header-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 	}
 
 	.logout-btn {

@@ -12,3 +12,48 @@ export const currentTrack = writable<SpotifyTrack | null>(null);
 export const playbackPosition = writable(0);
 export const trackDuration = writable(0);
 export const isAuthenticated = writable(false);
+
+// Settings for EveryNoise playlist scraping
+export interface ScraperSettings {
+	discoverWeeklyUrl: string;
+	releaseRadarUrl: string;
+}
+
+function createSettingsStore() {
+	// Load from localStorage if available
+	const storedSettings = typeof localStorage !== 'undefined' 
+		? localStorage.getItem('motify-scraper-settings') 
+		: null;
+	
+	const defaultSettings: ScraperSettings = {
+		discoverWeeklyUrl: '',
+		releaseRadarUrl: ''
+	};
+	
+	const initialSettings = storedSettings 
+		? { ...defaultSettings, ...JSON.parse(storedSettings) }
+		: defaultSettings;
+
+	const { subscribe, set, update } = writable<ScraperSettings>(initialSettings);
+
+	return {
+		subscribe,
+		set: (value: ScraperSettings) => {
+			if (typeof localStorage !== 'undefined') {
+				localStorage.setItem('motify-scraper-settings', JSON.stringify(value));
+			}
+			set(value);
+		},
+		update: (fn: (value: ScraperSettings) => ScraperSettings) => {
+			update((value) => {
+				const newValue = fn(value);
+				if (typeof localStorage !== 'undefined') {
+					localStorage.setItem('motify-scraper-settings', JSON.stringify(newValue));
+				}
+				return newValue;
+			});
+		}
+	};
+}
+
+export const scraperSettings = createSettingsStore();

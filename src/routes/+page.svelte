@@ -7,6 +7,7 @@
 	import PlaylistSelector from '$lib/components/PlaylistSelector.svelte';
 	import Player from '$lib/components/Player.svelte';
 	import TrackList from '$lib/components/TrackList.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 
 	onMount(async () => {
 		console.log('Main app mounted, checking authentication...');
@@ -64,6 +65,7 @@
 			<TrackList />
 		</div>
 	</main>
+	<Toast />
 {:else}
 	<Auth />
 {/if}

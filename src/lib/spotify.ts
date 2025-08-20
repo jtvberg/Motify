@@ -416,6 +416,20 @@ class SpotifyAPI {
 		});
 	}
 
+	async addTracksToPlaylist(playlistId: string, trackUris: string[]): Promise<void> {
+		// Spotify API allows up to 100 tracks per request
+		const batchSize = 100;
+		for (let i = 0; i < trackUris.length; i += batchSize) {
+			const batch = trackUris.slice(i, i + batchSize);
+			await this.makeRequest(`/playlists/${playlistId}/tracks`, {
+				method: 'POST',
+				body: JSON.stringify({
+					uris: batch
+				})
+			});
+		}
+	}
+
 	async removeTrackFromPlaylist(playlistId: string, trackUri: string): Promise<void> {
 		await this.makeRequest(`/playlists/${playlistId}/tracks`, {
 			method: 'DELETE',
