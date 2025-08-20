@@ -129,7 +129,7 @@
 				
 				<div class="input-group">
 					<label for="release-radar">
-						<i class="fas fa-broadcast-tower"></i>
+						<i class="fas fa-satellite-dish"></i>
 						Release Radar URL
 					</label>
 					<input 

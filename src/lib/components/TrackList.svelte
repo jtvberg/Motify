@@ -449,7 +449,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 0.9rem;
+		font-size: 1rem;
 	}
 
 	.play-btn {
@@ -509,7 +509,7 @@
 		}
 
 		.track-header, .track-item {
-			grid-template-columns: 1fr 100px;
+			grid-template-columns: 1fr 120px;
 			gap: 1rem;
 		}
 
