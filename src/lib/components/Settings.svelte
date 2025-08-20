@@ -80,7 +80,7 @@
 
 <div class="settings-container">
 	<button class="settings-btn" on:click={toggleSettings} aria-label="Scraper Settings">
-		<i class="fas fa-cog"></i>
+		<i class="fas fa-cog glyph-adj"></i>
 	</button>
 </div>
 
@@ -356,5 +356,9 @@
 		background: #666;
 		cursor: not-allowed;
 		opacity: 0.6;
+	}
+
+	.glyph-adj {
+		padding-top: 2px;
 	}
 </style>
