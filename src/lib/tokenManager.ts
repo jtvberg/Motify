@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { spotifyAPI } from './spotify';
 import { webPlaybackService } from './webPlayback';
 
@@ -6,6 +7,9 @@ class TokenManager {
 	private isVisible = true;
 
 	initialize(): void {
+		// Only initialize in browser environment
+		if (!browser) return;
+		
 		// Listen for visibility changes
 		document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
 		
@@ -14,6 +18,8 @@ class TokenManager {
 	}
 
 	private handleVisibilityChange(): void {
+		if (!browser) return;
+		
 		this.isVisible = !document.hidden;
 		
 		if (this.isVisible) {
@@ -27,6 +33,8 @@ class TokenManager {
 	}
 
 	private startTokenCheck(): void {
+		if (!browser) return;
+		
 		this.stopTokenCheck(); // Ensure no duplicate intervals
 		
 		// Check token every 5 minutes when tab is visible
@@ -80,6 +88,8 @@ class TokenManager {
 	}
 
 	destroy(): void {
+		if (!browser) return;
+		
 		this.stopTokenCheck();
 		document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
 	}

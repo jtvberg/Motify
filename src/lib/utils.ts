@@ -113,3 +113,61 @@ export async function scrapeEveryNoiseTrackIdsWithProxy(playlistId: string): Pro
 		throw error;
 	}
 }
+
+/**
+ * Check if a track is playable
+ * @param track - The Spotify track to check
+ * @returns boolean indicating if the track is playable
+ */
+export function isTrackPlayable(track: any): boolean {
+	// If is_playable is explicitly set, use that
+	if (typeof track.is_playable === 'boolean') {
+		return track.is_playable;
+	}
+	
+	// Check for restrictions that would make it unplayable
+	if (track.restrictions?.reason) {
+		return false;
+	}
+	
+	// If no explicit playability info, assume it's playable
+	return true;
+}
+
+/**
+ * Find the next playable track in a list
+ * @param tracks - Array of tracks to search
+ * @param startIndex - Index to start searching from
+ * @param direction - 1 for forward, -1 for backward
+ * @returns The index of the next playable track, or -1 if none found
+ */
+export function findNextPlayableTrack(tracks: any[], startIndex: number, direction: 1 | -1 = 1): number {
+	if (tracks.length === 0) return -1;
+	
+	let currentIndex = startIndex;
+	let attempts = 0;
+	const maxAttempts = tracks.length; // Avoid infinite loop
+	
+	while (attempts < maxAttempts) {
+		// Calculate next index with wrapping
+		if (direction === 1) {
+			currentIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
+		} else {
+			currentIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
+		}
+		
+		// Check if this track is playable
+		if (isTrackPlayable(tracks[currentIndex])) {
+			return currentIndex;
+		}
+		
+		attempts++;
+		
+		// If we've looped back to the start position, no playable tracks found
+		if (currentIndex === startIndex) {
+			break;
+		}
+	}
+	
+	return -1; // No playable track found
+}

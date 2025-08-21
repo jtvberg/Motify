@@ -3,7 +3,7 @@
 	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
-	import { formatTime } from '$lib/utils';
+	import { formatTime, isTrackPlayable, findNextPlayableTrack } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
@@ -144,8 +144,14 @@
 			// Stop current position updates immediately
 			stopPositionUpdates();
 			
-			// Calculate previous track index (wrap around to end if at beginning)
-			const previousIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
+			// Find the previous playable track
+			const previousIndex = findNextPlayableTrack(tracks, currentIndex, -1);
+			
+			if (previousIndex === -1) {
+				console.log('No playable previous track found');
+				return;
+			}
+			
 			const previousTrack = tracks[previousIndex];
 			
 			console.log(`Playing previous track: ${previousTrack.name} (index ${previousIndex})`);
@@ -188,8 +194,14 @@
 			// Stop current position updates immediately
 			stopPositionUpdates();
 			
-			// Calculate next track index (wrap around to beginning if at end)
-			const nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
+			// Find the next playable track
+			const nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
+			
+			if (nextIndex === -1) {
+				console.log('No playable next track found');
+				return;
+			}
+			
 			const nextTrack = tracks[nextIndex];
 			
 			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);

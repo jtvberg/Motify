@@ -5,6 +5,7 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration } from '$lib/utils';
+	import { isTrackPlayable, findNextPlayableTrack } from '$lib/utils';
 	import type { SpotifyTrack } from '$lib/spotify';
 
 	let tracks: SpotifyTrack[] = [];
@@ -124,6 +125,13 @@
 		console.log('=== PLAY TRACK START ===');
 		console.log('Attempting to play track:', track.name);
 		
+		// Check if track is playable before attempting to play
+		if (!isTrackPlayable(track)) {
+			console.log('Track is not playable, skipping:', track.name);
+			alert(`This track is not available for playback: ${track.name}`);
+			return;
+		}
+		
 		const deviceId = webPlaybackService.getDeviceId();
 		console.log('Device ID:', deviceId);
 		
@@ -218,6 +226,12 @@
 	}
 
 	async function togglePlayPause(track: SpotifyTrack) {
+		// Check if track is playable before attempting to play
+		if (!isTrackPlayable(track)) {
+			console.log('Track is not playable, cannot toggle:', track.name);
+			return;
+		}
+		
 		const isCurrentTrack = $currentTrack && $currentTrack.id === track.id;
 		
 		if (isCurrentTrack && $isPlaying) {
@@ -264,18 +278,21 @@
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
 			
-			// If we removed the currently playing track, play the next one
+			// If we removed the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
-				// Determine next track to play
-				let nextTrackIndex = currentIndex;
-				if (nextTrackIndex >= tracks.length) {
-					nextTrackIndex = 0; // Loop to beginning if we removed the last track
-				}
+				// Find the next playable track starting from the removed track's position
+				const nextPlayableIndex = findNextPlayableTrack(tracks, Math.max(0, currentIndex - 1), 1);
 				
-				const nextTrack = tracks[nextTrackIndex];
-				if (nextTrack) {
-					console.log(`Auto-playing next track: ${nextTrack.name}`);
+				if (nextPlayableIndex !== -1) {
+					const nextTrack = tracks[nextPlayableIndex];
+					console.log(`Auto-playing next playable track after removal: ${nextTrack.name}`);
 					await playTrack(nextTrack);
+				} else {
+					console.log('No playable tracks remaining after removal');
+					// Stop playback if no playable tracks remain
+					currentTrack.set(null);
+					currentTrackIndex.set(-1);
+					isPlaying.set(false);
 				}
 			}
 		} catch (error) {
@@ -298,18 +315,21 @@
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
 			
-			// If we moved the currently playing track, play the next one
+			// If we moved the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
-				// Determine next track to play
-				let nextTrackIndex = currentIndex;
-				if (nextTrackIndex >= tracks.length) {
-					nextTrackIndex = 0; // Loop to beginning if we moved the last track
-				}
+				// Find the next playable track starting from the moved track's position
+				const nextPlayableIndex = findNextPlayableTrack(tracks, Math.max(0, currentIndex - 1), 1);
 				
-				const nextTrack = tracks[nextTrackIndex];
-				if (nextTrack) {
-					console.log(`Auto-playing next track after move: ${nextTrack.name}`);
+				if (nextPlayableIndex !== -1) {
+					const nextTrack = tracks[nextPlayableIndex];
+					console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
 					await playTrack(nextTrack);
+				} else {
+					console.log('No playable tracks remaining after move');
+					// Stop playback if no playable tracks remain
+					currentTrack.set(null);
+					currentTrackIndex.set(-1);
+					isPlaying.set(false);
 				}
 			}
 		} catch (error) {
@@ -368,28 +388,46 @@
 
 				{#each tracks as track, index}
 					{@const isCurrentTrack = $currentTrack && $currentTrack.id === track.id}
-					<div class="track-item" class:current-track={isCurrentTrack}>
+					{@const trackPlayable = isTrackPlayable(track)}
+					<div class="track-item" class:current-track={isCurrentTrack} class:unavailable-track={!trackPlayable}>
 						<span class="track-number">{index + 1}</span>
 						<div class="track-title">
 							<img 
 								src={track.album.images[2]?.url || track.album.images[0]?.url} 
 								alt="Album cover"
 								class="track-cover"
+								class:grayscale={!trackPlayable}
 							/>
-							<span class:current-track-title={isCurrentTrack}>{track.name}</span>
+							<span class:current-track-title={isCurrentTrack} class:unavailable-title={!trackPlayable}>
+								{track.name}
+								{#if !trackPlayable}
+									<span class="unavailable-badge">Unavailable</span>
+								{/if}
+							</span>
 						</div>
-						<span class="track-artist">{track.artists.map(a => a.name).join(', ')}</span>
-						<span class="track-album">{track.album.name}</span>
-						<span class="track-duration">{formatDuration(track.duration_ms)}</span>
+						<span class="track-artist" class:unavailable-text={!trackPlayable}>{track.artists.map(a => a.name).join(', ')}</span>
+						<span class="track-album" class:unavailable-text={!trackPlayable}>{track.album.name}</span>
+						<span class="track-duration" class:unavailable-text={!trackPlayable}>{formatDuration(track.duration_ms)}</span>
 						<div class="track-actions">
-							<button 
-								class="action-btn play-btn" 
-								class:pause-btn={isCurrentTrack && $isPlaying}
-								on:click={() => togglePlayPause(track)}
-								aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
-							>
-								<i class="fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}"></i>
-							</button>
+							{#if trackPlayable}
+								<button 
+									class="action-btn play-btn" 
+									class:pause-btn={isCurrentTrack && $isPlaying}
+									on:click={() => togglePlayPause(track)}
+									aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
+								>
+									<i class="fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}"></i>
+								</button>
+							{:else}
+								<button 
+									class="action-btn play-btn disabled"
+									disabled
+									aria-label="Track unavailable"
+									title="This track is not available for playback"
+								>
+									<i class="fas fa-ban"></i>
+								</button>
+							{/if}
 							<button 
 								class="action-btn remove-btn" 
 								on:click={() => removeTrack(track)}
@@ -397,7 +435,7 @@
 							>
 								<i class="fas fa-trash"></i>
 							</button>
-							{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+							{#if trackPlayable && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 								<button 
 									class="action-btn move-btn" 
 									on:click={() => moveTrack(track)}
@@ -657,6 +695,55 @@
 	.move-btn:hover {
 		background: rgba(0, 122, 255, 1);
 		transform: scale(1.1);
+	}
+
+	/* Unavailable track styles */
+	.unavailable-track {
+		opacity: 0.5;
+		background: rgba(255, 255, 255, 0.02) !important;
+	}
+
+	.unavailable-track:hover {
+		background: rgba(255, 255, 255, 0.03) !important;
+	}
+
+	.unavailable-text {
+		color: #666666 !important;
+	}
+
+	.unavailable-title {
+		color: #666666 !important;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.unavailable-badge {
+		background: rgba(255, 69, 58, 0.8);
+		color: white;
+		font-size: 0.7rem;
+		padding: 2px 6px;
+		border-radius: 4px;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.grayscale {
+		filter: grayscale(100%);
+		opacity: 0.6;
+	}
+
+	.action-btn.disabled {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #666666 !important;
+		cursor: not-allowed !important;
+		opacity: 0.5;
+	}
+
+	.action-btn.disabled:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+		transform: none !important;
 	}
 
 	@media (max-width: 1024px) {

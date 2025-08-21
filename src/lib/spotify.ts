@@ -31,6 +31,10 @@ export interface SpotifyTrack {
 	duration_ms: number;
 	uri: string;
 	preview_url?: string;
+	is_playable?: boolean;
+	restrictions?: {
+		reason: string;
+	};
 }
 
 export interface SpotifyPlaylist {
