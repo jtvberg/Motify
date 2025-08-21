@@ -12,6 +12,8 @@ export const currentTrack = writable<SpotifyTrack | null>(null);
 export const playbackPosition = writable(0);
 export const trackDuration = writable(0);
 export const isAuthenticated = writable(false);
+export const currentPlaylistSnapshot = writable<string | null>(null);
+export const isRefreshingPlaylist = writable(false);
 
 // Settings for EveryNoise playlist scraping
 export interface ScraperSettings {

@@ -57,7 +57,6 @@
 					<i class="fab fa-spotify"></i>
 					Motify
 				</h1>
-				<p>Your Spotify Playlist Manager</p>
 			</header>
 
 			<PlaylistSelector />
@@ -83,13 +82,11 @@
 
 	.app-header {
 		text-align: center;
-		margin-bottom: 3rem;
 	}
 
 	.app-header h1 {
 		font-size: 3rem;
 		font-weight: 700;
-		margin: 0 0 0.5rem 0;
 		background: linear-gradient(45deg, #1db954, #1ed760);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
@@ -97,11 +94,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-	}
-
-	.app-header p {
-		font-size: 1.2rem;
-		color: #b3b3b3;
 		margin: 0;
 	}
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { formatDuration } from '$lib/utils';
@@ -23,9 +23,14 @@
 		
 		try {
 			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
-			const tracksData = await spotifyAPI.getPlaylistTracks($selectedPlaylist.id);
+			const [playlist, tracksData] = await Promise.all([
+				spotifyAPI.getPlaylist($selectedPlaylist.id),
+				spotifyAPI.getPlaylistTracks($selectedPlaylist.id)
+			]);
+			
 			tracks = tracksData;
 			currentTracks.set(tracks);
+			currentPlaylistSnapshot.set(playlist.snapshot_id);
 			console.log(`Successfully loaded ${tracks.length} tracks`);
 		} catch (error) {
 			console.error('Failed to load tracks:', error);
@@ -34,6 +39,42 @@
 			currentTracks.set([]);
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function refreshPlaylist() {
+		if (!$selectedPlaylist || $isRefreshingPlaylist) return;
+		
+		isRefreshingPlaylist.set(true);
+		try {
+			console.log(`Refreshing playlist: ${$selectedPlaylist.name}`);
+			const [playlist, tracksData] = await Promise.all([
+				spotifyAPI.getPlaylist($selectedPlaylist.id),
+				spotifyAPI.getPlaylistTracks($selectedPlaylist.id)
+			]);
+			
+			const oldTrackCount = tracks.length;
+			tracks = tracksData;
+			currentTracks.set(tracks);
+			currentPlaylistSnapshot.set(playlist.snapshot_id);
+			
+			// Update the current track index if the current track still exists
+			if ($currentTrack) {
+				const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
+				if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
+					currentTrackIndex.set(newIndex);
+					console.log(`Updated current track index to ${newIndex}`);
+				} else if (newIndex < 0) {
+					// Current track was removed from the playlist
+					console.log('Current track no longer in playlist');
+				}
+			}
+			
+			console.log(`Playlist refreshed: ${oldTrackCount} → ${tracks.length} tracks`);
+		} catch (error) {
+			console.error('Failed to refresh playlist:', error);
+		} finally {
+			isRefreshingPlaylist.set(false);
 		}
 	}
 
@@ -248,6 +289,18 @@
 				<p>{$selectedPlaylist.description || 'No description'}</p>
 				<span class="track-count">{tracks.length} tracks</span>
 			</div>
+			<div class="playlist-actions">
+				<button 
+					class="refresh-btn" 
+					on:click={refreshPlaylist}
+					disabled={$isRefreshingPlaylist}
+					aria-label="Refresh playlist"
+					title="Refresh playlist to sync changes from other devices"
+				>
+					<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
+					{$isRefreshingPlaylist ? 'Refreshing...' : 'Refresh'}
+				</button>
+			</div>
 		</div>
 
 		{#if loading}
@@ -348,6 +401,10 @@
 		object-fit: cover;
 	}
 
+	.playlist-info {
+		flex: 1;
+	}
+
 	.playlist-info h2 {
 		margin: 0 0 0.5rem 0;
 		font-size: 1.8rem;
@@ -362,6 +419,47 @@
 	.track-count {
 		color: #1db954;
 		font-weight: 600;
+	}
+
+	.playlist-actions {
+		display: flex;
+		gap: 1rem;
+	}
+
+	.refresh-btn {
+		background: rgba(255, 255, 255, 0.1);
+		color: #ffffff;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.9rem;
+		font-weight: 500;
+	}
+
+	.refresh-btn:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.3);
+		transform: translateY(-1px);
+	}
+
+	.refresh-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.spinning {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
 	}
 
 	.loading, .empty-state, .no-playlist {
@@ -535,6 +633,15 @@
 		.playlist-header {
 			flex-direction: column;
 			text-align: center;
+		}
+
+		.playlist-actions {
+			margin-top: 1rem;
+		}
+
+		.refresh-btn {
+			padding: 0.75rem 1.5rem;
+			font-size: 1rem;
 		}
 
 		.track-header, .track-item {

@@ -42,6 +42,7 @@ export interface SpotifyPlaylist {
 		items: { track: SpotifyTrack }[];
 	};
 	images: { url: string }[];
+	snapshot_id: string;
 }
 
 export interface SpotifyUser {
@@ -352,6 +353,11 @@ class SpotifyAPI {
 		
 		console.log(`Finished fetching all ${allPlaylists.length} playlists in ${pageCount} pages`);
 		return allPlaylists;
+	}
+
+	async getPlaylist(playlistId: string): Promise<SpotifyPlaylist> {
+		console.log(`Fetching playlist details for ${playlistId}...`);
+		return this.makeRequest(`/playlists/${playlistId}`);
 	}
 
 	async getPlaylistTracks(playlistId: string): Promise<SpotifyTrack[]> {
