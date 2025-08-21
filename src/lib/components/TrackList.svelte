@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { formatDuration } from '$lib/utils';
@@ -48,6 +48,15 @@
 		const trackIndex = tracks.findIndex(t => t.id === track.id);
 		console.log(`Track index: ${trackIndex} for track: ${track.name}`);
 		
+		// Immediately update UI state for better responsiveness, but only for non-web player
+		// Let web player state changes handle track updates to avoid flashing
+		if (!deviceId) {
+			currentTrack.set(track);
+		}
+		currentTrackIndex.set(trackIndex);
+		playbackPosition.set(0); // Reset position to beginning
+		isPlaying.set(true); // Optimistically set playing state
+		
 		let playSuccessful = false;
 		let lastError: any = null;
 		
@@ -60,35 +69,38 @@
 			} else {
 				console.log('Web player not ready, using fallback');
 				await spotifyAPI.playTrack(track.uri);
+				// For fallback, we need to set the track since there's no state change event
+				currentTrack.set(track);
 				playSuccessful = true;
 				console.log('✅ Track started successfully via fallback');
-			}
-			
-			// Only update stores after successful playback start
-			if (playSuccessful) {
-				currentTrackIndex.set(trackIndex);
-				console.log(`Updated current track index to ${trackIndex}`);
 			}
 		} catch (error) {
 			lastError = error;
 			console.error('❌ Play request failed:', error);
 			
-			// If playback failed immediately, revert the store changes
-			currentTrack.set(null);
-			currentTrackIndex.set(-1);
+			// Revert optimistic state changes
+			isPlaying.set(false);
 			
 			// Wait a moment and check if playback actually started
 			console.log('Checking if playback started despite error...');
-			await new Promise(resolve => setTimeout(resolve, 500));
+			await new Promise(resolve => setTimeout(resolve, 1000));
 			
 			try {
-				const state = await webPlaybackService.getCurrentState();
-				if (state && !state.paused && state.track_window?.current_track?.uri === track.uri) {
-					console.log('✅ Playback actually started despite API error');
-					playSuccessful = true;
-					// Restore the store values
-					currentTrack.set(track);
-					currentTrackIndex.set(trackIndex);
+				if (deviceId) {
+					const state = await webPlaybackService.getCurrentState();
+					if (state && !state.paused && state.track_window?.current_track?.uri === track.uri) {
+						console.log('✅ Playback actually started despite API error');
+						playSuccessful = true;
+						isPlaying.set(true);
+					}
+				} else {
+					// Check via API
+					const state = await spotifyAPI.getPlaybackState();
+					if (state && state.is_playing && state.item?.uri === track.uri) {
+						console.log('✅ Playback actually started despite API error');
+						playSuccessful = true;
+						isPlaying.set(true);
+					}
 				}
 			} catch (stateError) {
 				console.log('Could not check playback state:', stateError);
@@ -97,11 +109,26 @@
 		
 		// Only show error if play was not successful
 		if (!playSuccessful && lastError) {
+			// Revert all state changes on failure
+			currentTrack.set(null);
+			currentTrackIndex.set(-1);
+			isPlaying.set(false);
+			playbackPosition.set(0);
+			
 			const errorMessage = typeof lastError === 'object' && lastError !== null && 'message' in lastError
 				? (lastError as { message: string }).message
 				: String(lastError);
+			
 			console.error('Showing error to user:', errorMessage);
-			alert(`Failed to play track: ${errorMessage}. Make sure you have Spotify Premium and try again.`);
+			
+			// Check for specific error types and provide better messages
+			if (errorMessage.includes('Premium') || errorMessage.includes('403')) {
+				alert('Spotify Premium is required for track playback. Please upgrade your Spotify account to Premium to use this feature.');
+			} else if (errorMessage.includes('Device not found') || errorMessage.includes('404')) {
+				alert('Playback device not found. Please make sure Spotify is open and try again.');
+			} else {
+				alert(`Failed to play track: ${errorMessage}. Make sure you have Spotify Premium and try again.`);
+			}
 		}
 		
 		console.log('=== PLAY TRACK END ===');
@@ -119,6 +146,7 @@
 				} else {
 					await spotifyAPI.pausePlayback();
 				}
+				isPlaying.set(false);
 			} catch (error) {
 				console.error('Failed to pause track:', error);
 			}
@@ -131,6 +159,7 @@
 				} else {
 					await spotifyAPI.resumePlayback();
 				}
+				isPlaying.set(true);
 			} catch (error) {
 				console.error('Failed to resume track:', error);
 			}

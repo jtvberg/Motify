@@ -469,11 +469,32 @@ class SpotifyAPI {
 				body: JSON.stringify(body)
 			});
 			console.log('Play request successful');
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Play request failed:', error);
 			
-			// If we got a 404 and specified a device, the device might not be active
-			// Don't retry without device_id as this often doesn't work well
+			// Check for specific premium requirement error
+			if (error.status === 403 && error.message?.includes('Premium')) {
+				throw new Error('Spotify Premium is required for playback. Please upgrade your account to use this feature.');
+			}
+			
+			// Check for device not found error
+			if (error.status === 404 && deviceId) {
+				console.warn('Device not found, attempting to activate device first');
+				try {
+					await this.transferPlayback(deviceId);
+					await new Promise(resolve => setTimeout(resolve, 500));
+					// Retry the play request
+					await this.makeRequest(url, {
+						method: 'PUT',
+						body: JSON.stringify(body)
+					});
+					console.log('Play request successful after device activation');
+					return;
+				} catch (retryError) {
+					console.error('Retry after device activation failed:', retryError);
+				}
+			}
+			
 			throw error;
 		}
 	}

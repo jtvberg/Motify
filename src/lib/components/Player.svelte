@@ -55,6 +55,11 @@
 	}
 
 	function startPositionUpdates() {
+		// Clear any existing interval first
+		if (positionUpdateInterval) {
+			clearInterval(positionUpdateInterval);
+		}
+		
 		// Update position every second when playing and using Web Playback SDK
 		positionUpdateInterval = setInterval(async () => {
 			if (isDragging || !isPlayerReady || !$isPlaying) return;
@@ -62,8 +67,18 @@
 			try {
 				const state = await webPlaybackService.getCurrentState();
 				if (state && state.track_window.current_track) {
-					// Only update position, don't change other state
-					playbackPosition.set(state.position / 1000);
+					// Only update position if it's reasonable and for the same track
+					const currentTrackUri = $currentTrack?.uri;
+					const stateTrackUri = state.track_window.current_track.uri;
+					
+					if (currentTrackUri === stateTrackUri) {
+						const newPosition = state.position / 1000;
+						// Sanity check: don't jump backwards unless it's a big jump (seek)
+						const currentPosition = $playbackPosition;
+						if (newPosition >= currentPosition - 2 || Math.abs(newPosition - currentPosition) > 5) {
+							playbackPosition.set(newPosition);
+						}
+					}
 				}
 			} catch (error) {
 				console.error('Failed to get current position:', error);
@@ -86,6 +101,15 @@
 			}
 		} else {
 			stopPositionUpdates();
+		}
+	}
+
+	// React to track changes to reset position and update highlight
+	$: if ($currentTrack && $currentTracks.length > 0) {
+		// Find and update the current track index if needed
+		const trackIndex = $currentTracks.findIndex(t => t.id === $currentTrack.id);
+		if (trackIndex >= 0 && trackIndex !== $currentTrackIndex) {
+			currentTrackIndex.set(trackIndex);
 		}
 	}
 
@@ -117,21 +141,34 @@
 				return;
 			}
 			
+			// Stop current position updates immediately
+			stopPositionUpdates();
+			
 			// Calculate previous track index (wrap around to end if at beginning)
 			const previousIndex = currentIndex > 0 ? currentIndex - 1 : tracks.length - 1;
 			const previousTrack = tracks[previousIndex];
 			
 			console.log(`Playing previous track: ${previousTrack.name} (index ${previousIndex})`);
 			
-			// Only update the index, let the player state change event update the track
+			// Reset position to 0 immediately for visual feedback
+			playbackPosition.set(0);
+			
+			// Update the index first
 			currentTrackIndex.set(previousIndex);
 			
-			// Play the track
+			// Play the track - let the player state change event update the current track
 			if (isPlayerReady) {
 				await webPlaybackService.play(previousTrack.uri);
 			} else {
 				await spotifyAPI.playTrack(previousTrack.uri);
+				// For fallback API, update the track manually since no state change event
+				currentTrack.set(previousTrack);
 				setTimeout(updatePlaybackState, 500);
+			}
+			
+			// Restart position updates if playing
+			if ($isPlaying && isPlayerReady) {
+				startPositionUpdates();
 			}
 		} catch (error) {
 			console.error('Failed to go to previous track:', error);
@@ -148,21 +185,34 @@
 				return;
 			}
 			
+			// Stop current position updates immediately
+			stopPositionUpdates();
+			
 			// Calculate next track index (wrap around to beginning if at end)
 			const nextIndex = currentIndex < tracks.length - 1 ? currentIndex + 1 : 0;
 			const nextTrack = tracks[nextIndex];
 			
 			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
 			
-			// Only update the index, let the player state change event update the track
+			// Reset position to 0 immediately for visual feedback
+			playbackPosition.set(0);
+			
+			// Update the index first
 			currentTrackIndex.set(nextIndex);
 			
-			// Play the track
+			// Play the track - let the player state change event update the current track
 			if (isPlayerReady) {
 				await webPlaybackService.play(nextTrack.uri);
 			} else {
 				await spotifyAPI.playTrack(nextTrack.uri);
+				// For fallback API, update the track manually since no state change event
+				currentTrack.set(nextTrack);
 				setTimeout(updatePlaybackState, 500);
+			}
+			
+			// Restart position updates if playing
+			if ($isPlaying && isPlayerReady) {
+				startPositionUpdates();
 			}
 		} catch (error) {
 			console.error('Failed to go to next track:', error);
