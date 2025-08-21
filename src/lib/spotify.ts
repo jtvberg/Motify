@@ -366,7 +366,7 @@ class SpotifyAPI {
 
 	async getPlaylistTracks(playlistId: string): Promise<SpotifyTrack[]> {
 		let allTracks: SpotifyTrack[] = [];
-		let url: string | null = `/playlists/${playlistId}/tracks?limit=100`;
+		let url: string | null = `/playlists/${playlistId}/tracks?limit=100&fields=items(track(id,name,artists(name),album(name,images),duration_ms,uri,preview_url,is_playable,restrictions,available_markets)),next&market=from_token`;
 		let pageCount = 0;
 		
 		console.log(`Fetching tracks for playlist ${playlistId}...`);

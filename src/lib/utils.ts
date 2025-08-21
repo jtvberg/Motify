@@ -120,13 +120,49 @@ export async function scrapeEveryNoiseTrackIdsWithProxy(playlistId: string): Pro
  * @returns boolean indicating if the track is playable
  */
 export function isTrackPlayable(track: any): boolean {
-	// If is_playable is explicitly set, use that
-	if (typeof track.is_playable === 'boolean') {
-		return track.is_playable;
+	// Debug: Log ALL track data to see what we're getting
+	console.log('Track data for:', track.name, {
+		is_playable: track.is_playable,
+		restrictions: track.restrictions,
+		uri: track.uri,
+		id: track.id,
+		full_track: track
+	});
+	
+	// Debug: Simulate some tracks as unavailable for testing (remove this later)
+	// Uncomment the next 3 lines to test with every 5th track being unavailable
+	if (track.name && track.name.toLowerCase().includes('test')) {
+		console.log('Marking as unavailable due to test keyword:', track.name);
+		return false;
+	}
+	
+	// Log track data for debugging (can be removed later)
+	if (track && (track.is_playable === false || track.restrictions)) {
+		console.log('Unavailable track detected:', {
+			name: track.name,
+			is_playable: track.is_playable,
+			restrictions: track.restrictions,
+			uri: track.uri
+		});
+	}
+	
+	// If is_playable is explicitly set to false, track is not playable
+	if (track.is_playable === false) {
+		return false;
 	}
 	
 	// Check for restrictions that would make it unplayable
 	if (track.restrictions?.reason) {
+		return false;
+	}
+	
+	// Check if the track has a valid URI (some unavailable tracks might have null/empty URIs)
+	if (!track.uri || track.uri === '') {
+		return false;
+	}
+	
+	// Check if track is null or has missing essential data
+	if (!track || !track.id || !track.name) {
 		return false;
 	}
 	

@@ -66,6 +66,17 @@
 				currentTracks.set(tracks);
 				currentPlaylistSnapshot.set(playlist.snapshot_id);
 				console.log(`Successfully loaded ${tracks.length} tracks`);
+				
+				// Debug: Check for unavailable tracks
+				const unavailableTracks = tracks.filter(track => !isTrackPlayable(track));
+				if (unavailableTracks.length > 0) {
+					console.log(`Found ${unavailableTracks.length} unavailable tracks:`, unavailableTracks.map(t => ({
+						name: t.name,
+						is_playable: t.is_playable,
+						restrictions: t.restrictions,
+						uri: t.uri
+					})));
+				}
 			} else {
 				console.error('Failed to load playlist data');
 				tracks = [];
