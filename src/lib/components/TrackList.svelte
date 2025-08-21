@@ -3,6 +3,7 @@
 	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
+	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration } from '$lib/utils';
 	import type { SpotifyTrack } from '$lib/spotify';
 
@@ -11,6 +12,36 @@
 
 	$: if ($selectedPlaylist) {
 		loadTracks();
+	}
+
+	// Helper function to handle API errors gracefully
+	async function handleAPIError<T>(apiCall: () => Promise<T>): Promise<T | null> {
+		try {
+			// Check token before making the call
+			const tokenValid = await tokenManager.checkAndRefreshToken();
+			if (!tokenValid) {
+				console.error('Invalid token, cannot make API call');
+				return null;
+			}
+			
+			return await apiCall();
+		} catch (error) {
+			console.error('API call failed:', error);
+			
+			// If it's a 401 error, try one more time after token refresh
+			if (error instanceof Error && error.message.includes('401')) {
+				try {
+					console.log('Retrying API call after token refresh...');
+					await tokenManager.checkAndRefreshToken();
+					return await apiCall();
+				} catch (retryError) {
+					console.error('Retry failed:', retryError);
+					return null;
+				}
+			}
+			
+			return null;
+		}
 	}
 
 	async function loadTracks() {
@@ -23,18 +54,24 @@
 		
 		try {
 			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
+			
 			const [playlist, tracksData] = await Promise.all([
-				spotifyAPI.getPlaylist($selectedPlaylist.id),
-				spotifyAPI.getPlaylistTracks($selectedPlaylist.id)
+				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
+				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
 			]);
 			
-			tracks = tracksData;
-			currentTracks.set(tracks);
-			currentPlaylistSnapshot.set(playlist.snapshot_id);
-			console.log(`Successfully loaded ${tracks.length} tracks`);
+			if (playlist && tracksData) {
+				tracks = tracksData;
+				currentTracks.set(tracks);
+				currentPlaylistSnapshot.set(playlist.snapshot_id);
+				console.log(`Successfully loaded ${tracks.length} tracks`);
+			} else {
+				console.error('Failed to load playlist data');
+				tracks = [];
+				currentTracks.set([]);
+			}
 		} catch (error) {
 			console.error('Failed to load tracks:', error);
-			// Ensure tracks remain empty on error
 			tracks = [];
 			currentTracks.set([]);
 		} finally {
@@ -48,29 +85,34 @@
 		isRefreshingPlaylist.set(true);
 		try {
 			console.log(`Refreshing playlist: ${$selectedPlaylist.name}`);
+			
 			const [playlist, tracksData] = await Promise.all([
-				spotifyAPI.getPlaylist($selectedPlaylist.id),
-				spotifyAPI.getPlaylistTracks($selectedPlaylist.id)
+				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
+				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
 			]);
 			
-			const oldTrackCount = tracks.length;
-			tracks = tracksData;
-			currentTracks.set(tracks);
-			currentPlaylistSnapshot.set(playlist.snapshot_id);
-			
-			// Update the current track index if the current track still exists
-			if ($currentTrack) {
-				const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
-				if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
-					currentTrackIndex.set(newIndex);
-					console.log(`Updated current track index to ${newIndex}`);
-				} else if (newIndex < 0) {
-					// Current track was removed from the playlist
-					console.log('Current track no longer in playlist');
+			if (playlist && tracksData) {
+				const oldTrackCount = tracks.length;
+				tracks = tracksData;
+				currentTracks.set(tracks);
+				currentPlaylistSnapshot.set(playlist.snapshot_id);
+				
+				// Update the current track index if the current track still exists
+				if ($currentTrack) {
+					const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
+					if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
+						currentTrackIndex.set(newIndex);
+						console.log(`Updated current track index to ${newIndex}`);
+					} else if (newIndex < 0) {
+						// Current track was removed from the playlist
+						console.log('Current track no longer in playlist');
+					}
 				}
+				
+				console.log(`Playlist refreshed: ${oldTrackCount} → ${tracks.length} tracks`);
+			} else {
+				console.error('Failed to refresh playlist data');
 			}
-			
-			console.log(`Playlist refreshed: ${oldTrackCount} → ${tracks.length} tracks`);
 		} catch (error) {
 			console.error('Failed to refresh playlist:', error);
 		} finally {

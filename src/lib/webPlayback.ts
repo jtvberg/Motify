@@ -105,10 +105,27 @@ class WebPlaybackService {
 		this.player = new window.Spotify.Player({
 			name: 'Motify Web Player',
 			getOAuthToken: (cb) => {
-				const currentToken = spotifyAPI.getAccessToken();
-				if (currentToken) {
-					cb(currentToken);
-				}
+				// Always get the freshest token and handle errors gracefully
+				spotifyAPI.ensureValidToken().then(token => {
+					if (token) {
+						cb(token);
+					} else {
+						console.warn('No valid token available for Web Playback SDK');
+						// Don't call the callback with null/undefined as it may cause issues
+						// Instead, try to get any existing token as fallback
+						const fallbackToken = spotifyAPI.getAccessToken();
+						if (fallbackToken) {
+							cb(fallbackToken);
+						}
+					}
+				}).catch(error => {
+					console.error('Error getting token for Web Playback SDK:', error);
+					// Fallback to any existing token
+					const fallbackToken = spotifyAPI.getAccessToken();
+					if (fallbackToken) {
+						cb(fallbackToken);
+					}
+				});
 			},
 			volume: 0.8
 		});
@@ -120,6 +137,17 @@ class WebPlaybackService {
 
 		this.player.addListener('authentication_error', ({ message }) => {
 			console.error('Spotify Player authentication error:', message);
+			// Handle authentication failure gracefully
+			this.handleAuthenticationFailure();
+			
+			// Try to refresh the token for future attempts
+			spotifyAPI.ensureValidToken().then(token => {
+				if (!token) {
+					console.warn('Authentication failed and no valid token available - user may need to re-login');
+				}
+			}).catch(error => {
+				console.error('Failed to refresh token after authentication error:', error);
+			});
 		});
 
 		this.player.addListener('account_error', ({ message }) => {
@@ -353,16 +381,45 @@ class WebPlaybackService {
 		if (!this.player) {
 			return null;
 		}
-		return await this.player.getCurrentState();
+		try {
+			return await this.player.getCurrentState();
+		} catch (error) {
+			console.error('Failed to get player state:', error);
+			return null;
+		}
 	}
 
 	disconnect(): void {
 		if (this.player) {
+			console.log('Disconnecting Web Player...');
 			this.player.disconnect();
 			this.player = null;
 			this.deviceId = null;
 			this.isInitialized = false;
 		}
+	}
+
+	// Method to handle authentication failures gracefully
+	handleAuthenticationFailure(): void {
+		console.warn('Handling authentication failure - disconnecting player');
+		this.disconnect();
+		// Reset stores to prevent stale state
+		isPlaying.set(false);
+		currentTrack.set(null);
+		playbackPosition.set(0);
+		trackDuration.set(0);
+	}
+
+	// Method to reconnect after token refresh
+	async reconnect(): Promise<void> {
+		if (this.isInitialized) {
+			console.log('Player already connected');
+			return;
+		}
+		
+		console.log('Attempting to reconnect Web Player...');
+		this.disconnect(); // Ensure clean state
+		await this.initialize();
 	}
 }
 

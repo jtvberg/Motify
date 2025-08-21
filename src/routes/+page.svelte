@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { isAuthenticated } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
+	import { tokenManager } from '$lib/tokenManager';
 	import Auth from '$lib/components/Auth.svelte';
 	import PlaylistSelector from '$lib/components/PlaylistSelector.svelte';
 	import Player from '$lib/components/Player.svelte';
@@ -11,6 +12,9 @@
 
 	onMount(async () => {
 		console.log('Main app mounted, checking authentication...');
+		
+		// Initialize token manager for better token handling
+		tokenManager.initialize();
 		
 		// Check if user is already authenticated with valid token
 		try {
@@ -41,6 +45,11 @@
 			console.error('Error checking authentication:', error);
 			isAuthenticated.set(false);
 		}
+	});
+
+	onDestroy(() => {
+		// Clean up token manager
+		tokenManager.destroy();
 	});
 </script>
 
