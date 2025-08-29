@@ -83,7 +83,7 @@
 	
 	.toast-content {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		padding: 12px 16px;
 		gap: 12px;
 	}
@@ -114,7 +114,6 @@
 		flex: 1;
 		color: #ffffff;
 		font-size: 14px;
-		line-height: 1.4;
 		word-wrap: break-word;
 	}
 	

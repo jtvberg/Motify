@@ -6,6 +6,7 @@
 	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration } from '$lib/utils';
 	import { isTrackPlayable, findNextPlayableTrack } from '$lib/utils';
+	import { toastStore } from '$lib/toast';
 	import type { SpotifyTrack } from '$lib/spotify';
 
 	let tracks: SpotifyTrack[] = [];
@@ -289,9 +290,16 @@
 			const isRelinked = isTrackRelinked(track);
 			console.log(`Removing track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
 			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
+			
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
+			
+			// Show success toast
+			toastStore.add({
+				message: `Removed "${track.name}" from ${$selectedPlaylist.name}`,
+				type: 'success'
+			});
 			
 			// If we removed the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
@@ -323,6 +331,12 @@
 			}
 		} catch (error) {
 			console.error('Failed to remove track:', error);
+			
+			// Show error toast
+			toastStore.add({
+				message: `Failed to remove "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
 		}
 	}
 
@@ -342,9 +356,16 @@
 			await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
 			// Remove from source playlist
 			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
+			
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
+			
+			// Show success toast
+			toastStore.add({
+				message: `Moved "${track.name}" from ${$selectedPlaylist.name} to ${$targetPlaylist.name}`,
+				type: 'success'
+			});
 			
 			// If we moved the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
@@ -376,6 +397,12 @@
 			}
 		} catch (error) {
 			console.error('Failed to move track:', error);
+			
+			// Show error toast
+			toastStore.add({
+				message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
 		}
 	}
 </script>
