@@ -341,70 +341,84 @@
 	}
 
 	async function moveTrack(track: SpotifyTrack) {
-		if (!$targetPlaylist || !$selectedPlaylist) return;
-		
-		const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
-		const currentIndex = tracks.findIndex(t => t.id === track.id);
-		
-		try {
-			// Use the operational URI for both add and remove operations
-			const operationalUri = getOperationalUri(track);
-			const isRelinked = isTrackRelinked(track);
-			console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
-			
-			// Add to target playlist
-			await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
-			// Remove from source playlist
-			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
-			
-			// Remove from local tracks array
-			tracks = tracks.filter(t => t.id !== track.id);
-			currentTracks.set(tracks);
-			
-			// Show success toast
-			toastStore.add({
-				message: `Moved "${track.name}" from ${$selectedPlaylist.name} to ${$targetPlaylist.name}`,
-				type: 'success'
-			});
-			
-			// If we moved the currently playing track, play the next playable one
-			if (isCurrentlyPlaying && tracks.length > 0) {
-				// After moving a track, the track that was "next" now occupies the same index
-				// So we want to start searching from the moved track's position (or one before if it was the last track)
-				const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
-				
-				// First check if the track now at the moved position is playable
-				if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
-					const nextTrack = tracks[startSearchIndex];
-					console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
-					await playTrack(nextTrack);
-				} else {
-					// If the track at the moved position isn't playable, search for the next playable one
-					const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
-					
-					if (nextPlayableIndex !== -1) {
-						const nextTrack = tracks[nextPlayableIndex];
-						console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
-						await playTrack(nextTrack);
-					} else {
-						console.log('No playable tracks remaining after move');
-						// Stop playback if no playable tracks remain
-						currentTrack.set(null);
-						currentTrackIndex.set(-1);
-						isPlaying.set(false);
-					}
-				}
-			}
-		} catch (error) {
-			console.error('Failed to move track:', error);
-			
-			// Show error toast
-			toastStore.add({
-				message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
-				type: 'error'
-			});
-		}
-	}
+    if (!$targetPlaylist || !$selectedPlaylist) return;
+    
+    const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
+    const currentIndex = tracks.findIndex(t => t.id === track.id);
+    
+    try {
+        // Use the operational URI for both add and remove operations
+        const operationalUri = getOperationalUri(track);
+        const isRelinked = isTrackRelinked(track);
+        console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+        
+        // Check if track already exists in target playlist
+        const targetTracks = await handleAPIError(() => spotifyAPI.getPlaylistTracks($targetPlaylist.id));
+        const trackAlreadyExists = targetTracks && targetTracks.some(t => t.id === track.id);
+        
+        if (!trackAlreadyExists) {
+            // Add to target playlist only if it doesn't already exist
+            await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
+        }
+        
+        // Always remove from source playlist
+        await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
+        
+        // Remove from local tracks array
+        tracks = tracks.filter(t => t.id !== track.id);
+        currentTracks.set(tracks);
+        
+        // Show appropriate success toast
+        if (trackAlreadyExists) {
+            toastStore.add({
+                message: `"${track.name}" was already in ${$targetPlaylist.name}, removed from ${$selectedPlaylist.name}`,
+                type: 'info'
+            });
+        } else {
+            toastStore.add({
+                message: `Moved "${track.name}" from ${$selectedPlaylist.name} to ${$targetPlaylist.name}`,
+                type: 'success'
+            });
+        }
+        
+        // If we moved the currently playing track, play the next playable one
+        if (isCurrentlyPlaying && tracks.length > 0) {
+            // After moving a track, the track that was "next" now occupies the same index
+            // So we want to start searching from the moved track's position (or one before if it was the last track)
+            const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
+            
+            // First check if the track now at the moved position is playable
+            if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
+                const nextTrack = tracks[startSearchIndex];
+                console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
+                await playTrack(nextTrack);
+            } else {
+                // If the track at the moved position isn't playable, search for the next playable one
+                const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
+                
+                if (nextPlayableIndex !== -1) {
+                    const nextTrack = tracks[nextPlayableIndex];
+                    console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
+                    await playTrack(nextTrack);
+                } else {
+                    console.log('No playable tracks remaining after move');
+                    // Stop playback if no playable tracks remain
+                    currentTrack.set(null);
+                    currentTrackIndex.set(-1);
+                    isPlaying.set(false);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Failed to move track:', error);
+        
+        // Show error toast
+        toastStore.add({
+            message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+            type: 'error'
+        });
+    }
+}
 </script>
 
 <div class="track-list-container">
