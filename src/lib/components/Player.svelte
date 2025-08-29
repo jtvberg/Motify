@@ -327,8 +327,8 @@
 	}
 
 	.album-cover {
-		width: 60px;
-		height: 60px;
+		width: 72px;
+		height: 72px;
 		border-radius: 8px;
 		object-fit: cover;
 	}

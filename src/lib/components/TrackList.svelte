@@ -500,6 +500,10 @@
 </div>
 
 <style>
+
+	h2 {
+		margin: 0;
+	}
 	.track-list-container {
 		background: rgba(255, 255, 255, 0.05);
 		backdrop-filter: blur(10px);
@@ -517,8 +521,8 @@
 	}
 
 	.playlist-cover {
-		width: 80px;
-		height: 80px;
+		width: 96px;
+		height: 96px;
 		border-radius: 8px;
 		object-fit: cover;
 	}
@@ -804,6 +808,7 @@
 		.playlist-header {
 			flex-direction: column;
 			text-align: center;
+			gap: 0rem;
 		}
 
 		.playlist-actions {
