@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist } from '$lib/stores';
-	import { spotifyAPI } from '$lib/spotify';
+	import { spotifyAPI, getOperationalUri, isTrackRelinked } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration } from '$lib/utils';
@@ -284,26 +284,41 @@
 		const currentIndex = tracks.findIndex(t => t.id === track.id);
 		
 		try {
-			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, track.uri);
+			// Use the operational URI (linked_from.uri if available) for reliable removal
+			const operationalUri = getOperationalUri(track);
+			const isRelinked = isTrackRelinked(track);
+			console.log(`Removing track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
 			
 			// If we removed the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
-				// Find the next playable track starting from the removed track's position
-				const nextPlayableIndex = findNextPlayableTrack(tracks, Math.max(0, currentIndex - 1), 1);
+				// After removing a track, the track that was "next" now occupies the same index
+				// So we want to start searching from the removed track's position (or one before if it was the last track)
+				const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
 				
-				if (nextPlayableIndex !== -1) {
-					const nextTrack = tracks[nextPlayableIndex];
-					console.log(`Auto-playing next playable track after removal: ${nextTrack.name}`);
+				// First check if the track now at the removed position is playable
+				if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
+					const nextTrack = tracks[startSearchIndex];
+					console.log(`Auto-playing track that moved into removed position: ${nextTrack.name}`);
 					await playTrack(nextTrack);
 				} else {
-					console.log('No playable tracks remaining after removal');
-					// Stop playback if no playable tracks remain
-					currentTrack.set(null);
-					currentTrackIndex.set(-1);
-					isPlaying.set(false);
+					// If the track at the removed position isn't playable, search for the next playable one
+					const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
+					
+					if (nextPlayableIndex !== -1) {
+						const nextTrack = tracks[nextPlayableIndex];
+						console.log(`Auto-playing next playable track after removal: ${nextTrack.name}`);
+						await playTrack(nextTrack);
+					} else {
+						console.log('No playable tracks remaining after removal');
+						// Stop playback if no playable tracks remain
+						currentTrack.set(null);
+						currentTrackIndex.set(-1);
+						isPlaying.set(false);
+					}
 				}
 			}
 		} catch (error) {
@@ -318,29 +333,45 @@
 		const currentIndex = tracks.findIndex(t => t.id === track.id);
 		
 		try {
+			// Use the operational URI for both add and remove operations
+			const operationalUri = getOperationalUri(track);
+			const isRelinked = isTrackRelinked(track);
+			console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+			
 			// Add to target playlist
-			await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, track.uri);
+			await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
 			// Remove from source playlist
-			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, track.uri);
+			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
 			// Remove from local tracks array
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
 			
 			// If we moved the currently playing track, play the next playable one
 			if (isCurrentlyPlaying && tracks.length > 0) {
-				// Find the next playable track starting from the moved track's position
-				const nextPlayableIndex = findNextPlayableTrack(tracks, Math.max(0, currentIndex - 1), 1);
+				// After moving a track, the track that was "next" now occupies the same index
+				// So we want to start searching from the moved track's position (or one before if it was the last track)
+				const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
 				
-				if (nextPlayableIndex !== -1) {
-					const nextTrack = tracks[nextPlayableIndex];
-					console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
+				// First check if the track now at the moved position is playable
+				if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
+					const nextTrack = tracks[startSearchIndex];
+					console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
 					await playTrack(nextTrack);
 				} else {
-					console.log('No playable tracks remaining after move');
-					// Stop playback if no playable tracks remain
-					currentTrack.set(null);
-					currentTrackIndex.set(-1);
-					isPlaying.set(false);
+					// If the track at the moved position isn't playable, search for the next playable one
+					const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
+					
+					if (nextPlayableIndex !== -1) {
+						const nextTrack = tracks[nextPlayableIndex];
+						console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
+						await playTrack(nextTrack);
+					} else {
+						console.log('No playable tracks remaining after move');
+						// Stop playback if no playable tracks remain
+						currentTrack.set(null);
+						currentTrackIndex.set(-1);
+						isPlaying.set(false);
+					}
 				}
 			}
 		} catch (error) {
