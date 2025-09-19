@@ -121,13 +121,13 @@ export async function scrapeEveryNoiseTrackIdsWithProxy(playlistId: string): Pro
  */
 export function isTrackPlayable(track: any): boolean {
 	// Debug: Log ALL track data to see what we're getting
-	console.log('Track data for:', track.name, {
-		is_playable: track.is_playable,
-		restrictions: track.restrictions,
-		uri: track.uri,
-		id: track.id,
-		full_track: track
-	});
+	// console.log('Track data for:', track.name, {
+	// 	is_playable: track.is_playable,
+	// 	restrictions: track.restrictions,
+	// 	uri: track.uri,
+	// 	id: track.id,
+	// 	full_track: track
+	// });
 	
 	// Debug: Simulate some tracks as unavailable for testing (remove this later)
 	// Uncomment the next 3 lines to test with every 5th track being unavailable

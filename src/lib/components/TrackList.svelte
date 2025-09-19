@@ -481,7 +481,7 @@
 								class="track-cover"
 								class:grayscale={!trackPlayable}
 							/>
-							<span class:current-track-title={isCurrentTrack} class:unavailable-title={!trackPlayable}>
+							<span class="track-name" class:current-track-title={isCurrentTrack} class:unavailable-title={!trackPlayable}>
 								{track.name}
 								{#if !trackPlayable}
 									<span class="unavailable-badge">Unavailable</span>
@@ -700,7 +700,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		font-weight: 600;
-		width: 100%;
 	}
 
 	.current-track-title {
@@ -863,13 +862,22 @@
 		}
 
 		.track-header, .track-item {
-			grid-template-columns: 1fr 242px;
+			grid-template-columns: 1fr 208px;
 			gap: 1rem;
 			align-items: unset;
 		}
 
+		.track-item {
+			padding-bottom: .6rem;
+		}
+
 		.track-number, .track-artist, .track-duration {
 			display: none;
+		}
+
+		.track-cover {
+			width: 64px;
+			height: 64px;
 		}
 
 		.track-title {
@@ -878,13 +886,17 @@
 			gap: 0.5rem;
 		}
 
+		.track-name {
+			width: calc(100vw - 24px)
+		}
+
 		.track-actions {
 			justify-content: flex-end;
 		}
 
 		.action-btn {
-			width: 74px;
-			height: 74px;
+			width: 64px;
+			height: 64px;
 			font-size: 2rem;
 		}
 	}

@@ -392,7 +392,7 @@ class SpotifyAPI {
 		try {
 			while (url) {
 				pageCount++;
-				console.log(`Fetching page ${pageCount}: ${url}`);
+				// console.log(`Fetching page ${pageCount}: ${url}`);
 				
 				const response = await this.makeRequest(url);
 				
@@ -407,7 +407,7 @@ class SpotifyAPI {
 				
 				allTracks = allTracks.concat(tracks);
 				
-				console.log(`Page ${pageCount}: Fetched ${tracks.length} tracks (total so far: ${allTracks.length})`);
+				// console.log(`Page ${pageCount}: Fetched ${tracks.length} tracks (total so far: ${allTracks.length})`);
 				
 				// Check if there are more pages
 				if (response.next) {
