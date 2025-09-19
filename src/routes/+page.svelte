@@ -112,7 +112,7 @@
 
 	@media (max-width: 768px) {
 		.main-app {
-			padding: 1rem;
+			padding: 0;
 		}
 
 		.app-header h1 {

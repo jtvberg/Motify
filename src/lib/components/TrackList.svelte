@@ -700,6 +700,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		font-weight: 600;
+		width: 100%;
 	}
 
 	.current-track-title {
@@ -862,7 +863,7 @@
 		}
 
 		.track-header, .track-item {
-			grid-template-columns: 1fr 120px;
+			grid-template-columns: 1fr 242px;
 			gap: 1rem;
 			align-items: unset;
 		}
@@ -875,6 +876,16 @@
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 0.5rem;
+		}
+
+		.track-actions {
+			justify-content: flex-end;
+		}
+
+		.action-btn {
+			width: 74px;
+			height: 74px;
+			font-size: 2rem;
 		}
 	}
 </style>
