@@ -6,8 +6,7 @@
 	
 	let isScrapingDW = false;
 	let isScrapingRR = false;
-	
-	// Check if source playlist is selected and URLs are configured
+
 	$: hasSourcePlaylist = $selectedPlaylist !== null;
 	$: hasDiscoverWeekly = $scraperSettings.discoverWeeklyUrl.trim() !== '';
 	$: hasReleaseRadar = $scraperSettings.releaseRadarUrl.trim() !== '';
@@ -43,8 +42,7 @@
 			}
 			
 			console.log(`Found ${trackIds.length} tracks in ${playlistName}`);
-			
-			// Get current tracks in the source playlist to avoid duplicates
+
 			const currentTrackIds = $currentTracks.map(track => track.id);
 			const newTrackIds = trackIds.filter(id => !currentTrackIds.includes(id));
 			
@@ -57,22 +55,17 @@
 			}
 			
 			console.log(`Adding ${newTrackIds.length} new tracks to playlist ${$selectedPlaylist.name}`);
-			
-			// Convert track IDs to URIs
+
 			const trackUris = newTrackIds.map(id => `spotify:track:${id}`);
-			
-			// Add tracks to the selected playlist
+
 			await spotifyAPI.addTracksToPlaylist($selectedPlaylist.id, trackUris);
-			
-			// Refresh the current tracks list to update the UI
+
 			const updatedTracks = await spotifyAPI.getPlaylistTracks($selectedPlaylist.id);
 			currentTracks.set(updatedTracks);
-			
-			// Update the playlist in the playlists store to reflect new track count
+
 			const updatedPlaylists = await spotifyAPI.getUserPlaylists();
 			playlists.set(updatedPlaylists);
-			
-			// Update selected playlist with new track count
+
 			const updatedSelectedPlaylist = updatedPlaylists.find(p => p.id === $selectedPlaylist.id);
 			if (updatedSelectedPlaylist) {
 				selectedPlaylist.set(updatedSelectedPlaylist);

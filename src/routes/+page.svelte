@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { isAuthenticated } from '$lib/stores';
-	import { spotifyAPI } from '$lib/spotify';
-	import { webPlaybackService } from '$lib/webPlayback';
-	import { tokenManager } from '$lib/tokenManager';
+	import { initializationService } from '$lib/initializationService';
 	import Auth from '$lib/components/Auth.svelte';
 	import PlaylistSelector from '$lib/components/PlaylistSelector.svelte';
 	import Player from '$lib/components/Player.svelte';
@@ -11,39 +9,12 @@
 	import Toast from '$lib/components/Toast.svelte';
 
 	onMount(async () => {
-		console.log('Main app mounted, checking authentication...');
-		
-		// Initialize token manager for better token handling
-		tokenManager.initialize();
-		
-		// Check if user is already authenticated with valid token
-		try {
-			const token = await spotifyAPI.ensureValidToken();
-			if (token) {
-				console.log('User is authenticated with valid token');
-				isAuthenticated.set(true);
-				
-				// Initialize Web Playback SDK after authentication
-				try {
-					console.log('Initializing Web Playback SDK...');
-					await webPlaybackService.initialize();
-					console.log('Web Playback SDK ready');
-				} catch (error) {
-					console.error('Failed to initialize Web Playback SDK:', error);
-				}
-			} else {
-				console.log('No valid token available, user needs to authenticate');
-				isAuthenticated.set(false);
-			}
-		} catch (error) {
-			console.error('Error checking authentication:', error);
-			isAuthenticated.set(false);
-		}
+		console.log('Main app mounted, initializing...');
+		await initializationService.initialize();
 	});
 
 	onDestroy(() => {
-		// Clean up token manager
-		tokenManager.destroy();
+		initializationService.destroy();
 	});
 </script>
 

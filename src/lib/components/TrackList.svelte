@@ -16,10 +16,8 @@
 		loadTracks();
 	}
 
-	// Helper function to handle API errors gracefully
 	async function handleAPIError<T>(apiCall: () => Promise<T>): Promise<T | null> {
 		try {
-			// Check token before making the call
 			const tokenValid = await tokenManager.checkAndRefreshToken();
 			if (!tokenValid) {
 				console.error('Invalid token, cannot make API call');
@@ -29,8 +27,7 @@
 			return await apiCall();
 		} catch (error) {
 			console.error('API call failed:', error);
-			
-			// If it's a 401 error, try one more time after token refresh
+
 			if (error instanceof Error && error.message.includes('401')) {
 				try {
 					console.log('Retrying API call after token refresh...');
@@ -50,14 +47,12 @@
 		if (!$selectedPlaylist) return;
 		
 		loading = true;
-		// Reset tracks immediately to prevent showing stale data
 		tracks = [];
 		currentTracks.set([]);
 		
 		try {
 			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
 			
-			// Only fetch tracks since we already have playlist details from selectedPlaylist
 			const tracksData = await handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id));
 			
 			if (tracksData) {
@@ -65,8 +60,7 @@
 				currentTracks.set(tracks);
 				currentPlaylistSnapshot.set($selectedPlaylist.snapshot_id);
 				console.log(`Successfully loaded ${tracks.length} tracks`);
-				
-				// Check for unavailable tracks and only log summary to reduce console spam
+
 				const unavailableTracks = tracks.filter(track => !isTrackPlayable(track));
 				if (unavailableTracks.length > 0) {
 					console.log(`Found ${unavailableTracks.length} unavailable tracks out of ${tracks.length} total`);
@@ -91,8 +85,7 @@
 		isRefreshingPlaylist.set(true);
 		try {
 			console.log(`Refreshing playlist: ${$selectedPlaylist.name}`);
-			
-			// Fetch fresh playlist data and tracks
+
 			const [playlist, tracksData] = await Promise.all([
 				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
 				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
@@ -103,11 +96,9 @@
 				tracks = tracksData;
 				currentTracks.set(tracks);
 				currentPlaylistSnapshot.set(playlist.snapshot_id);
-				
-				// Clear track playability cache since tracks may have changed
+
 				clearTrackPlayabilityCache();
-				
-				// Update the current track index if the current track still exists
+
 				if ($currentTrack) {
 					const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
 					if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
@@ -130,8 +121,7 @@
 
 	async function playTrack(track: SpotifyTrack) {
 		console.log('Playing track:', track.name);
-		
-		// Check if track is playable before attempting to play
+
 		if (!isTrackPlayable(track)) {
 			console.log('Track is not playable, skipping:', track.name);
 			alert(`This track is not available for playback: ${track.name}`);
@@ -139,18 +129,14 @@
 		}
 		
 		const deviceId = webPlaybackService.getDeviceId();
-		
-		// Find track index for proper playlist navigation
 		const trackIndex = tracks.findIndex(t => t.id === track.id);
-		
-		// Immediately update UI state for better responsiveness, but only for non-web player
-		// Let web player state changes handle track updates to avoid flashing
+
 		if (!deviceId) {
 			currentTrack.set(track);
 		}
 		currentTrackIndex.set(trackIndex);
-		playbackPosition.set(0); // Reset position to beginning
-		isPlaying.set(true); // Optimistically set playing state
+		playbackPosition.set(0);
+		isPlaying.set(true);
 		
 		let playSuccessful = false;
 		let lastError: any = null;
@@ -164,7 +150,6 @@
 			} else {
 				console.log('Web player not ready, using fallback');
 				await spotifyAPI.playTrack(track.uri);
-				// For fallback, we need to set the track since there's no state change event
 				currentTrack.set(track);
 				playSuccessful = true;
 				console.log('✅ Track started successfully via fallback');
@@ -172,11 +157,9 @@
 		} catch (error) {
 			lastError = error;
 			console.error('❌ Play request failed:', error);
-			
-			// Revert optimistic state changes
+
 			isPlaying.set(false);
-			
-			// Wait a moment and check if playback actually started
+
 			console.log('Checking if playback started despite error...');
 			await new Promise(resolve => setTimeout(resolve, 1000));
 			
@@ -189,7 +172,6 @@
 						isPlaying.set(true);
 					}
 				} else {
-					// Check via API
 					const state = await spotifyAPI.getPlaybackState();
 					if (state && state.is_playing && state.item?.uri === track.uri) {
 						console.log('✅ Playback actually started despite API error');
@@ -201,10 +183,8 @@
 				console.log('Could not check playback state:', stateError);
 			}
 		}
-		
-		// Only show error if play was not successful
+
 		if (!playSuccessful && lastError) {
-			// Revert all state changes on failure
 			currentTrack.set(null);
 			currentTrackIndex.set(-1);
 			isPlaying.set(false);
@@ -215,8 +195,7 @@
 				: String(lastError);
 			
 			console.error('Showing error to user:', errorMessage);
-			
-			// Check for specific error types and provide better messages
+
 			if (errorMessage.includes('Premium') || errorMessage.includes('403')) {
 				alert('Spotify Premium is required for track playback. Please upgrade your Spotify account to Premium to use this feature.');
 			} else if (errorMessage.includes('Device not found') || errorMessage.includes('404')) {
@@ -228,7 +207,6 @@
 	}
 
 	async function togglePlayPause(track: SpotifyTrack) {
-		// Check if track is playable before attempting to play
 		if (!isTrackPlayable(track)) {
 			console.log('Track is not playable, cannot toggle:', track.name);
 			return;
@@ -237,7 +215,6 @@
 		const isCurrentTrack = $currentTrack && $currentTrack.id === track.id;
 		
 		if (isCurrentTrack && $isPlaying) {
-			// Track is currently playing, pause it
 			try {
 				const deviceId = webPlaybackService.getDeviceId();
 				if (deviceId) {
@@ -250,7 +227,6 @@
 				console.error('Failed to pause track:', error);
 			}
 		} else if (isCurrentTrack && !$isPlaying) {
-			// Track is current but paused, resume it
 			try {
 				const deviceId = webPlaybackService.getDeviceId();
 				if (deviceId) {
@@ -263,7 +239,6 @@
 				console.error('Failed to resume track:', error);
 			}
 		} else {
-			// Different track, play it
 			await playTrack(track);
 		}
 	}
@@ -275,35 +250,27 @@
 		const currentIndex = tracks.findIndex(t => t.id === track.id);
 		
 		try {
-			// Use the operational URI (linked_from.uri if available) for reliable removal
 			const operationalUri = getOperationalUri(track);
 			const isRelinked = isTrackRelinked(track);
 			console.log(`Removing track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
 			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
-			
-			// Remove from local tracks array
+
 			tracks = tracks.filter(t => t.id !== track.id);
 			currentTracks.set(tracks);
-			
-			// Show success toast
+
 			toastStore.add({
 				message: `Removed "${track.name}" from ${$selectedPlaylist.name}`,
 				type: 'success'
 			});
-			
-			// If we removed the currently playing track, play the next playable one
+
 			if (isCurrentlyPlaying && tracks.length > 0) {
-				// After removing a track, the track that was "next" now occupies the same index
-				// So we want to start searching from the removed track's position (or one before if it was the last track)
 				const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
-				
-				// First check if the track now at the removed position is playable
+
 				if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
 					const nextTrack = tracks[startSearchIndex];
 					console.log(`Auto-playing track that moved into removed position: ${nextTrack.name}`);
 					await playTrack(nextTrack);
 				} else {
-					// If the track at the removed position isn't playable, search for the next playable one
 					const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
 					
 					if (nextPlayableIndex !== -1) {
@@ -312,7 +279,6 @@
 						await playTrack(nextTrack);
 					} else {
 						console.log('No playable tracks remaining after removal');
-						// Stop playback if no playable tracks remain
 						currentTrack.set(null);
 						currentTrackIndex.set(-1);
 						isPlaying.set(false);
@@ -321,8 +287,7 @@
 			}
 		} catch (error) {
 			console.error('Failed to remove track:', error);
-			
-			// Show error toast
+
 			toastStore.add({
 				message: `Failed to remove "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
 				type: 'error'
@@ -337,28 +302,22 @@
     const currentIndex = tracks.findIndex(t => t.id === track.id);
     
     try {
-        // Use the operational URI for both add and remove operations
         const operationalUri = getOperationalUri(track);
         const isRelinked = isTrackRelinked(track);
         console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
-        
-        // Check if track already exists in target playlist
+
         const targetTracks = await handleAPIError(() => spotifyAPI.getPlaylistTracks($targetPlaylist.id));
         const trackAlreadyExists = targetTracks && targetTracks.some(t => t.id === track.id);
         
         if (!trackAlreadyExists) {
-            // Add to target playlist only if it doesn't already exist
             await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
         }
-        
-        // Always remove from source playlist
+
         await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
-        
-        // Remove from local tracks array
+
         tracks = tracks.filter(t => t.id !== track.id);
         currentTracks.set(tracks);
-        
-        // Show appropriate success toast
+
         if (trackAlreadyExists) {
             toastStore.add({
                 message: `"${track.name}" was already in ${$targetPlaylist.name}, removed from ${$selectedPlaylist.name}`,
@@ -370,20 +329,15 @@
                 type: 'success'
             });
         }
-        
-        // If we moved the currently playing track, play the next playable one
+
         if (isCurrentlyPlaying && tracks.length > 0) {
-            // After moving a track, the track that was "next" now occupies the same index
-            // So we want to start searching from the moved track's position (or one before if it was the last track)
             const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
-            
-            // First check if the track now at the moved position is playable
+
             if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
                 const nextTrack = tracks[startSearchIndex];
                 console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
                 await playTrack(nextTrack);
             } else {
-                // If the track at the moved position isn't playable, search for the next playable one
                 const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
                 
                 if (nextPlayableIndex !== -1) {
@@ -392,7 +346,6 @@
                     await playTrack(nextTrack);
                 } else {
                     console.log('No playable tracks remaining after move');
-                    // Stop playback if no playable tracks remain
                     currentTrack.set(null);
                     currentTrackIndex.set(-1);
                     isPlaying.set(false);
@@ -401,8 +354,7 @@
         }
     } catch (error) {
         console.error('Failed to move track:', error);
-        
-        // Show error toast
+
         toastStore.add({
             message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
             type: 'error'

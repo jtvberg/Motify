@@ -1,10 +1,7 @@
-// Spotify Web API utilities
 import { env } from '$env/dynamic/public';
 import { browser } from '$app/environment';
 
 const CLIENT_ID = env.PUBLIC_SPOTIFY_CLIENT_ID || '';
-
-// Dynamic redirect URI based on environment
 const getRedirectUri = (): string => {
 	if (browser) {
 		return `${window.location.origin}/callback`;
@@ -44,13 +41,10 @@ export interface SpotifyTrack {
 	};
 }
 
-// Helper function to get the correct URI for operations (removal, etc.)
 export function getOperationalUri(track: SpotifyTrack): string {
-	// Use the original track URI from linked_from if available, otherwise use the current track URI
 	return track.linked_from?.uri || track.uri;
 }
 
-// Helper function to check if a track is relinked
 export function isTrackRelinked(track: SpotifyTrack): boolean {
 	return !!track.linked_from;
 }
@@ -78,13 +72,11 @@ class SpotifyAPI {
 	private codeVerifier: string | null = null;
 
 	constructor() {
-		// Try to get token from localStorage if available
 		if (typeof window !== 'undefined') {
 			this.accessToken = localStorage.getItem('spotify_access_token');
 		}
 	}
 
-	// Generate code verifier for PKCE
 	private generateCodeVerifier(): string {
 		const array = new Uint8Array(32);
 		crypto.getRandomValues(array);
@@ -94,7 +86,6 @@ class SpotifyAPI {
 			.replace(/=+$/, '');
 	}
 
-	// Generate code challenge from verifier
 	private async generateCodeChallenge(verifier: string): Promise<string> {
 		const encoder = new TextEncoder();
 		const data = encoder.encode(verifier);
@@ -108,8 +99,7 @@ class SpotifyAPI {
 	async getAuthUrl(): Promise<string> {
 		this.codeVerifier = this.generateCodeVerifier();
 		const codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
-		
-		// Store code verifier for later use
+
 		if (typeof window !== 'undefined') {
 			localStorage.setItem('spotify_code_verifier', this.codeVerifier);
 		}
@@ -153,18 +143,16 @@ class SpotifyAPI {
 		}
 
 		const data = await response.json();
-		
-		// Store both access and refresh tokens
+
 		this.setAccessToken(data.access_token);
 		if (data.refresh_token) {
 			localStorage.setItem('spotify_refresh_token', data.refresh_token);
 		}
-		
-		// Store token expiry time
+
 		const expiresAt = Date.now() + (data.expires_in * 1000);
 		localStorage.setItem('spotify_token_expires_at', expiresAt.toString());
 		
-		localStorage.removeItem('spotify_code_verifier'); // Clean up
+		localStorage.removeItem('spotify_code_verifier');
 		return data.access_token;
 	}
 
@@ -210,16 +198,13 @@ class SpotifyAPI {
 		}
 
 		const data = await response.json();
-		
-		// Update access token
+
 		this.setAccessToken(data.access_token);
-		
-		// Update refresh token if a new one is provided
+
 		if (data.refresh_token) {
 			localStorage.setItem('spotify_refresh_token', data.refresh_token);
 		}
-		
-		// Update expiry time
+
 		const expiresAt = Date.now() + (data.expires_in * 1000);
 		localStorage.setItem('spotify_token_expires_at', expiresAt.toString());
 		
@@ -228,16 +213,14 @@ class SpotifyAPI {
 
 	async ensureValidToken(): Promise<string | null> {
 		let token = this.getAccessToken();
-		
-		// If no token, check localStorage
+
 		if (!token && typeof window !== 'undefined') {
 			token = localStorage.getItem('spotify_access_token');
 			if (token) {
 				this.accessToken = token;
 			}
 		}
-		
-		// If token exists but is expired, try to refresh it
+
 		if (token && this.isTokenExpired()) {
 			try {
 				console.log('Token expired, refreshing...');
@@ -245,7 +228,6 @@ class SpotifyAPI {
 				console.log('Token refreshed successfully');
 			} catch (error) {
 				console.error('Failed to refresh token:', error);
-				// Clear expired tokens
 				this.logout();
 				return null;
 			}
@@ -265,7 +247,6 @@ class SpotifyAPI {
 	}
 
 	private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
-		// Ensure we have a valid token
 		const token = await this.ensureValidToken();
 		if (!token) {
 			throw new Error('No access token available');
@@ -282,10 +263,8 @@ class SpotifyAPI {
 
 		if (!response.ok) {
 			if (response.status === 401) {
-				// Try to refresh token once more
 				try {
 					const refreshedToken = await this.refreshAccessToken();
-					// Retry the request with the new token
 					const retryResponse = await fetch(`https://api.spotify.com/v1${endpoint}`, {
 						...options,
 						headers: {
@@ -296,22 +275,19 @@ class SpotifyAPI {
 					});
 					
 					if (retryResponse.ok) {
-						// Handle empty responses (like 204 No Content)
 						const text = await retryResponse.text();
 						return text ? JSON.parse(text) : {};
 					}
 				} catch (refreshError) {
 					console.error('Token refresh failed:', refreshError);
 				}
-				
-				// If refresh failed or retry failed, logout
+
 				this.logout();
 				throw new Error('Authentication failed');
 			}
 			throw new Error(`Spotify API error: ${response.status}`);
 		}
 
-		// Handle empty responses (like 204 No Content) that don't have JSON
 		const text = await response.text();
 		return text ? JSON.parse(text) : {};
 	}
@@ -339,8 +315,7 @@ class SpotifyAPI {
 				}
 				
 				allPlaylists = allPlaylists.concat(response.items);
-				
-				// Check if there are more pages
+
 				if (response.next) {
 					try {
 						const nextUrl = new URL(response.next);
@@ -354,7 +329,6 @@ class SpotifyAPI {
 					url = null;
 				}
 				
-				// Safety check
 				if (pageCount > 20) {
 					console.warn('Too many playlist pages, stopping pagination');
 					break;
@@ -384,7 +358,6 @@ class SpotifyAPI {
 		try {
 			while (url) {
 				pageCount++;
-				// console.log(`Fetching page ${pageCount}: ${url}`);
 				
 				const response = await this.makeRequest(url);
 				
@@ -398,15 +371,10 @@ class SpotifyAPI {
 					.filter((track: any) => track !== null && track !== undefined);
 				
 				allTracks = allTracks.concat(tracks);
-				
-				// console.log(`Page ${pageCount}: Fetched ${tracks.length} tracks (total so far: ${allTracks.length})`);
-				
-				// Check if there are more pages
+
 				if (response.next) {
 					try {
-						// Extract the path from the full URL
 						const nextUrl = new URL(response.next);
-						// Remove /v1 from the pathname since makeRequest adds it
 						let path = nextUrl.pathname;
 						if (path.startsWith('/v1')) {
 							path = path.substring(3);
@@ -419,8 +387,7 @@ class SpotifyAPI {
 				} else {
 					url = null;
 				}
-				
-				// Safety check to prevent infinite loops
+
 				if (pageCount > 50) {
 					console.warn('Too many pages, stopping pagination');
 					break;
@@ -445,7 +412,6 @@ class SpotifyAPI {
 	}
 
 	async addTracksToPlaylist(playlistId: string, trackUris: string[]): Promise<void> {
-		// Spotify API allows up to 100 tracks per request
 		const batchSize = 100;
 		for (let i = 0; i < trackUris.length; i += batchSize) {
 			const batch = trackUris.slice(i, i + batchSize);
@@ -474,7 +440,6 @@ class SpotifyAPI {
 			uris: [trackUri]
 		};
 
-		// Build the URL with device_id as query parameter if provided
 		let url = '/me/player/play';
 		if (deviceId) {
 			url += `?device_id=${deviceId}`;
@@ -491,19 +456,16 @@ class SpotifyAPI {
 			console.log('Play request successful');
 		} catch (error: any) {
 			console.error('Play request failed:', error);
-			
-			// Check for specific premium requirement error
+
 			if (error.status === 403 && error.message?.includes('Premium')) {
 				throw new Error('Spotify Premium is required for playback. Please upgrade your account to use this feature.');
 			}
-			
-			// Check for device not found error
+
 			if (error.status === 404 && deviceId) {
 				console.warn('Device not found, attempting to activate device first');
 				try {
 					await this.transferPlayback(deviceId);
 					await new Promise(resolve => setTimeout(resolve, 500));
-					// Retry the play request
 					await this.makeRequest(url, {
 						method: 'PUT',
 						body: JSON.stringify(body)

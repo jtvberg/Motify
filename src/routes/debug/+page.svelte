@@ -3,6 +3,7 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { currentTrack, isPlaying, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
+	import { initializationService } from '$lib/initializationService';
 	import { scrapeEveryNoiseTrackIds } from '$lib/utils';
 
 	let logs: string[] = [];
@@ -18,22 +19,31 @@
 
 	onMount(() => {
 		addLog('Debug page mounted');
-		
-		// Check if Spotify Web Playback SDK is loaded
+
+		if (initializationService.isAppInitialized()) {
+			addLog('App is initialized');
+		} else {
+			addLog('App is NOT initialized');
+		}
+
 		if (typeof window !== 'undefined' && window.Spotify) {
 			addLog('Spotify Web Playback SDK is loaded');
 		} else {
 			addLog('Spotify Web Playback SDK is NOT loaded');
 		}
 
-		// Check if user is authenticated
+		if (initializationService.isWebPlaybackReady()) {
+			addLog('Web Playback SDK is ready');
+		} else {
+			addLog('Web Playback SDK is NOT ready');
+		}
+
 		if ($user) {
 			addLog(`User authenticated: ${$user.display_name}`);
 		} else {
 			addLog('User not authenticated');
 		}
 
-		// Check current track
 		if ($currentTrack) {
 			addLog(`Current track: ${$currentTrack.name} by ${$currentTrack.artists[0].name}`);
 		} else {
@@ -45,18 +55,15 @@
 
 	async function testWebPlaybackInit() {
 		try {
-			addLog('Testing Web Playback SDK initialization...');
-			const token = localStorage.getItem('spotify_access_token');
-			if (!token) {
-				addLog('No access token found');
-				return;
+			addLog('Testing app initialization...');
+			const success = await initializationService.initialize();
+			if (success) {
+				addLog('App initialization completed successfully');
+			} else {
+				addLog('App initialization failed or user not authenticated');
 			}
-			
-			addLog('Access token found, initializing...');
-			await webPlaybackService.initialize();
-			addLog('Web Playback SDK initialized successfully');
 		} catch (error) {
-			addLog(`Error initializing Web Playback SDK: ${error}`);
+			addLog(`Error during initialization: ${error}`);
 		}
 	}
 
@@ -121,7 +128,7 @@
 	<h1>Debug Page</h1>
 	
 	<div class="controls">
-		<button on:click={testWebPlaybackInit}>Initialize Web Playback SDK</button>
+		<button on:click={testWebPlaybackInit}>Test App Initialization</button>
 		<button on:click={getPlaybackState}>Get Playback State</button>
 		<button on:click={getAvailableDevices}>Get Available Devices</button>
 		<button on:click={testPlay}>Test Play</button>

@@ -14,13 +14,11 @@
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
 
 	onMount(async () => {
-		// Check if Web Playback SDK is already initialized
 		if (webPlaybackService.getDeviceId()) {
 			isPlayerReady = true;
 			console.log('Web Playback SDK already initialized');
 			startPositionUpdates();
 		} else {
-			// Wait for SDK to be initialized by main app
 			const checkInitialization = setInterval(() => {
 				if (webPlaybackService.getDeviceId()) {
 					isPlayerReady = true;
@@ -29,8 +27,7 @@
 					clearInterval(checkInitialization);
 				}
 			}, 100);
-			
-			// Fallback timeout - if SDK isn't ready in 10 seconds, use API polling
+
 			setTimeout(() => {
 				if (!isPlayerReady) {
 					console.log('Web Playback SDK not ready, falling back to API polling');
@@ -67,25 +64,21 @@
 	}
 
 	function startPositionUpdates() {
-		// Clear any existing interval first
 		if (positionUpdateInterval) {
 			clearInterval(positionUpdateInterval);
 		}
-		
-		// Update position every second when playing and using Web Playback SDK
+
 		positionUpdateInterval = setInterval(async () => {
 			if (isDragging || !isPlayerReady || !$isPlaying) return;
 			
 			try {
 				const state = await webPlaybackService.getCurrentState();
 				if (state && state.track_window.current_track) {
-					// Only update position if it's reasonable and for the same track
 					const currentTrackUri = $currentTrack?.uri;
 					const stateTrackUri = state.track_window.current_track.uri;
 					
 					if (currentTrackUri === stateTrackUri) {
 						const newPosition = state.position / 1000;
-						// Sanity check: don't jump backwards unless it's a big jump (seek)
 						const currentPosition = $playbackPosition;
 						if (newPosition >= currentPosition - 2 || Math.abs(newPosition - currentPosition) > 5) {
 							playbackPosition.set(newPosition);
@@ -105,7 +98,6 @@
 		}
 	}
 
-	// React to play/pause changes to start/stop position updates
 	$: if (isPlayerReady) {
 		if ($isPlaying) {
 			if (!positionUpdateInterval) {
@@ -116,9 +108,7 @@
 		}
 	}
 
-	// React to track changes to reset position and update highlight
 	$: if ($currentTrack && $currentTracks.length > 0) {
-		// Find and update the current track index if needed
 		const trackIndex = $currentTracks.findIndex(t => t.id === $currentTrack.id);
 		if (trackIndex >= 0 && trackIndex !== $currentTrackIndex) {
 			currentTrackIndex.set(trackIndex);
@@ -152,11 +142,9 @@
 				console.log('No playlist context for previous track');
 				return;
 			}
-			
-			// Stop current position updates immediately
+
 			stopPositionUpdates();
-			
-			// Find the previous playable track
+
 			const previousIndex = findNextPlayableTrack(tracks, currentIndex, -1);
 			
 			if (previousIndex === -1) {
@@ -167,24 +155,19 @@
 			const previousTrack = tracks[previousIndex];
 			
 			console.log(`Playing previous track: ${previousTrack.name} (index ${previousIndex})`);
-			
-			// Reset position to 0 immediately for visual feedback
+
 			playbackPosition.set(0);
-			
-			// Update the index first
+
 			currentTrackIndex.set(previousIndex);
-			
-			// Play the track - let the player state change event update the current track
+
 			if (isPlayerReady) {
 				await webPlaybackService.play(previousTrack.uri);
 			} else {
 				await spotifyAPI.playTrack(previousTrack.uri);
-				// For fallback API, update the track manually since no state change event
 				currentTrack.set(previousTrack);
 				setTimeout(updatePlaybackState, 500);
 			}
-			
-			// Restart position updates if playing
+
 			if ($isPlaying && isPlayerReady) {
 				startPositionUpdates();
 			}
@@ -202,11 +185,9 @@
 				console.log('No playlist context for next track');
 				return;
 			}
-			
-			// Stop current position updates immediately
+
 			stopPositionUpdates();
-			
-			// Find the next playable track
+
 			const nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
 			
 			if (nextIndex === -1) {
@@ -217,24 +198,18 @@
 			const nextTrack = tracks[nextIndex];
 			
 			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
-			
-			// Reset position to 0 immediately for visual feedback
+
 			playbackPosition.set(0);
-			
-			// Update the index first
 			currentTrackIndex.set(nextIndex);
-			
-			// Play the track - let the player state change event update the current track
+
 			if (isPlayerReady) {
 				await webPlaybackService.play(nextTrack.uri);
 			} else {
 				await spotifyAPI.playTrack(nextTrack.uri);
-				// For fallback API, update the track manually since no state change event
 				currentTrack.set(nextTrack);
 				setTimeout(updatePlaybackState, 500);
 			}
-			
-			// Restart position updates if playing
+
 			if ($isPlaying && isPlayerReady) {
 				startPositionUpdates();
 			}

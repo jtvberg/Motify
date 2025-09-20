@@ -15,14 +15,12 @@ export const isAuthenticated = writable(false);
 export const currentPlaylistSnapshot = writable<string | null>(null);
 export const isRefreshingPlaylist = writable(false);
 
-// Settings for EveryNoise playlist scraping
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;
 	releaseRadarUrl: string;
 }
 
 function createSettingsStore() {
-	// Load from localStorage if available
 	const storedSettings = typeof localStorage !== 'undefined' 
 		? localStorage.getItem('motify-scraper-settings') 
 		: null;

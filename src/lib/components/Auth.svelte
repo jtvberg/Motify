@@ -5,8 +5,7 @@
 		try {
 			const authUrl = await spotifyAPI.getAuthUrl();
 			console.log('Auth URL:', authUrl);
-			
-			// Check if we have the required environment variables
+
 			console.log('Environment check:', {
 				hasClientId: !!authUrl.includes('client_id='),
 				hasRedirectUri: !!authUrl.includes('redirect_uri='),

@@ -9,7 +9,6 @@ export const GET = async ({ url }: { url: URL }) => {
 
 	try {
 		const everynoiseUrl = `https://everynoise.com/playlistprofile.cgi?id=${playlistId}`;
-		
 		const response = await fetch(everynoiseUrl, {
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -21,15 +20,11 @@ export const GET = async ({ url }: { url: URL }) => {
 		}
 
 		const html = await response.text();
-		
-		// Extract data from JavaScript variables
 		const trackIds: string[] = [];
-		
-		// Look for the apiheader with bearer token
 		const apihMatch = html.match(/var apiheader = "(.*?)"/);
 		let apiToken = '';
+		
 		if (apihMatch) {
-			// Extract bearer token from the authorization header
 			const authMatch = apihMatch[1].match(/Bearer ([^']+)/);
 			if (authMatch) {
 				apiToken = authMatch[1];
@@ -37,7 +32,6 @@ export const GET = async ({ url }: { url: URL }) => {
 			}
 		}
 		
-		// Try to make a direct API call to get track data
 		if (apiToken) {
 			try {
 				const spotifyResponse = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -65,25 +59,22 @@ export const GET = async ({ url }: { url: URL }) => {
 			}
 		}
 		
-		// Fallback: Look for script content that might contain track IDs
 		if (trackIds.length === 0) {
-			// Look for any potential Spotify track IDs (22 character alphanumeric)
 			const spotifyTrackMatches = html.match(/[0-9A-Za-z]{22}/g);
 			if (spotifyTrackMatches) {
 				console.log('Found potential Spotify IDs:', spotifyTrackMatches.slice(0, 10));
-				// Filter for valid Spotify track ID patterns and exclude the playlist ID itself
 				const validSpotifyIds = spotifyTrackMatches.filter(id => 
 					id.length === 22 && 
 					/^[0-9A-Za-z]{22}$/.test(id) && 
 					id !== playlistId &&
-					!id.startsWith('BQ') // Exclude tokens
+					!id.startsWith('BQ')
 				);
 				trackIds.push(...validSpotifyIds);
 			}
 		}
 
 		return json({ 
-			trackIds: [...new Set(trackIds)], // Remove duplicates
+			trackIds: [...new Set(trackIds)],
 			htmlLength: html.length,
 			foundToken: !!apiToken,
 			method: trackIds.length > 0 ? (apiToken ? 'spotify-api' : 'html-parsing') : 'none'

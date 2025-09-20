@@ -2,7 +2,6 @@ import { spotifyAPI } from './spotify';
 import { isPlaying, currentTrack, playbackPosition, trackDuration } from './stores';
 import { get } from 'svelte/store';
 
-// Extend Window interface to include Spotify
 declare global {
 	interface Window {
 		onSpotifyWebPlaybackSDKReady: () => void;
@@ -55,19 +54,16 @@ class WebPlaybackService {
     private instanceId: string;
 
     constructor() {
-        // Generate a unique instance ID for this browser session
         this.instanceId = this.generateInstanceId();
     }
 
     private generateInstanceId(): string {
-        // Create a unique ID with timestamp and random component
         const timestamp = Date.now().toString(36);
         const random = Math.random().toString(36).substring(2, 8);
         return `${timestamp}-${random}`;
     }
 
     private getDeviceName(): string {
-        // Include instance ID in device name to make it unique
         return `Motify Web Player (${this.instanceId})`;
     }
 
@@ -75,7 +71,6 @@ class WebPlaybackService {
 		if (this.isInitialized) return;
 
 		return new Promise((resolve, reject) => {
-			// Check if SDK is already loaded
 			if (window.Spotify) {
 				try {
 					this.setupPlayer();
@@ -84,7 +79,6 @@ class WebPlaybackService {
 					reject(error);
 				}
 			} else {
-				// Wait for SDK to load - check periodically since we can't override the global callback
 				const checkSDK = () => {
 					if (window.Spotify) {
 						try {
@@ -94,15 +88,12 @@ class WebPlaybackService {
 							reject(error);
 						}
 					} else {
-						// Check again in 100ms
 						setTimeout(checkSDK, 100);
 					}
 				};
 				
-				// Start checking
 				setTimeout(checkSDK, 100);
-				
-				// Longer timeout for mobile devices
+
 				const timeoutMs = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 15000 : 10000;
 				setTimeout(() => {
 					if (!this.isInitialized) {
@@ -121,16 +112,13 @@ class WebPlaybackService {
 		}
 
 		this.player = new window.Spotify.Player({
-			name: this.getDeviceName(), // Use unique device name
+			name: this.getDeviceName(),
 			getOAuthToken: (cb) => {
-				// Always get the freshest token and handle errors gracefully
 				spotifyAPI.ensureValidToken().then(token => {
 					if (token) {
 						cb(token);
 					} else {
 						console.warn('No valid token available for Web Playback SDK');
-						// Don't call the callback with null/undefined as it may cause issues
-						// Instead, try to get any existing token as fallback
 						const fallbackToken = spotifyAPI.getAccessToken();
 						if (fallbackToken) {
 							cb(fallbackToken);
@@ -138,7 +126,6 @@ class WebPlaybackService {
 					}
 				}).catch(error => {
 					console.error('Error getting token for Web Playback SDK:', error);
-					// Fallback to any existing token
 					const fallbackToken = spotifyAPI.getAccessToken();
 					if (fallbackToken) {
 						cb(fallbackToken);
@@ -148,17 +135,14 @@ class WebPlaybackService {
 			volume: 0.8
 		});
 
-		// Error handling
 		this.player.addListener('initialization_error', ({ message }) => {
 			console.error('Spotify Player initialization error:', message);
 		});
 
 		this.player.addListener('authentication_error', ({ message }) => {
 			console.error('Spotify Player authentication error:', message);
-			// Handle authentication failure gracefully
 			this.handleAuthenticationFailure();
-			
-			// Try to refresh the token for future attempts
+
 			spotifyAPI.ensureValidToken().then(token => {
 				if (!token) {
 					console.warn('Authentication failed and no valid token available - user may need to re-login');
@@ -176,65 +160,51 @@ class WebPlaybackService {
 			console.error('Spotify Player playback error:', message);
 		});
 
-		// Playback status updates
 		this.player.addListener('player_state_changed', (state) => {
 			if (!state) return;
 
 			console.log('Player state changed:', state);
-			
-			// Only update stores if this is a significant change
+
 			const newTrack = state.track_window.current_track;
 			const newPlaying = !state.paused;
 			const newPosition = state.position / 1000;
 			const newDuration = state.duration / 1000;
-			
-			// Update current track only if it's actually different
-			// This prevents flashing when we've already set the track via navigation
+
 			if (newTrack) {
 				const currentStoreTrack = get(currentTrack);
-				
-				// Only update if the URI is different or if we don't have a current track
+
 				if (!currentStoreTrack || currentStoreTrack.uri !== newTrack.uri) {
 					console.log('Updating current track from player state:', newTrack.name);
 					currentTrack.set(newTrack);
 				}
 			}
 			
-			// Always update playing state and duration
 			isPlaying.set(newPlaying);
 			trackDuration.set(newDuration);
-			
-			// Update position, but be smart about it
 			playbackPosition.set(newPosition);
 		});
 
-		// Ready
 		this.player.addListener('ready', async ({ device_id }) => {
 			console.log('Spotify Web Player ready with Device ID:', device_id);
 			this.deviceId = device_id;
 
-			// Wait for device to appear in /me/player/devices and get the actual device ID
 			const actualDeviceId = await this.waitForDeviceRegistration();
 			if (actualDeviceId) {
-				// Only log if the actual device ID is different from SDK ID
 				if (actualDeviceId !== device_id) {
 					console.log('Device registered with different ID. SDK ID:', device_id, 'Actual ID:', actualDeviceId);
 				}
-				this.deviceId = actualDeviceId; // Use the actual device ID from the API
+				this.deviceId = actualDeviceId;
 				this.isInitialized = true;
 			} else {
 				console.warn('Device did not appear in /me/player/devices in time:', device_id);
-				// Still mark as initialized but with original device ID as fallback
 				this.isInitialized = true;
 			}
 		});
 
-		// Not Ready
 		this.player.addListener('not_ready', ({ device_id }) => {
 			console.log('Spotify Web Player has gone offline:', device_id);
 		});
 
-		// Connect to the player
 		this.player.connect().then((success) => {
 			if (success) {
 				console.log('Successfully connected to Spotify Web Player');
@@ -255,23 +225,16 @@ class WebPlaybackService {
         
         while (Date.now() - start < timeoutMs) {
             const devices = await spotifyAPI.getAvailableDevices();
-            
-            // Look for our specific device by the unique name
-            const ourDevice = devices.devices?.find((d: any) => 
-                d.name === deviceName && 
-                d.type === 'Computer'
-            );
+            const ourDevice = devices.devices?.find((d: any) => d.name === deviceName);
             
             if (ourDevice) {
                 return ourDevice.id;
             }
             
-            // Also check if the original device ID matches (fallback)
             if (devices.devices?.some((d: any) => d.id === this.deviceId)) {
                 return this.deviceId;
             }
-            
-            // Reduced logging frequency - only log every second instead of every 200ms
+
             if ((Date.now() - start) % 1000 < 200) {
                 console.log('Waiting for device registration...');
             }
@@ -280,7 +243,6 @@ class WebPlaybackService {
         return null;
     }
 
-    // Add method to get instance info for debugging
     getInstanceInfo(): { instanceId: string; deviceName: string; deviceId: string | null } {
         return {
             instanceId: this.instanceId,
@@ -294,22 +256,18 @@ class WebPlaybackService {
 		
 		try {
 			console.log('Activating Web Player device:', this.deviceId);
-			
-			// First check what devices are available
+
 			const devicesResponse = await spotifyAPI.getAvailableDevices();
 			console.log('Available devices:', devicesResponse.devices);
-			
-			// Check for competing devices on mobile
+
 			const mobileDevices = devicesResponse.devices?.filter((d: any) => 
 				d.type === 'Smartphone' && d.is_active
 			);
 			
 			if (mobileDevices?.length > 0) {
 				console.warn('Active mobile devices detected:', mobileDevices);
-				// This might cause conflicts, but we'll proceed
 			}
 			
-			// Find our device in the list
 			const ourDevice = devicesResponse.devices?.find((d: any) => d.id === this.deviceId);
 			
 			if (!ourDevice) {
@@ -319,14 +277,11 @@ class WebPlaybackService {
 				return;
 			}
 			
-			// Transfer playback to our device
 			await spotifyAPI.transferPlayback(this.deviceId);
 			console.log('Device activation request sent');
-			
-			// Wait a bit longer for mobile devices
+
 			await new Promise(resolve => setTimeout(resolve, 800));
 			
-			// Verify the device is now active
 			const updatedDevicesResponse = await spotifyAPI.getAvailableDevices();
 			const updatedDevice = updatedDevicesResponse.devices?.find((d: any) => d.id === this.deviceId);
 			
@@ -353,12 +308,9 @@ class WebPlaybackService {
 			console.log('Playing specific track via Spotify API with device:', this.deviceId);
 			
 			try {
-				// First ensure the device is active by transferring playback to it
 				await this.activateDevice();
-				// Longer delay to ensure transfer completes on mobile
 				await new Promise(resolve => setTimeout(resolve, 500));
 				
-				// Clear any pending state first
 				const currentState = await this.player.getCurrentState();
 				if (currentState && !currentState.paused) {
 					console.log('Pausing current playback before starting new track');
@@ -366,10 +318,8 @@ class WebPlaybackService {
 					await new Promise(resolve => setTimeout(resolve, 200));
 				}
 				
-				// Now try to play the track
 				await spotifyAPI.playTrack(uri, this.deviceId);
-				
-				// Verify playback started and wait for state to update
+
 				let retries = 0;
 				const maxRetries = 10;
 				
@@ -387,30 +337,25 @@ class WebPlaybackService {
 				}
 				
 			} catch (error) {
-				// If API call fails but the player is ready, try using the player directly
 				console.warn('API play failed, trying Web Player SDK directly:', error);
-				
-				// Use the Web Player SDK to start playback
+
 				try {
-					// First check if something is already playing and pause it
 					const state = await this.player.getCurrentState();
 					if (state && !state.paused) {
 						await this.player.pause();
 						await new Promise(resolve => setTimeout(resolve, 200));
 					}
-					
-					// Use Web API to queue the track, then resume with player
+
 					await spotifyAPI.playTrack(uri);
 					await new Promise(resolve => setTimeout(resolve, 300));
 					await this.player.resume();
 				} catch (fallbackError) {
 					console.error('Both API and SDK methods failed:', fallbackError);
-					throw error; // Throw the original error
+					throw error;
 				}
 			}
 		} else {
 			console.log('Resuming current playback via Web Player');
-			// Resume current playback
 			await this.player.resume();
 		}
 	}
@@ -472,18 +417,15 @@ class WebPlaybackService {
 		}
 	}
 
-	// Method to handle authentication failures gracefully
 	handleAuthenticationFailure(): void {
 		console.warn('Handling authentication failure - disconnecting player');
 		this.disconnect();
-		// Reset stores to prevent stale state
 		isPlaying.set(false);
 		currentTrack.set(null);
 		playbackPosition.set(0);
 		trackDuration.set(0);
 	}
 
-	// Method to reconnect after token refresh
 	async reconnect(): Promise<void> {
 		if (this.isInitialized) {
 			console.log('Player already connected');
@@ -491,7 +433,7 @@ class WebPlaybackService {
 		}
 		
 		console.log('Attempting to reconnect Web Player...');
-		this.disconnect(); // Ensure clean state
+		this.disconnect();
 		await this.initialize();
 	}
 }

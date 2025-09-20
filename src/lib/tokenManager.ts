@@ -7,13 +7,10 @@ class TokenManager {
 	private isVisible = true;
 
 	initialize(): void {
-		// Only initialize in browser environment
 		if (!browser) return;
-		
-		// Listen for visibility changes
+
 		document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-		
-		// Check token validity periodically when tab is visible
+
 		this.startTokenCheck();
 	}
 
@@ -35,14 +32,12 @@ class TokenManager {
 	private startTokenCheck(): void {
 		if (!browser) return;
 		
-		this.stopTokenCheck(); // Ensure no duplicate intervals
-		
-		// Check token every 5 minutes when tab is visible
+		this.stopTokenCheck();
 		this.checkInterval = window.setInterval(() => {
 			if (this.isVisible) {
 				this.checkTokenAndReconnect();
 			}
-		}, 5 * 60 * 1000); // 5 minutes
+		}, 5 * 60 * 1000);
 	}
 
 	private stopTokenCheck(): void {
@@ -61,7 +56,6 @@ class TokenManager {
 				return;
 			}
 
-			// If we have a valid token but the player is disconnected, try to reconnect
 			const deviceId = webPlaybackService.getDeviceId();
 			if (!deviceId) {
 				console.log('Player disconnected but token is valid, attempting reconnect...');
@@ -76,7 +70,6 @@ class TokenManager {
 		}
 	}
 
-	// Manual check for when user performs an action
 	async checkAndRefreshToken(): Promise<boolean> {
 		try {
 			const token = await spotifyAPI.ensureValidToken();

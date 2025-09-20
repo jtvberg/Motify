@@ -9,10 +9,8 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<script>
-		// Define the global callback for Spotify Web Playback SDK
 		window.onSpotifyWebPlaybackSDKReady = () => {
 			console.log('Spotify Web Playback SDK is ready');
-			// The SDK is ready, but we'll initialize it when needed in the main app
 		};
 	</script>
 	<script src="https://sdk.scdn.co/spotify-player.js"></script>
@@ -26,7 +24,7 @@
 	:global(body) {
 		margin: 0;
 		background-color: #121212;
-		color: #ffffff;
+		color: #f3f3f3;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	}
 

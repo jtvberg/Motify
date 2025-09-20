@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { scraperSettings } from '$lib/stores';
 	import { extractPlaylistIdFromUrl, isValidSpotifyPlaylistId } from '$lib/utils';
-	import { onMount } from 'svelte';
 	
 	let showSettings = false;
 	let discoverWeeklyUrl = '';
 	let releaseRadarUrl = '';
 	let modalElement: HTMLDivElement;
 	
-	// Load current settings
 	$: {
 		discoverWeeklyUrl = $scraperSettings.discoverWeeklyUrl;
 		releaseRadarUrl = $scraperSettings.releaseRadarUrl;
@@ -27,13 +25,11 @@
 	}
 	
 	function cancelSettings() {
-		// Reset to current values
 		discoverWeeklyUrl = $scraperSettings.discoverWeeklyUrl;
 		releaseRadarUrl = $scraperSettings.releaseRadarUrl;
 		showSettings = false;
 	}
 	
-	// Handle escape key and click outside to close
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			cancelSettings();
@@ -46,14 +42,12 @@
 		}
 	}
 	
-	// Portal action to mount modal to body
 	function portal(node: HTMLElement) {
 		let target = document.body;
 		
 		function update() {
 			if (showSettings) {
 				target.appendChild(node);
-				// Focus the modal for accessibility
 				setTimeout(() => node.focus(), 0);
 			} else if (node.parentNode) {
 				node.parentNode.removeChild(node);
@@ -72,7 +66,6 @@
 		};
 	}
 	
-	// Validation helpers
 	$: discoverWeeklyValid = !discoverWeeklyUrl || isValidSpotifyPlaylistId(extractPlaylistIdFromUrl(discoverWeeklyUrl));
 	$: releaseRadarValid = !releaseRadarUrl || isValidSpotifyPlaylistId(extractPlaylistIdFromUrl(releaseRadarUrl));
 	$: allValid = discoverWeeklyValid && releaseRadarValid;

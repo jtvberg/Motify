@@ -22,7 +22,6 @@ function createToastStore() {
 			
 			update(toasts => [...toasts, newToast]);
 			
-			// Auto remove after duration
 			if (newToast.duration && newToast.duration > 0) {
 				setTimeout(() => {
 					update(toasts => toasts.filter(t => t.id !== id));
