@@ -346,13 +346,8 @@ class SpotifyAPI {
 				// Check if there are more pages
 				if (response.next) {
 					try {
-						// Extract the path from the full URL
 						const nextUrl = new URL(response.next);
-						// Remove /v1 from the pathname since makeRequest adds it
 						let path = nextUrl.pathname;
-						if (path.startsWith('/v1')) {
-							path = path.substring(3);
-						}
 						url = path + nextUrl.search;
 					} catch (urlError) {
 						console.error('Failed to parse next playlist URL:', response.next, urlError);
