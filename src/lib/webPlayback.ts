@@ -191,10 +191,21 @@ class WebPlaybackService {
 		});
 
 		// Ready
-		this.player.addListener('ready', ({ device_id }) => {
+		this.player.addListener('ready', async ({ device_id }) => {
 			console.log('Spotify Web Player ready with Device ID:', device_id);
 			this.deviceId = device_id;
-			this.isInitialized = true;
+
+			// Wait for device to appear in /me/player/devices and get the actual device ID
+			const actualDeviceId = await this.waitForDeviceRegistration();
+			if (actualDeviceId) {
+				console.log('Device registered with Spotify backend. SDK ID:', device_id, 'Actual ID:', actualDeviceId);
+				this.deviceId = actualDeviceId; // Use the actual device ID from the API
+				this.isInitialized = true;
+			} else {
+				console.warn('Device did not appear in /me/player/devices in time:', device_id);
+				// Still mark as initialized but with original device ID as fallback
+				this.isInitialized = true;
+			}
 		});
 
 		// Not Ready
@@ -215,6 +226,33 @@ class WebPlaybackService {
 	getDeviceId(): string | null {
 		return this.deviceId;
 	}
+
+
+    private async waitForDeviceRegistration(timeoutMs = 5000): Promise<string | null> {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const devices = await spotifyAPI.getAvailableDevices();
+            
+            // Look for our device by name since the ID might not match
+            const ourDevice = devices.devices?.find((d: any) => 
+                d.name === 'Motify Web Player'
+            );
+            
+            if (ourDevice) {
+                console.log('Found our device:', ourDevice);
+                return ourDevice.id; // Return the actual device ID from the API
+            }
+            
+            // Also check if the original device ID matches (fallback)
+            if (devices.devices?.some((d: any) => d.id === this.deviceId)) {
+                console.log('Original device ID found in API');
+                return this.deviceId;
+            }
+
+            await new Promise(res => setTimeout(res, 200));
+        }
+        return null;
+    }
 
 	async activateDevice(): Promise<void> {
 		if (!this.deviceId) return;
