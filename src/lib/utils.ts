@@ -114,30 +114,46 @@ export async function scrapeEveryNoiseTrackIdsWithProxy(playlistId: string): Pro
 	}
 }
 
+// Cache for track playability to avoid redundant checks
+const trackPlayabilityCache = new Map<string, boolean>();
+
 /**
  * Check if a track is playable
  * @param track - The Spotify track to check
  * @returns boolean indicating if the track is playable
  */
 export function isTrackPlayable(track: any): boolean {
-	// Debug: Log ALL track data to see what we're getting
-	// console.log('Track data for:', track.name, {
-	// 	is_playable: track.is_playable,
-	// 	restrictions: track.restrictions,
-	// 	uri: track.uri,
-	// 	id: track.id,
-	// 	full_track: track
-	// });
-	
-	// Debug: Simulate some tracks as unavailable for testing (remove this later)
-	// Uncomment the next 3 lines to test with every 5th track being unavailable
-	if (track.name && track.name.toLowerCase().includes('test')) {
-		console.log('Marking as unavailable due to test keyword:', track.name);
+	// Return early for invalid tracks
+	if (!track || !track.id || !track.name) {
 		return false;
 	}
 	
-	// Log track data for debugging (can be removed later)
-	if (track && (track.is_playable === false || track.restrictions)) {
+	// Check cache first to avoid redundant processing
+	const cacheKey = track.id;
+	if (trackPlayabilityCache.has(cacheKey)) {
+		return trackPlayabilityCache.get(cacheKey)!;
+	}
+	
+	let isPlayable = true;
+	
+	// If is_playable is explicitly set to false, track is not playable
+	if (track.is_playable === false) {
+		isPlayable = false;
+	}
+	// Check for restrictions that would make it unplayable
+	else if (track.restrictions?.reason) {
+		isPlayable = false;
+	}
+	// Check if the track has a valid URI
+	else if (!track.uri || track.uri === '') {
+		isPlayable = false;
+	}
+	
+	// Cache the result
+	trackPlayabilityCache.set(cacheKey, isPlayable);
+	
+	// Only log unavailable tracks once when first detected
+	if (!isPlayable) {
 		console.log('Unavailable track detected:', {
 			name: track.name,
 			is_playable: track.is_playable,
@@ -146,28 +162,15 @@ export function isTrackPlayable(track: any): boolean {
 		});
 	}
 	
-	// If is_playable is explicitly set to false, track is not playable
-	if (track.is_playable === false) {
-		return false;
-	}
-	
-	// Check for restrictions that would make it unplayable
-	if (track.restrictions?.reason) {
-		return false;
-	}
-	
-	// Check if the track has a valid URI (some unavailable tracks might have null/empty URIs)
-	if (!track.uri || track.uri === '') {
-		return false;
-	}
-	
-	// Check if track is null or has missing essential data
-	if (!track || !track.id || !track.name) {
-		return false;
-	}
-	
-	// If no explicit playability info, assume it's playable
-	return true;
+	return isPlayable;
+}
+
+/**
+ * Clear the track playability cache
+ * Useful when switching playlists or refreshing data
+ */
+export function clearTrackPlayabilityCache(): void {
+	trackPlayabilityCache.clear();
 }
 
 /**

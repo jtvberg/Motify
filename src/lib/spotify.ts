@@ -330,7 +330,6 @@ class SpotifyAPI {
 		try {
 			while (url) {
 				pageCount++;
-				console.log(`Fetching playlist page ${pageCount}: ${url}`);
 				
 				const response = await this.makeRequest(url);
 				
@@ -340,8 +339,6 @@ class SpotifyAPI {
 				}
 				
 				allPlaylists = allPlaylists.concat(response.items);
-				
-				console.log(`Page ${pageCount}: Fetched ${response.items.length} playlists (total so far: ${allPlaylists.length})`);
 				
 				// Check if there are more pages
 				if (response.next) {
@@ -368,7 +365,7 @@ class SpotifyAPI {
 			throw error;
 		}
 		
-		console.log(`Finished fetching all ${allPlaylists.length} playlists in ${pageCount} pages`);
+		console.log(`Finished fetching all ${allPlaylists.length} playlists`);
 		return allPlaylists;
 	}
 
@@ -434,7 +431,7 @@ class SpotifyAPI {
 			throw error;
 		}
 		
-		console.log(`Finished fetching all ${allTracks.length} tracks for playlist ${playlistId} in ${pageCount} pages`);
+		console.log(`Finished fetching all ${allTracks.length} tracks for playlist ${playlistId}`);
 		return allTracks;
 	}
 

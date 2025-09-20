@@ -216,7 +216,10 @@ class WebPlaybackService {
 			// Wait for device to appear in /me/player/devices and get the actual device ID
 			const actualDeviceId = await this.waitForDeviceRegistration();
 			if (actualDeviceId) {
-				console.log('Device registered with Spotify backend. SDK ID:', device_id, 'Actual ID:', actualDeviceId);
+				// Only log if the actual device ID is different from SDK ID
+				if (actualDeviceId !== device_id) {
+					console.log('Device registered with different ID. SDK ID:', device_id, 'Actual ID:', actualDeviceId);
+				}
 				this.deviceId = actualDeviceId; // Use the actual device ID from the API
 				this.isInitialized = true;
 			} else {
@@ -260,17 +263,18 @@ class WebPlaybackService {
             );
             
             if (ourDevice) {
-                console.log('Found our device:', ourDevice);
                 return ourDevice.id;
             }
             
             // Also check if the original device ID matches (fallback)
             if (devices.devices?.some((d: any) => d.id === this.deviceId)) {
-                console.log('Original device ID found in API');
                 return this.deviceId;
             }
             
-            console.log('Waiting for device registration. Looking for:', deviceName);
+            // Reduced logging frequency - only log every second instead of every 200ms
+            if ((Date.now() - start) % 1000 < 200) {
+                console.log('Waiting for device registration...');
+            }
             await new Promise(res => setTimeout(res, 200));
         }
         return null;

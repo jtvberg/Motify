@@ -14,18 +14,30 @@
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
 
 	onMount(async () => {
-		// Initialize Web Playback SDK
-		try {
-			await webPlaybackService.initialize();
+		// Check if Web Playback SDK is already initialized
+		if (webPlaybackService.getDeviceId()) {
 			isPlayerReady = true;
-			console.log('Web Playback SDK initialized');
-			
-			// Start position updates for Web Playback SDK
+			console.log('Web Playback SDK already initialized');
 			startPositionUpdates();
-		} catch (error) {
-			console.error('Failed to initialize Web Playback SDK:', error);
-			// Fallback to regular API polling
-			updateInterval = setInterval(updatePlaybackState, 1000);
+		} else {
+			// Wait for SDK to be initialized by main app
+			const checkInitialization = setInterval(() => {
+				if (webPlaybackService.getDeviceId()) {
+					isPlayerReady = true;
+					console.log('Web Playback SDK detected as ready');
+					startPositionUpdates();
+					clearInterval(checkInitialization);
+				}
+			}, 100);
+			
+			// Fallback timeout - if SDK isn't ready in 10 seconds, use API polling
+			setTimeout(() => {
+				if (!isPlayerReady) {
+					console.log('Web Playback SDK not ready, falling back to API polling');
+					clearInterval(checkInitialization);
+					updateInterval = setInterval(updatePlaybackState, 1000);
+				}
+			}, 10000);
 		}
 	});
 

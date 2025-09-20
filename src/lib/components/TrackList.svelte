@@ -5,7 +5,7 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration } from '$lib/utils';
-	import { isTrackPlayable, findNextPlayableTrack } from '$lib/utils';
+	import { isTrackPlayable, findNextPlayableTrack, clearTrackPlayabilityCache } from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import type { SpotifyTrack } from '$lib/spotify';
 
@@ -57,26 +57,19 @@
 		try {
 			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
 			
-			const [playlist, tracksData] = await Promise.all([
-				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
-				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
-			]);
+			// Only fetch tracks since we already have playlist details from selectedPlaylist
+			const tracksData = await handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id));
 			
-			if (playlist && tracksData) {
+			if (tracksData) {
 				tracks = tracksData;
 				currentTracks.set(tracks);
-				currentPlaylistSnapshot.set(playlist.snapshot_id);
+				currentPlaylistSnapshot.set($selectedPlaylist.snapshot_id);
 				console.log(`Successfully loaded ${tracks.length} tracks`);
 				
-				// Debug: Check for unavailable tracks
+				// Check for unavailable tracks and only log summary to reduce console spam
 				const unavailableTracks = tracks.filter(track => !isTrackPlayable(track));
 				if (unavailableTracks.length > 0) {
-					console.log(`Found ${unavailableTracks.length} unavailable tracks:`, unavailableTracks.map(t => ({
-						name: t.name,
-						is_playable: t.is_playable,
-						restrictions: t.restrictions,
-						uri: t.uri
-					})));
+					console.log(`Found ${unavailableTracks.length} unavailable tracks out of ${tracks.length} total`);
 				}
 			} else {
 				console.error('Failed to load playlist data');
@@ -99,6 +92,7 @@
 		try {
 			console.log(`Refreshing playlist: ${$selectedPlaylist.name}`);
 			
+			// Fetch fresh playlist data and tracks
 			const [playlist, tracksData] = await Promise.all([
 				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
 				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
@@ -110,14 +104,15 @@
 				currentTracks.set(tracks);
 				currentPlaylistSnapshot.set(playlist.snapshot_id);
 				
+				// Clear track playability cache since tracks may have changed
+				clearTrackPlayabilityCache();
+				
 				// Update the current track index if the current track still exists
 				if ($currentTrack) {
 					const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
 					if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
 						currentTrackIndex.set(newIndex);
-						console.log(`Updated current track index to ${newIndex}`);
 					} else if (newIndex < 0) {
-						// Current track was removed from the playlist
 						console.log('Current track no longer in playlist');
 					}
 				}
@@ -134,8 +129,7 @@
 	}
 
 	async function playTrack(track: SpotifyTrack) {
-		console.log('=== PLAY TRACK START ===');
-		console.log('Attempting to play track:', track.name);
+		console.log('Playing track:', track.name);
 		
 		// Check if track is playable before attempting to play
 		if (!isTrackPlayable(track)) {
@@ -145,11 +139,9 @@
 		}
 		
 		const deviceId = webPlaybackService.getDeviceId();
-		console.log('Device ID:', deviceId);
 		
 		// Find track index for proper playlist navigation
 		const trackIndex = tracks.findIndex(t => t.id === track.id);
-		console.log(`Track index: ${trackIndex} for track: ${track.name}`);
 		
 		// Immediately update UI state for better responsiveness, but only for non-web player
 		// Let web player state changes handle track updates to avoid flashing
@@ -233,8 +225,6 @@
 				alert(`Failed to play track: ${errorMessage}. Make sure you have Spotify Premium and try again.`);
 			}
 		}
-		
-		console.log('=== PLAY TRACK END ===');
 	}
 
 	async function togglePlayPause(track: SpotifyTrack) {

@@ -28,12 +28,6 @@
 					console.log('Initializing Web Playback SDK...');
 					await webPlaybackService.initialize();
 					console.log('Web Playback SDK ready');
-					
-					// Wait a bit for the device to be ready
-					setTimeout(() => {
-						const deviceId = webPlaybackService.getDeviceId();
-						console.log('Device ID after initialization:', deviceId);
-					}, 2000);
 				} catch (error) {
 					console.error('Failed to initialize Web Playback SDK:', error);
 				}
