@@ -51,20 +51,12 @@ class WebPlaybackService {
     private player: SpotifyPlayer | null = null;
     private deviceId: string | null = null;
     private isInitialized = false;
-    private instanceId: string;
 
     constructor() {
-        this.instanceId = this.generateInstanceId();
-    }
-
-    private generateInstanceId(): string {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substring(2, 8);
-        return `${timestamp}-${random}`;
     }
 
     private getDeviceName(): string {
-        return `Motify Web Player (${this.instanceId})`;
+        return 'Motify Web Player';
     }
 
     async initialize(): Promise<void> {
@@ -163,8 +155,6 @@ class WebPlaybackService {
 		this.player.addListener('player_state_changed', (state) => {
 			if (!state) return;
 
-			console.log('Player state changed:', state);
-
 			const newTrack = state.track_window.current_track;
 			const newPlaying = !state.paused;
 			const newPosition = state.position / 1000;
@@ -187,18 +177,6 @@ class WebPlaybackService {
 		this.player.addListener('ready', async ({ device_id }) => {
 			console.log('Spotify Web Player ready with Device ID:', device_id);
 			this.deviceId = device_id;
-
-			const actualDeviceId = await this.waitForDeviceRegistration();
-			if (actualDeviceId) {
-				if (actualDeviceId !== device_id) {
-					console.log('Device registered with different ID. SDK ID:', device_id, 'Actual ID:', actualDeviceId);
-				}
-				this.deviceId = actualDeviceId;
-				this.isInitialized = true;
-			} else {
-				console.warn('Device did not appear in /me/player/devices in time:', device_id);
-				this.isInitialized = true;
-			}
 		});
 
 		this.player.addListener('not_ready', ({ device_id }) => {
@@ -217,39 +195,6 @@ class WebPlaybackService {
 	getDeviceId(): string | null {
 		return this.deviceId;
 	}
-
-
-    private async waitForDeviceRegistration(timeoutMs = 5000): Promise<string | null> {
-        const start = Date.now();
-        const deviceName = this.getDeviceName();
-        
-        while (Date.now() - start < timeoutMs) {
-            const devices = await spotifyAPI.getAvailableDevices();
-            const ourDevice = devices.devices?.find((d: any) => d.name === deviceName);
-            
-            if (ourDevice) {
-                return ourDevice.id;
-            }
-            
-            if (devices.devices?.some((d: any) => d.id === this.deviceId)) {
-                return this.deviceId;
-            }
-
-            if ((Date.now() - start) % 1000 < 200) {
-                console.log('Waiting for device registration...');
-            }
-            await new Promise(res => setTimeout(res, 200));
-        }
-        return null;
-    }
-
-    getInstanceInfo(): { instanceId: string; deviceName: string; deviceId: string | null } {
-        return {
-            instanceId: this.instanceId,
-            deviceName: this.getDeviceName(),
-            deviceId: this.deviceId
-        };
-    }
 
 	async activateDevice(): Promise<void> {
 		if (!this.deviceId) return;
