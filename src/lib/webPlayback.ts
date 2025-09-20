@@ -49,11 +49,29 @@ interface SpotifyPlaybackState {
 }
 
 class WebPlaybackService {
-	private player: SpotifyPlayer | null = null;
-	private deviceId: string | null = null;
-	private isInitialized = false;
+    private player: SpotifyPlayer | null = null;
+    private deviceId: string | null = null;
+    private isInitialized = false;
+    private instanceId: string;
 
-	async initialize(): Promise<void> {
+    constructor() {
+        // Generate a unique instance ID for this browser session
+        this.instanceId = this.generateInstanceId();
+    }
+
+    private generateInstanceId(): string {
+        // Create a unique ID with timestamp and random component
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        return `${timestamp}-${random}`;
+    }
+
+    private getDeviceName(): string {
+        // Include instance ID in device name to make it unique
+        return `Motify Web Player (${this.instanceId})`;
+    }
+
+    async initialize(): Promise<void> {
 		if (this.isInitialized) return;
 
 		return new Promise((resolve, reject) => {
@@ -103,7 +121,7 @@ class WebPlaybackService {
 		}
 
 		this.player = new window.Spotify.Player({
-			name: 'Motify Web Player',
+			name: this.getDeviceName(), // Use unique device name
 			getOAuthToken: (cb) => {
 				// Always get the freshest token and handle errors gracefully
 				spotifyAPI.ensureValidToken().then(token => {
@@ -230,17 +248,20 @@ class WebPlaybackService {
 
     private async waitForDeviceRegistration(timeoutMs = 5000): Promise<string | null> {
         const start = Date.now();
+        const deviceName = this.getDeviceName();
+        
         while (Date.now() - start < timeoutMs) {
             const devices = await spotifyAPI.getAvailableDevices();
             
-            // Look for our device by name since the ID might not match
+            // Look for our specific device by the unique name
             const ourDevice = devices.devices?.find((d: any) => 
-                d.name === 'Motify Web Player'
+                d.name === deviceName && 
+                d.type === 'Computer'
             );
             
             if (ourDevice) {
                 console.log('Found our device:', ourDevice);
-                return ourDevice.id; // Return the actual device ID from the API
+                return ourDevice.id;
             }
             
             // Also check if the original device ID matches (fallback)
@@ -248,10 +269,20 @@ class WebPlaybackService {
                 console.log('Original device ID found in API');
                 return this.deviceId;
             }
-
+            
+            console.log('Waiting for device registration. Looking for:', deviceName);
             await new Promise(res => setTimeout(res, 200));
         }
         return null;
+    }
+
+    // Add method to get instance info for debugging
+    getInstanceInfo(): { instanceId: string; deviceName: string; deviceId: string | null } {
+        return {
+            instanceId: this.instanceId,
+            deviceName: this.getDeviceName(),
+            deviceId: this.deviceId
+        };
     }
 
 	async activateDevice(): Promise<void> {
