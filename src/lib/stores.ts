@@ -14,6 +14,7 @@ export const trackDuration = writable(0);
 export const isAuthenticated = writable(false);
 export const currentPlaylistSnapshot = writable<string | null>(null);
 export const isRefreshingPlaylist = writable(false);
+export const isPlaylistSelectorOpen = writable(false);
 
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;
