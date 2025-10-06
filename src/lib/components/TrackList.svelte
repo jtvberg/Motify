@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist } from '$lib/stores';
 	import { spotifyAPI, getOperationalUri, isTrackRelinked } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';

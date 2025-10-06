@@ -4,7 +4,7 @@
         <a href="https://jtvberg.com" target="_blank" rel="noopener noreferrer">jtvberg</a>.
         Source code on
         <a href="https://github.com/jtvberg/Motify" target="_blank" rel="noopener noreferrer">GitHub</a>.
-        Version 0.5.0
+        Version 0.5.1
     </p>
 </footer>
 <style>

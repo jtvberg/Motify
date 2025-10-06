@@ -3,7 +3,7 @@
 	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
-	import { formatTime, isTrackPlayable, findNextPlayableTrack } from '$lib/utils';
+	import { formatTime, findNextPlayableTrack } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
@@ -262,7 +262,9 @@
 				{/if}
 			</div>
 			<div class="control-buttons">
-				<!-- <div class="track-button track-remove far fa-trash-can fa-xl" role="button" aria-label="Remove track"></div> -->
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div class="track-button track-remove far fa-trash-can fa-xl" role="button" on:click={() => console.log('remove track')} aria-label="Remove track"></div>
 				<button class="control-btn" on:click={previousTrack} aria-label="Previous track">
 					<i class="fas fa-step-backward"></i>
 				</button>
@@ -272,7 +274,9 @@
 				<button class="control-btn" on:click={nextTrack} aria-label="Next track">
 					<i class="fas fa-step-forward"></i>
 				</button>
-				<!-- <div class="track-button track-move far fa-square-plus fa-xl" role="button" aria-label="Add track"></div> -->
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div class="track-button track-move far fa-square-plus fa-xl" role="button" on:click={() => console.log('move track')} aria-label="Add track"></div>
 			</div>
 
 			<div class="progress-container">
