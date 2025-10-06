@@ -296,71 +296,71 @@
 	}
 
 	async function moveTrack(track: SpotifyTrack) {
-    if (!$targetPlaylist || !$selectedPlaylist) return;
-    
-    const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
-    const currentIndex = tracks.findIndex(t => t.id === track.id);
-    
-    try {
-        const operationalUri = getOperationalUri(track);
-        const isRelinked = isTrackRelinked(track);
-        console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+		if (!$targetPlaylist || !$selectedPlaylist) return;
+		
+		const isCurrentlyPlaying = $currentTrack && $currentTrack.id === track.id;
+		const currentIndex = tracks.findIndex(t => t.id === track.id);
+		
+		try {
+			const operationalUri = getOperationalUri(track);
+			const isRelinked = isTrackRelinked(track);
+			console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
 
-        const targetTracks = await handleAPIError(() => spotifyAPI.getPlaylistTracks($targetPlaylist.id));
-        const trackAlreadyExists = targetTracks && targetTracks.some(t => t.id === track.id);
-        
-        if (!trackAlreadyExists) {
-            await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
-        }
+			const targetTracks = await handleAPIError(() => spotifyAPI.getPlaylistTracks($targetPlaylist.id));
+			const trackAlreadyExists = targetTracks && targetTracks.some(t => t.id === track.id);
+			
+			if (!trackAlreadyExists) {
+				await spotifyAPI.addTrackToPlaylist($targetPlaylist.id, operationalUri);
+			}
 
-        await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
+			await spotifyAPI.removeTrackFromPlaylist($selectedPlaylist.id, operationalUri);
 
-        tracks = tracks.filter(t => t.id !== track.id);
-        currentTracks.set(tracks);
+			tracks = tracks.filter(t => t.id !== track.id);
+			currentTracks.set(tracks);
 
-        if (trackAlreadyExists) {
-            toastStore.add({
-                message: `"${track.name}" was already in ${$targetPlaylist.name}, removed from ${$selectedPlaylist.name}`,
-                type: 'info'
-            });
-        } else {
-            toastStore.add({
-                message: `Moved "${track.name}" from ${$selectedPlaylist.name} to ${$targetPlaylist.name}`,
-                type: 'success'
-            });
-        }
+			if (trackAlreadyExists) {
+				toastStore.add({
+					message: `"${track.name}" was already in ${$targetPlaylist.name}, removed from ${$selectedPlaylist.name}`,
+					type: 'info'
+				});
+			} else {
+				toastStore.add({
+					message: `Moved "${track.name}" from ${$selectedPlaylist.name} to ${$targetPlaylist.name}`,
+					type: 'success'
+				});
+			}
 
-        if (isCurrentlyPlaying && tracks.length > 0) {
-            const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
+			if (isCurrentlyPlaying && tracks.length > 0) {
+				const startSearchIndex = Math.min(currentIndex, tracks.length - 1);
 
-            if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
-                const nextTrack = tracks[startSearchIndex];
-                console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
-                await playTrack(nextTrack);
-            } else {
-                const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
-                
-                if (nextPlayableIndex !== -1) {
-                    const nextTrack = tracks[nextPlayableIndex];
-                    console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
-                    await playTrack(nextTrack);
-                } else {
-                    console.log('No playable tracks remaining after move');
-                    currentTrack.set(null);
-                    currentTrackIndex.set(-1);
-                    isPlaying.set(false);
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Failed to move track:', error);
+				if (startSearchIndex >= 0 && isTrackPlayable(tracks[startSearchIndex])) {
+					const nextTrack = tracks[startSearchIndex];
+					console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
+					await playTrack(nextTrack);
+				} else {
+					const nextPlayableIndex = findNextPlayableTrack(tracks, startSearchIndex, 1);
+					
+					if (nextPlayableIndex !== -1) {
+						const nextTrack = tracks[nextPlayableIndex];
+						console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
+						await playTrack(nextTrack);
+					} else {
+						console.log('No playable tracks remaining after move');
+						currentTrack.set(null);
+						currentTrackIndex.set(-1);
+						isPlaying.set(false);
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Failed to move track:', error);
 
-        toastStore.add({
-            message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
-            type: 'error'
-        });
-    }
-}
+			toastStore.add({
+				message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
+		}
+	}
 </script>
 
 <div class="track-list-container">
@@ -415,8 +415,48 @@
 					{@const isCurrentTrack = $currentTrack && $currentTrack.id === track.id}
 					{@const trackPlayable = isTrackPlayable(track)}
 					<div class="track-item" class:current-track={isCurrentTrack} class:unavailable-track={!trackPlayable}>
-						<span class="track-number">{index + 1}</span>
-						<div class="track-title">
+						<span class="track-number">
+						{#if isCurrentTrack}
+							{#if 1 == 1}
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_interactive_supports_focus -->
+								<div 
+									class="action-btn fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}" 
+									on:click={() => togglePlayPause(track)}
+									aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
+									role="button"
+								>
+								</div>
+							{:else}
+								<div 
+									class="action-btn play-btn fas fa-ban disabled"
+									aria-label="Track unavailable"
+									title="This track is not available for playback"
+								>
+								</div>
+							{/if}
+						{:else}
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_interactive_supports_focus -->
+							<div 
+								class="track-number-btn"
+								on:click={() => togglePlayPause(track)}
+								aria-label="Play track"
+								role="button"
+								>
+								<span class="track-number-index">{index + 1}</span>
+								<i class="track-number-icon fas fa-play"></i>
+							</div>
+						{/if}
+						</span>
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_interactive_supports_focus -->
+						<div 
+							class="track-title"
+							on:click={() => togglePlayPause(track)}
+							aria-label="Play track"
+							role="button"
+						>
 							<img 
 								src={track.album.images[2]?.url || track.album.images[0]?.url} 
 								alt="Album cover"
@@ -433,41 +473,26 @@
 						<span class="track-artist" class:unavailable-text={!trackPlayable}>{track.artists.map(a => a.name).join(', ')}</span>
 						<span class="track-album" class:unavailable-text={!trackPlayable}>{track.album.name}</span>
 						<span class="track-duration" class:unavailable-text={!trackPlayable}>{formatDuration(track.duration_ms)}</span>
-						<div class="track-actions">
-							{#if trackPlayable}
-								<button 
-									class="action-btn play-btn" 
-									class:pause-btn={isCurrentTrack && $isPlaying}
-									on:click={() => togglePlayPause(track)}
-									aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
-								>
-									<i class="fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}"></i>
-								</button>
-							{:else}
-								<button 
-									class="action-btn play-btn disabled"
-									disabled
-									aria-label="Track unavailable"
-									title="This track is not available for playback"
-								>
-									<i class="fas fa-ban"></i>
-								</button>
-							{/if}
-							<button 
-								class="action-btn remove-btn" 
+						<div class="track-actions">							
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_interactive_supports_focus -->
+							<div 
+								class="action-btn remove-btn far fa-trash-can fa-xl" 
 								on:click={() => removeTrack(track)}
 								aria-label="Remove from playlist"
+								role="button"
 							>
-								<i class="fas fa-trash"></i>
-							</button>
+							</div>
 							{#if trackPlayable && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
-								<button 
-									class="action-btn move-btn" 
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_interactive_supports_focus -->
+								<div 
+									class="action-btn move-btn far fa-square-plus fa-xl" 
 									on:click={() => moveTrack(track)}
 									aria-label="Move to target playlist"
+									role="button"
 								>
-									<i class="fas fa-arrow-right"></i>
-								</button>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -483,10 +508,10 @@
 </div>
 
 <style>
-
 	h2 {
 		margin: 0;
 	}
+
 	.track-list-container {
 		background: rgba(255, 255, 255, 0.05);
 		backdrop-filter: blur(10px);
@@ -584,6 +609,7 @@
 
 	.track-list {
 		padding: 0;
+		line-height: 1;
 	}
 
 	.track-header, .track-item {
@@ -606,6 +632,7 @@
 	.track-item {
 		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 		transition: background-color 0.2s ease;
+		content-visibility: auto;
 	}
 
 	.track-item:hover {
@@ -614,7 +641,7 @@
 
 	.track-item.current-track {
 		background: rgba(29, 185, 84, 0.1);
-		border-left: 3px solid #1db954;
+		box-shadow: inset 3px 0px 0px 0px #1db954;
 	}
 
 	.track-item.current-track:hover {
@@ -626,8 +653,25 @@
 	}
 
 	.track-number {
-		text-align: center;
+		display: flex;
+		justify-content: center;
 		color: #b3b3b3;
+	}
+
+	.track-number-btn:hover {
+		cursor: pointer;
+	}
+
+	.track-number-icon {
+		display: none;
+	}
+
+	.track-number-btn:hover .track-number-index {
+		display: none;
+	}
+
+	.track-number-btn:hover .track-number-icon {
+		display: inline;
 	}
 
 	.track-title {
@@ -671,7 +715,6 @@
 
 	.track-actions {
 		display: flex;
-		gap: 0.5rem;
 		justify-content: center;
 	}
 
@@ -698,31 +741,21 @@
 		transform: scale(1.1);
 	}
 
-	.pause-btn {
-		background: #ff9500 !important;
-	}
-
-	.pause-btn:hover {
-		background: #ffad33 !important;
-	}
-
 	.remove-btn {
-		background: rgba(255, 69, 58, 0.8);
-		color: white;
+		color: #b3b3b3;
 	}
 
 	.remove-btn:hover {
-		background: rgba(255, 69, 58, 1);
+		color: rgba(255, 69, 58, 1);
 		transform: scale(1.1);
 	}
 
 	.move-btn {
-		background: rgba(0, 122, 255, 0.8);
-		color: white;
+		color: #b3b3b3;
 	}
 
 	.move-btn:hover {
-		background: rgba(0, 122, 255, 1);
+		color: rgba(0, 122, 255, 0.8);
 		transform: scale(1.1);
 	}
 
@@ -804,13 +837,9 @@
 		}
 
 		.track-header, .track-item {
-			grid-template-columns: 1fr 208px;
+			grid-template-columns: 1fr 120px;
 			gap: 1rem;
 			align-items: unset;
-		}
-
-		.track-item {
-			padding-bottom: .6rem;
 		}
 
 		.track-number, .track-artist, .track-duration {
@@ -826,6 +855,7 @@
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 0.5rem;
+			cursor: pointer;
 		}
 
 		.track-name {
@@ -834,6 +864,7 @@
 
 		.track-actions {
 			justify-content: flex-end;
+			align-items: center;
 		}
 
 		.action-btn {

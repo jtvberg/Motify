@@ -249,6 +249,9 @@
 				alt="Album cover"
 				class="album-cover"
 			/>
+		</div>
+
+		<div class="player-controls">
 			<div class="track-details">
 				<div class="track-name">{$currentTrack.name}</div>
 				<div class="artist-name">{$currentTrack.artists.map(a => a.name).join(', ')}</div>
@@ -258,10 +261,8 @@
 					</div>
 				{/if}
 			</div>
-		</div>
-
-		<div class="player-controls">
 			<div class="control-buttons">
+				<!-- <div class="track-button far fa-trash-can fa-xl" role="button" aria-label="Remove track"></div> -->
 				<button class="control-btn" on:click={previousTrack} aria-label="Previous track">
 					<i class="fas fa-step-backward"></i>
 				</button>
@@ -271,6 +272,7 @@
 				<button class="control-btn" on:click={nextTrack} aria-label="Next track">
 					<i class="fas fa-step-forward"></i>
 				</button>
+				<!-- <div class="track-button far fa-square-plus fa-xl" role="button" aria-label="Add track"></div> -->
 			</div>
 
 			<div class="progress-container">
@@ -301,21 +303,21 @@
 		margin-bottom: 2rem;
 		display: flex;
 		align-items: center;
-		gap: 2rem;
+		gap: 1rem;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	.track-info {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 1rem;
 		min-width: 0;
-		flex: 1;
 	}
 
 	.album-cover {
-		width: 72px;
-		height: 72px;
+		width: 200px;
+		height: 200px;
 		border-radius: 8px;
 		object-fit: cover;
 	}
@@ -373,6 +375,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		padding-top: 2px;
 	}
 
 	.control-btn:hover {
@@ -382,7 +385,6 @@
 
 	.play-btn {
 		background: #1db954;
-		color: white;
 		border: none;
 		width: 50px;
 		height: 50px;
@@ -398,6 +400,13 @@
 	.play-btn:hover {
 		background: #1ed760;
 		transform: scale(1.1);
+	}
+
+	.track-button {
+		color: #b3b3b3;
+		cursor: pointer;
+		transition: color 0.3s ease;
+		margin-inline: 1rem;
 	}
 
 	.progress-container {
@@ -452,6 +461,14 @@
 
 		.track-info {
 			width: 100%;
+		}
+
+		.track-details {
+			display: flex;
+			min-width: 0;
+			flex: 1;
+			flex-direction: column;
+			align-items: center;
 		}
 
 		.player-controls {
