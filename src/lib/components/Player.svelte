@@ -293,7 +293,7 @@
 
 <style>
 	.player {
-		background: rgba(0, 0, 0, 0.8);
+		background: #000000cc;
 		backdrop-filter: blur(20px);
 		border-radius: 12px;
 		padding: 1.5rem;
@@ -301,7 +301,7 @@
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid #ffffff1a;
 	}
 
 	.track-info {
@@ -334,14 +334,14 @@
 	}
 
 	.artist-name {
-		color: #b3b3b3;
+		color: #b3b3b3ff;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.playlist-position {
-		color: #1db954;
+		color: #1db954ff;
 		font-size: 0.8rem;
 		margin-top: 0.25rem;
 	}
@@ -361,8 +361,8 @@
 	}
 
 	.control-btn {
-		background: rgba(255, 255, 255, 0.1);
-		color: #ffffff;
+		background: #ffffff1a;
+		color: #ffffffff;
 		border: none;
 		width: 40px;
 		height: 40px;
@@ -376,7 +376,7 @@
 	}
 
 	.play-btn {
-		background: #1db954;
+		background: #1db954ff;
 		color: black;
 		border: none;
 		width: 50px;
@@ -391,7 +391,7 @@
 	}
 
 	.track-button {
-		color: #b3b3b3;
+		color: #b3b3b3ff;
 		cursor: pointer;
 		transition: color 0.3s ease;
 		margin-inline: 1rem;
@@ -400,7 +400,7 @@
 	.track-button-disabled {
 		opacity: 0.5;
 		cursor: not-allowed !important;
-		color: #666666 !important;
+		color: #666666ff !important;
 	}
 
 	.progress-container {
@@ -411,7 +411,7 @@
 
 	.time {
 		font-size: 0.9rem;
-		color: #b3b3b3;
+		color: #b3b3b3ff;
 		min-width: 40px;
 		text-align: center;
 	}
@@ -419,7 +419,7 @@
 	.progress-bar {
 		flex: 1;
 		height: 4px;
-		background: rgba(255, 255, 255, 0.2);
+		background: #ffffff33;
 		border-radius: 2px;
 		outline: none;
 		cursor: pointer;
@@ -433,18 +433,18 @@
 		width: 12px;
 		height: 12px;
 		border-radius: 50%;
-		background: #1db954;
+		background: #1db954ff;
 		cursor: pointer;
-		border: 2px solid #ffffff;
+		border: 2px solid #ffffffff;
 	}
 
 	.progress-bar::-moz-range-thumb {
 		width: 12px;
 		height: 12px;
 		border-radius: 50%;
-		background: #1db954;
+		background: #1db954ff;
 		cursor: pointer;
-		border: 2px solid #ffffff;
+		border: 2px solid #ffffffff;
 	}
 
 	@media (max-width: 768px) {
@@ -472,25 +472,25 @@
 
 	@media (hover: hover) {
 		.control-btn:hover {
-			background: rgba(255, 255, 255, 0.2);
+			background: #ffffff33;
 			transform: scale(1.1);
 		}
 
 		.play-btn:hover {
-			background: #1ed760;
+			background: #1ed760ff;
 			transform: scale(1.1);
 		}
 
 		.track-remove:hover {
-			color: rgba(255, 69, 58, 1);
+			color: #ff453aff;
 		}
 
 		.track-move:hover {
-			color: rgba(0, 122, 255, 0.8);
+			color: #007affcc;
 		}
 
 		.track-button-disabled:hover {
-			color: #666666 !important;
+			color: #666666ff !important;
 			transform: none !important;
 		}
 	}

@@ -65,7 +65,7 @@
 	.app-header h1 {
 		font-size: 3rem;
 		font-weight: 700;
-		background: linear-gradient(45deg, #1db954, #1ed760);
+		background: linear-gradient(45deg, #1db954ff, #1ed760ff);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
@@ -76,7 +76,7 @@
 	}
 
 	.app-header i {
-		color: #1db954;
+		color: #1db954ff;
 	}
 
 	@media (max-width: 768px) {

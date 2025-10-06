@@ -23,8 +23,8 @@
 <style>
 	:global(body) {
 		margin: 0;
-		background-color: #121212;
-		color: #f3f3f3;
+		background-color: #121212ff;
+		color: #f3f3f3ff;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	}
 

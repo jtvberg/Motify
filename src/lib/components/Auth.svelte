@@ -54,38 +54,38 @@
 	}
 
 	.auth-card {
-		background: rgba(255, 255, 255, 0.1);
+		background: #ffffff1a;
 		backdrop-filter: blur(10px);
 		border-radius: 16px;
 		padding: 3rem;
 		text-align: center;
 		max-width: 400px;
 		width: 100%;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		border: 1px solid #ffffff33;
 	}
 
 	.auth-header h1 {
 		font-size: 2.5rem;
 		margin: 1rem 0 0.5rem 0;
-		background: linear-gradient(45deg, #1db954, #1ed760);
+		background: linear-gradient(45deg, #1db954ff, #1ed760ff);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
 	}
 
 	.auth-header p {
-		color: #b3b3b3;
+		color: #b3b3b3ff;
 		margin-bottom: 2rem;
 	}
 
 	.auth-content p {
 		margin-bottom: 2rem;
-		color: #e1e1e1;
+		color: #e1e1e1ff;
 	}
 
 	.auth-button {
-		background: #1db954;
-		color: #f3f3f3;
+		background: #1db954ff;
+		color: #f3f3f3ff;
 		border: none;
 		padding: 1rem 2rem;
 		border-radius: 50px;
@@ -99,12 +99,12 @@
 	}
 
 	.auth-button:hover {
-		background: #1ed760;
+		background: #1ed760ff;
 		transform: translateY(-2px);
-		box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
+		box-shadow: 0 8px 25px #1db9544d;
 	}
 
 	.fa-spotify {
-		color: #1db954;
+		color: #1db954ff;
 	}
 </style>

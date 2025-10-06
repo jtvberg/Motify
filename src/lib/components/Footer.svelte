@@ -12,11 +12,11 @@
         text-align: center;
         padding: 1rem 0;
         font-size: 0.9rem;
-        color: #bbb;
+        color: #bbbbbbff;
     }
 
     .app-footer a {
-        color: #1db954;
+        color: #1db954ff;
         text-decoration: none;
     }
 

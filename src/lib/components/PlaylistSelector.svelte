@@ -140,7 +140,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0, 0, 0, 0.8);
+		background: #000000cc;
 		backdrop-filter: blur(5px);
 		display: flex;
 		align-items: center;
@@ -150,14 +150,14 @@
 	}
 
 	.modal-content {
-		background: rgba(18, 18, 18, 0.95);
+		background: #121212f2;
 		border-radius: 16px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid #ffffff1a;
 		width: 100%;
 		max-width: 800px;
 		max-height: 90vh;
 		overflow-y: auto;
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		box-shadow: 0 20px 60px #00000080;
 	}
 
 	.modal-header {
@@ -165,20 +165,20 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid #ffffff1a;
 	}
 
 	.modal-header h2 {
 		font-size: 1.5rem;
 		font-weight: 600;
 		margin: 0;
-		color: #ffffff;
+		color: #ffffffff;
 	}
 
 	.close-btn {
-		background: rgba(255, 255, 255, 0.1);
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: #ffffff1a;
+		color: #ffffffff;
+		border: 1px solid #ffffff33;
 		border-radius: 8px;
 		width: 40px;
 		height: 40px;
@@ -191,8 +191,8 @@
 	}
 
 	.close-btn:hover {
-		background: rgba(255, 255, 255, 0.2);
-		color: #ff6b6b;
+		background: #ffffff33;
+		color: #ff6b6bff;
 	}
 
 	.playlist-selector {
@@ -226,14 +226,14 @@
 	}
 
 	.profile-pic-fallback {
-		background: linear-gradient(45deg, #1db954, #1ed760);
+		background: linear-gradient(45deg, #1db954ff, #1ed760ff);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: bold;
 		font-size: 1.2rem;
-		color: #f3f3f3;
-		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+		color: #f3f3f3ff;
+		text-shadow: 0 1px 2px #00000033;
 	}
 
 	.username {
@@ -248,9 +248,9 @@
 	}
 
 	.logout-btn {
-		background: rgba(255, 255, 255, 0.1);
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: #ffffff1a;
+		color: #ffffffff;
+		border: 1px solid #ffffff33;
 		border-radius: 8px;
 		cursor: pointer;
 		padding-top: 3px;
@@ -262,7 +262,7 @@
 	}
 
 	.logout-btn:hover {
-		background: rgba(255, 255, 255, 0.2);
+		background: #ffffff33;
 	}
 
 	.selectors {
@@ -275,8 +275,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		min-width: 0; /* Allow flex items to shrink below content size */
-		overflow: hidden; /* Prevent content from breaking out */
+		min-width: 0;
+		overflow: hidden;
 	}
 
 	.selector-group label {
@@ -284,13 +284,13 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #e1e1e1;
+		color: #e1e1e1ff;
 	}
 
 	select {
-		background: rgba(255, 255, 255, 0.1);
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: #ffffff1a;
+		color: #ffffffff;
+		border: 1px solid #ffffff33;
 		padding: 0.75rem;
 		border-radius: 8px;
 		font-size: 1rem;
@@ -304,18 +304,18 @@
 	}
 
 	select:hover {
-		border-color: #1db954;
+		border-color: #1db954ff;
 	}
 
 	select:focus {
 		outline: none;
-		border-color: #1db954;
-		box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+		border-color: #1db954ff;
+		box-shadow: 0 0 0 2px #1db95433;
 	}
 
 	option {
-		background: #2a2a2a;
-		color: #ffffff;
+		background: #2a2a2aff;
+		color: #ffffffff;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		overflow: hidden;

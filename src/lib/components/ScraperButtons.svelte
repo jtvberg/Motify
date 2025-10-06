@@ -147,9 +147,9 @@
 	}
 	
 	.scraper-btn {
-		background: rgba(255, 255, 255, 0.1);
-		color: #ffffff;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: #ffffff1a;
+		color: #ffffffff;
+		border: 1px solid #ffffff33;
 		padding: 0.5rem 0.75rem;
 		border-radius: 8px;
 		cursor: pointer;
@@ -164,7 +164,7 @@
 	}
 	
 	.scraper-btn:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.2);
+		background: #ffffff33;
 		transform: translateY(-1px);
 	}
 	
@@ -175,13 +175,13 @@
 	}
 	
 	.scraper-btn.discover-weekly:hover:not(:disabled) {
-		background: rgba(29, 185, 84, 0.2);
-		border-color: #1db954;
+		background: #1db95433;
+		border-color: #1db954ff;
 	}
 	
 	.scraper-btn.release-radar:hover:not(:disabled) {
-		background: rgba(30, 215, 96, 0.2);
-		border-color: #1ed760;
+		background: #1ed76033;
+		border-color: #1ed760ff;
 	}
 	
 	.scraper-btn i {

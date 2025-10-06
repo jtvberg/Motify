@@ -198,20 +198,20 @@
 
 	button {
 		padding: 10px 15px;
-		background: #1db954;
-		color: #f3f3f3;
+		background: #1db954ff;
+		color: #f3f3f3ff;
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
 	}
 
 	button:hover {
-		background: #1ed760;
+		background: #1ed760ff;
 	}
 
 	.logs {
 		margin: 20px 0;
-		background: #2a2a2a;
+		background: #2a2a2aff;
 		padding: 15px;
 		border-radius: 5px;
 		max-height: 400px;
@@ -222,19 +222,19 @@
 		font-family: monospace;
 		font-size: 12px;
 		margin: 5px 0;
-		color: #fff;
+		color: #ffffffff;
 	}
 
 	.available-devices {
 		margin: 20px 0;
-		background: #2a2a2a;
+		background: #2a2a2aff;
 		padding: 15px;
 		border-radius: 5px;
 	}
 
 	.playback-state {
 		margin: 20px 0;
-		background: #2a2a2a;
+		background: #2a2a2aff;
 		padding: 15px;
 		border-radius: 5px;
 	}
@@ -246,20 +246,20 @@
 	}
 
 	h1, h2 {
-		color: #fff;
+		color: #ffffffff;
 	}
 
 	.everynoise-section {
 		margin: 20px 0;
 		padding: 20px;
-		background: #1a1a1a;
+		background: #1a1a1aff;
 		border-radius: 8px;
-		border: 1px solid #333;
+		border: 1px solid #333333ff;
 	}
 
 	.everynoise-section h2 {
 		margin-top: 0;
-		color: #1db954;
+		color: #1db954ff;
 	}
 
 	.input-group {
@@ -277,28 +277,28 @@
 		width: 100%;
 		max-width: 400px;
 		padding: 10px;
-		border: 1px solid #444;
+		border: 1px solid #444444ff;
 		border-radius: 4px;
-		background: #2a2a2a;
-		color: #fff;
+		background: #2a2a2aff;
+		color: #ffffffff;
 		font-size: 14px;
 	}
 
 	.input-group input:focus {
 		outline: none;
-		border-color: #1db954;
+		border-color: #1db954ff;
 	}
 
 	.track-ids-result {
 		margin-top: 20px;
 		padding: 15px;
-		background: #2a2a2a;
+		background: #2a2a2aff;
 		border-radius: 6px;
 	}
 
 	.track-ids-result h3 {
 		margin-top: 0;
-		color: #1db954;
+		color: #1db954ff;
 	}
 
 	.track-ids-list {
@@ -310,6 +310,6 @@
 
 	.track-id-item {
 		padding: 2px 0;
-		color: #ccc;
+		color: #ccccccff;
 	}
 </style>
