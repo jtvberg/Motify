@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
@@ -165,22 +165,36 @@
 	async function moveTrackHandler(track: SpotifyTrack) {
 		await moveTrack(track, tracks, stores, services, handleAPIError);
 	}
+
+	function openPlaylistSelector() {
+		isPlaylistSelectorOpen.set(true);
+	}
 </script>
 
 <div class="track-list-container">
 	{#if $selectedPlaylist}
 		<div class="playlist-header">
-			<img 
-				src={$selectedPlaylist.images[0]?.url || ''} 
-				alt="Playlist cover"
-				class="playlist-cover"
-			/>
+			{#if $selectedPlaylist.images?.[0]?.url}
+				<img 
+					src={$selectedPlaylist.images[0].url} 
+					alt="Playlist cover"
+					class="playlist-cover"
+				/>
+			{:else}
+				<div class="playlist-cover playlist-cover-default">
+					<i class="fas fa-music"></i>
+				</div>
+			{/if}
 			<div class="playlist-info">
 				<h2>{$selectedPlaylist.name}</h2>
 				<p>{$selectedPlaylist.description || 'No description'}</p>
 				<span class="track-count">{tracks.length} tracks</span>
 			</div>
 			<div class="playlist-actions">
+				<button class="playlist-selector-btn" on:click={openPlaylistSelector}>
+					<i class="fas fa-list"></i>
+					Change Playlists
+				</button>
 				<button 
 					class="refresh-btn" 
 					on:click={refreshPlaylist}
@@ -262,12 +276,18 @@
 							aria-label="Play track"
 							role="button"
 						>
-							<img 
-								src={track.album.images[2]?.url || track.album.images[0]?.url} 
-								alt="Album cover"
-								class="track-cover"
-								class:grayscale={!trackPlayable}
-							/>
+							{#if track.album.images[2]?.url || track.album.images[0]?.url}
+								<img 
+									src={track.album.images[2]?.url || track.album.images[0]?.url} 
+									alt="Album cover"
+									class="track-cover"
+									class:grayscale={!trackPlayable}
+								/>
+							{:else}
+								<div class="track-cover track-cover-default" class:grayscale={!trackPlayable}>
+									<i class="fas fa-compact-disc"></i>
+								</div>
+							{/if}
 							<span class="track-name" class:current-track-title={isCurrentTrack} class:unavailable-title={!trackPlayable}>
 								{track.name}
 								{#if !trackPlayable}
@@ -313,8 +333,11 @@
 		{/if}
 	{:else}
 		<div class="no-playlist">
-			<i class="fas fa-music fa-3x"></i>
-			<p>Select a playlist to view its tracks</p>
+			<i class="no-playlist-icon fas fa-music fa-3x"></i>
+			<button class="playlist-selector-btn" on:click={openPlaylistSelector}>
+				<i class="fas fa-list"></i>
+				Choose Playlists
+			</button>
 		</div>
 	{/if}
 </div>
@@ -347,6 +370,19 @@
 		object-fit: cover;
 	}
 
+	.playlist-cover-default {
+		background: rgba(255, 255, 255, 0.1);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.playlist-cover-default i {
+		font-size: 2.5rem;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
 	.playlist-info {
 		flex: 1;
 	}
@@ -372,7 +408,7 @@
 		gap: 1rem;
 	}
 
-	.refresh-btn {
+	.refresh-btn, .playlist-selector-btn {
 		background: rgba(255, 255, 255, 0.1);
 		color: #ffffff;
 		border: 1px solid rgba(255, 255, 255, 0.2);
@@ -393,6 +429,18 @@
 		transform: none;
 	}
 
+	.no-playlist-icon {
+		margin-bottom: 1rem;
+		color: #1db954;
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 2rem;
+	}
+
 	.spinning {
 		animation: spin 1s linear infinite;
 	}
@@ -402,15 +450,12 @@
 		to { transform: rotate(360deg); }
 	}
 
-	.loading, .empty-state, .no-playlist {
-		text-align: center;
+	.no-playlist {
 		padding: 3rem;
 		color: #b3b3b3;
-	}
-
-	.loading i, .empty-state i, .no-playlist i {
-		margin-bottom: 1rem;
-		color: #1db954;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}
 
 	.track-list {
@@ -491,6 +536,19 @@
 		border-radius: 4px;
 		object-fit: cover;
 		flex-shrink: 0;
+	}
+
+	.track-cover-default {
+		background: rgba(255, 255, 255, 0.1);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.track-cover-default i {
+		font-size: 1.2rem;
+		color: rgba(255, 255, 255, 0.7);
 	}
 
 	.track-artist, .track-album {
@@ -604,7 +662,7 @@
 			margin-top: 1rem;
 		}
 
-		.refresh-btn {
+		.refresh-btn, .playlist-selector-btn {
 			padding: 0.75rem 1.5rem;
 			font-size: 1rem;
 		}
@@ -691,7 +749,7 @@
 			background: rgba(255, 255, 255, 0.05);
 		}
 
-		.refresh-btn:hover:not(:disabled) {
+		.refresh-btn:hover:not(:disabled), .playlist-selector-btn:hover {
 			background: rgba(255, 255, 255, 0.2);
 			border-color: rgba(255, 255, 255, 0.3);
 			transform: translateY(-1px);

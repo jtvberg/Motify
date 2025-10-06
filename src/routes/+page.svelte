@@ -17,10 +17,6 @@
 	onDestroy(() => {
 		initializationService.destroy();
 	});
-
-	function openPlaylistSelector() {
-		isPlaylistSelectorOpen.set(true);
-	}
 </script>
 
 <svelte:head>
@@ -36,10 +32,6 @@
 					<i class="fab fa-spotify"></i>
 					Motify
 				</h1>
-				<button class="playlist-selector-btn" on:click={openPlaylistSelector}>
-					<i class="fas fa-list"></i>
-					Playlists
-				</button>
 			</header>
 
 			{#if $isPlaylistSelectorOpen}
@@ -68,7 +60,6 @@
 
 	.app-header {
 		text-align: center;
-		position: relative;
 	}
 
 	.app-header h1 {
@@ -88,30 +79,6 @@
 		color: #1db954;
 	}
 
-	.playlist-selector-btn {
-		position: absolute;
-		top: 50%;
-		right: 0;
-		transform: translateY(-50%);
-		background: rgba(29, 185, 84, 0.1);
-		color: #1db954;
-		border: 1px solid rgba(29, 185, 84, 0.3);
-		border-radius: 8px;
-		padding: 0.75rem 1rem;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 1rem;
-		font-weight: 600;
-	}
-
-	.playlist-selector-btn:hover {
-		background: rgba(29, 185, 84, 0.2);
-		border-color: #1db954;
-	}
-
 	@media (max-width: 768px) {
 		.main-app {
 			padding: 0;
@@ -119,12 +86,6 @@
 
 		.app-header h1 {
 			font-size: 2rem;
-		}
-
-		.playlist-selector-btn {
-			position: static;
-			transform: none;
-			margin-top: 1rem;
 		}
 	}
 </style>
