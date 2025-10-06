@@ -262,7 +262,7 @@
 				{/if}
 			</div>
 			<div class="control-buttons">
-				<!-- <div class="track-button far fa-trash-can fa-xl" role="button" aria-label="Remove track"></div> -->
+				<!-- <div class="track-button track-remove far fa-trash-can fa-xl" role="button" aria-label="Remove track"></div> -->
 				<button class="control-btn" on:click={previousTrack} aria-label="Previous track">
 					<i class="fas fa-step-backward"></i>
 				</button>
@@ -272,7 +272,7 @@
 				<button class="control-btn" on:click={nextTrack} aria-label="Next track">
 					<i class="fas fa-step-forward"></i>
 				</button>
-				<!-- <div class="track-button far fa-square-plus fa-xl" role="button" aria-label="Add track"></div> -->
+				<!-- <div class="track-button track-move far fa-square-plus fa-xl" role="button" aria-label="Add track"></div> -->
 			</div>
 
 			<div class="progress-container">
@@ -329,7 +329,7 @@
 
 	.track-name {
 		font-weight: 600;
-		font-size: 1.1rem;
+		font-size: 1.5rem;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -378,13 +378,9 @@
 		padding-top: 2px;
 	}
 
-	.control-btn:hover {
-		background: rgba(255, 255, 255, 0.2);
-		transform: scale(1.1);
-	}
-
 	.play-btn {
 		background: #1db954;
+		color: black;
 		border: none;
 		width: 50px;
 		height: 50px;
@@ -395,11 +391,6 @@
 		align-items: center;
 		justify-content: center;
 		font-size: 1.2rem;
-	}
-
-	.play-btn:hover {
-		background: #1ed760;
-		transform: scale(1.1);
 	}
 
 	.track-button {
@@ -473,6 +464,26 @@
 
 		.player-controls {
 			width: 100%;
+		}
+	}
+
+	@media (hover: hover) {
+		.control-btn:hover {
+			background: rgba(255, 255, 255, 0.2);
+			transform: scale(1.1);
+		}
+
+		.play-btn:hover {
+			background: #1ed760;
+			transform: scale(1.1);
+		}
+
+		.track-remove:hover {
+			color: rgba(255, 69, 58, 1);
+		}
+
+		.track-move:hover {
+			color: rgba(0, 122, 255, 0.8);
 		}
 	}
 </style>

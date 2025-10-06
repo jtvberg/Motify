@@ -417,15 +417,27 @@
 					<div class="track-item" class:current-track={isCurrentTrack} class:unavailable-track={!trackPlayable}>
 						<span class="track-number">
 						{#if isCurrentTrack}
-							{#if 1 == 1}
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_interactive_supports_focus -->
+							<div 
+								class="action-btn fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}" 
+								on:click={() => togglePlayPause(track)}
+								aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
+								role="button"
+							>
+							</div>
+						{:else}
+							{#if trackPlayable}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn fas {isCurrentTrack && $isPlaying ? 'fa-pause' : 'fa-play'}" 
+									class="track-number-btn"
 									on:click={() => togglePlayPause(track)}
-									aria-label={isCurrentTrack && $isPlaying ? 'Pause track' : 'Play track'}
+									aria-label="Play track"
 									role="button"
-								>
+									>
+									<span class="track-number-index">{index + 1}</span>
+									<i class="track-number-icon fas fa-play"></i>
 								</div>
 							{:else}
 								<div 
@@ -435,25 +447,14 @@
 								>
 								</div>
 							{/if}
-						{:else}
-							<!-- svelte-ignore a11y_click_events_have_key_events -->
-							<!-- svelte-ignore a11y_interactive_supports_focus -->
-							<div 
-								class="track-number-btn"
-								on:click={() => togglePlayPause(track)}
-								aria-label="Play track"
-								role="button"
-								>
-								<span class="track-number-index">{index + 1}</span>
-								<i class="track-number-icon fas fa-play"></i>
-							</div>
 						{/if}
 						</span>
 						<!-- svelte-ignore a11y_click_events_have_key_events -->
 						<!-- svelte-ignore a11y_interactive_supports_focus -->
 						<div 
 							class="track-title"
-							on:click={() => togglePlayPause(track)}
+							class:not-playable={!trackPlayable}
+   							on:click={() => trackPlayable && togglePlayPause(track)}
 							aria-label="Play track"
 							role="button"
 						>
@@ -493,6 +494,13 @@
 									role="button"
 								>
 								</div>
+							{:else}
+								<div 
+									class="action-btn move-btn far fa-square-plus fa-xl action-btn-disabled" 
+									aria-label="Move to target playlist"
+									title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+								>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -501,7 +509,7 @@
 		{/if}
 	{:else}
 		<div class="no-playlist">
-			<i class="fas fa-list-music fa-3x"></i>
+			<i class="fas fa-music fa-3x"></i>
 			<p>Select a playlist to view its tracks</p>
 		</div>
 	{/if}
@@ -529,8 +537,8 @@
 	}
 
 	.playlist-cover {
-		width: 96px;
-		height: 96px;
+		width: 112px;
+		height: 112px;
 		border-radius: 8px;
 		object-fit: cover;
 	}
@@ -575,12 +583,6 @@
 		font-weight: 500;
 	}
 
-	.refresh-btn:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.2);
-		border-color: rgba(255, 255, 255, 0.3);
-		transform: translateY(-1px);
-	}
-
 	.refresh-btn:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
@@ -612,6 +614,11 @@
 		line-height: 1;
 	}
 
+	.not-playable {
+		cursor: not-allowed !important;
+		pointer-events: none;
+	}
+
 	.track-header, .track-item {
 		display: grid;
 		grid-template-columns: 50px 2fr 1.5fr 1.5fr 100px 150px;
@@ -635,17 +642,9 @@
 		content-visibility: auto;
 	}
 
-	.track-item:hover {
-		background: rgba(255, 255, 255, 0.05);
-	}
-
 	.track-item.current-track {
 		background: rgba(29, 185, 84, 0.1);
 		box-shadow: inset 3px 0px 0px 0px #1db954;
-	}
-
-	.track-item.current-track:hover {
-		background: rgba(29, 185, 84, 0.15);
 	}
 
 	.track-item:last-child {
@@ -658,20 +657,8 @@
 		color: #b3b3b3;
 	}
 
-	.track-number-btn:hover {
-		cursor: pointer;
-	}
-
 	.track-number-icon {
 		display: none;
-	}
-
-	.track-number-btn:hover .track-number-index {
-		display: none;
-	}
-
-	.track-number-btn:hover .track-number-icon {
-		display: inline;
 	}
 
 	.track-title {
@@ -679,9 +666,10 @@
 		align-items: center;
 		gap: 1rem;
 		min-width: 0;
+		cursor: pointer;
 	}
 
-	.track-title span {
+	.track-title .track-name {
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -731,42 +719,28 @@
 		font-size: 1rem;
 	}
 
+	.action-btn-disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
 	.play-btn {
 		background: #1db954;
 		color: white;
-	}
-
-	.play-btn:hover {
-		background: #1ed760;
-		transform: scale(1.1);
 	}
 
 	.remove-btn {
 		color: #b3b3b3;
 	}
 
-	.remove-btn:hover {
-		color: rgba(255, 69, 58, 1);
-		transform: scale(1.1);
-	}
-
 	.move-btn {
 		color: #b3b3b3;
-	}
-
-	.move-btn:hover {
-		color: rgba(0, 122, 255, 0.8);
-		transform: scale(1.1);
 	}
 
 	/* Unavailable track styles */
 	.unavailable-track {
 		opacity: 0.5;
 		background: rgba(255, 255, 255, 0.02) !important;
-	}
-
-	.unavailable-track:hover {
-		background: rgba(255, 255, 255, 0.03) !important;
 	}
 
 	.unavailable-text {
@@ -801,11 +775,6 @@
 		color: #666666 !important;
 		cursor: not-allowed !important;
 		opacity: 0.5;
-	}
-
-	.action-btn.disabled:hover {
-		background: rgba(255, 255, 255, 0.1) !important;
-		transform: none !important;
 	}
 
 	@media (max-width: 1024px) {
@@ -855,7 +824,6 @@
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 0.5rem;
-			cursor: pointer;
 		}
 
 		.track-name {
@@ -873,4 +841,57 @@
 			font-size: 2rem;
 		}
 	}
+
+	@media (hover: hover) {
+		.action-btn-disabled:hover {
+			color: gray !important;
+			transform: none !important;
+		}
+
+		.unavailable-track:hover {
+			background: rgba(255, 255, 255, 0.03) !important;
+		}
+
+		.move-btn:hover {
+			color: rgba(0, 122, 255, 0.8);
+			transform: scale(1.1);
+		}
+
+		.remove-btn:hover {
+			color: rgba(255, 69, 58, 1);
+			transform: scale(1.1);
+		}
+
+		.play-btn:hover {
+			background: #1ed760;
+			transform: scale(1.1);
+		}
+
+		.track-number-btn:hover .track-number-index {
+			display: none;
+		}
+
+		.track-number-btn:hover .track-number-icon {
+			display: inline;
+		}
+
+		.track-number-btn:hover {
+			cursor: pointer;
+		}
+
+		.track-item.current-track:hover {
+			background: rgba(29, 185, 84, 0.15);
+		}
+
+		.track-item:hover {
+			background: rgba(255, 255, 255, 0.05);
+		}
+
+		.refresh-btn:hover:not(:disabled) {
+			background: rgba(255, 255, 255, 0.2);
+			border-color: rgba(255, 255, 255, 0.3);
+			transform: translateY(-1px);
+		}
+	}
+
 </style>

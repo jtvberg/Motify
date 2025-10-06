@@ -7,6 +7,7 @@
 	import Player from '$lib/components/Player.svelte';
 	import TrackList from '$lib/components/TrackList.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 
 	onMount(async () => {
 		console.log('Main app mounted, initializing...');
@@ -36,6 +37,7 @@
 			<PlaylistSelector />
 			<Player />
 			<TrackList />
+			<Footer />
 		</div>
 	</main>
 	<Toast />
