@@ -1,9 +1,18 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex, selectedPlaylist, targetPlaylist } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
-	import { formatTime, findNextPlayableTrack } from '$lib/utils';
+	import { toastStore } from '$lib/toast';
+	import { tokenManager } from '$lib/tokenManager';
+	import { 
+		formatTime,
+		togglePlayback,
+		playPreviousTrack,
+		playNextTrack,
+		removeTrack,
+		moveTrack
+	} from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
@@ -12,6 +21,50 @@
 	let isPlayerReady = false;
 
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
+
+	const stores = {
+		isPlaying,
+		currentTrack,
+		currentTracks,
+		currentTrackIndex,
+		playbackPosition,
+		trackDuration,
+		selectedPlaylist,
+		targetPlaylist
+	};
+
+	const services = {
+		spotifyAPI,
+		webPlaybackService,
+		toastStore
+	};
+
+	async function handleAPIError<T>(apiCall: () => Promise<T>): Promise<T | null> {
+		try {
+			const tokenValid = await tokenManager.checkAndRefreshToken();
+			if (!tokenValid) {
+				console.error('Invalid token, cannot make API call');
+				return null;
+			}
+			
+			return await apiCall();
+		} catch (error) {
+			console.error('API call failed:', error);
+
+			if (error instanceof Error && error.message.includes('401')) {
+				try {
+					console.log('Retrying API call after token refresh...');
+					await tokenManager.checkAndRefreshToken();
+					return await apiCall();
+				} catch (retryError) {
+					console.error('Retry failed:', retryError);
+					return null;
+				}
+			}
+			
+			return null;
+		}
+	}
 
 	onMount(async () => {
 		if (webPlaybackService.getDeviceId()) {
@@ -115,107 +168,39 @@
 		}
 	}
 
-	async function togglePlayback() {
-		try {
-			if (isPlayerReady) {
-				await webPlaybackService.togglePlay();
-			} else {
-				if ($isPlaying) {
-					await spotifyAPI.pausePlayback();
-					isPlaying.set(false);
-				} else {
-					await spotifyAPI.resumePlayback();
-					isPlaying.set(true);
-				}
-			}
-		} catch (error) {
-			console.error('Failed to toggle playback:', error);
-		}
+	async function togglePlaybackHandler() {
+		await togglePlayback(stores, services, isPlayerReady);
 	}
 
 	async function previousTrack() {
-		try {
-			const tracks = $currentTracks;
-			const currentIndex = $currentTrackIndex;
-			
-			if (tracks.length === 0 || currentIndex < 0) {
-				console.log('No playlist context for previous track');
-				return;
-			}
-
-			stopPositionUpdates();
-
-			const previousIndex = findNextPlayableTrack(tracks, currentIndex, -1);
-			
-			if (previousIndex === -1) {
-				console.log('No playable previous track found');
-				return;
-			}
-			
-			const previousTrack = tracks[previousIndex];
-			
-			console.log(`Playing previous track: ${previousTrack.name} (index ${previousIndex})`);
-
-			playbackPosition.set(0);
-
-			currentTrackIndex.set(previousIndex);
-
-			if (isPlayerReady) {
-				await webPlaybackService.play(previousTrack.uri);
-			} else {
-				await spotifyAPI.playTrack(previousTrack.uri);
-				currentTrack.set(previousTrack);
-				setTimeout(updatePlaybackState, 500);
-			}
-
-			if ($isPlaying && isPlayerReady) {
-				startPositionUpdates();
-			}
-		} catch (error) {
-			console.error('Failed to go to previous track:', error);
-		}
+		await playPreviousTrack(stores, services, isPlayerReady, stopPositionUpdates, startPositionUpdates, updatePlaybackState);
 	}
 
 	async function nextTrack() {
-		try {
-			const tracks = $currentTracks;
-			const currentIndex = $currentTrackIndex;
-			
-			if (tracks.length === 0 || currentIndex < 0) {
-				console.log('No playlist context for next track');
-				return;
-			}
+		await playNextTrack(stores, services, isPlayerReady, stopPositionUpdates, startPositionUpdates, updatePlaybackState);
+	}
 
-			stopPositionUpdates();
-
-			const nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
-			
-			if (nextIndex === -1) {
-				console.log('No playable next track found');
-				return;
-			}
-			
-			const nextTrack = tracks[nextIndex];
-			
-			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
-
-			playbackPosition.set(0);
-			currentTrackIndex.set(nextIndex);
-
-			if (isPlayerReady) {
-				await webPlaybackService.play(nextTrack.uri);
-			} else {
-				await spotifyAPI.playTrack(nextTrack.uri);
-				currentTrack.set(nextTrack);
-				setTimeout(updatePlaybackState, 500);
-			}
-
-			if ($isPlaying && isPlayerReady) {
-				startPositionUpdates();
-			}
-		} catch (error) {
-			console.error('Failed to go to next track:', error);
+	async function removeCurrentTrack() {
+		if (!$currentTrack || !$currentTracks.length) {
+			console.log('No current track to remove');
+			return;
 		}
+
+		const updatedTracks = await removeTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
+	}
+
+	async function moveCurrentTrack() {
+		if (!$currentTrack || !$currentTracks.length) {
+			console.log('No current track to move');
+			return;
+		}
+
+		if (!$targetPlaylist) {
+			console.log('No target playlist selected');
+			return;
+		}
+
+		const updatedTracks = await moveTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
 	}
 
 	function handleSeekStart() {
@@ -264,11 +249,11 @@
 			<div class="control-buttons">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div class="track-button track-remove far fa-trash-can fa-xl" role="button" on:click={() => console.log('remove track')} aria-label="Remove track"></div>
+				<div class="track-button track-remove far fa-trash-can fa-xl" role="button" on:click={removeCurrentTrack} aria-label="Remove track"></div>
 				<button class="control-btn" on:click={previousTrack} aria-label="Previous track">
 					<i class="fas fa-step-backward"></i>
 				</button>
-				<button class="play-btn" on:click={togglePlayback} aria-label={$isPlaying ? 'Pause' : 'Play'}>
+				<button class="play-btn" on:click={togglePlaybackHandler} aria-label={$isPlaying ? 'Pause' : 'Play'}>
 					<i class="fas {$isPlaying ? 'fa-pause' : 'fa-play'}"></i>
 				</button>
 				<button class="control-btn" on:click={nextTrack} aria-label="Next track">
@@ -276,7 +261,15 @@
 				</button>
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div class="track-button track-move far fa-square-plus fa-xl" role="button" on:click={() => console.log('move track')} aria-label="Add track"></div>
+				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+					<div class="track-button track-move far fa-square-plus fa-xl" role="button" on:click={moveCurrentTrack} aria-label="Move track to target playlist"></div>
+				{:else}
+					<div 
+						class="track-button track-move far fa-square-plus fa-xl track-button-disabled" 
+						aria-label="Move track to target playlist"
+						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+					></div>
+				{/if}
 			</div>
 
 			<div class="progress-container">
@@ -404,6 +397,12 @@
 		margin-inline: 1rem;
 	}
 
+	.track-button-disabled {
+		opacity: 0.5;
+		cursor: not-allowed !important;
+		color: #666666 !important;
+	}
+
 	.progress-container {
 		display: flex;
 		align-items: center;
@@ -488,6 +487,11 @@
 
 		.track-move:hover {
 			color: rgba(0, 122, 255, 0.8);
+		}
+
+		.track-button-disabled:hover {
+			color: #666666 !important;
+			transform: none !important;
 		}
 	}
 </style>
