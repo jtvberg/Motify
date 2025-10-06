@@ -11,6 +11,10 @@
 	let targetId = '';
 
 	$: userPlaylists = $playlists;
+	
+	// Sync local variables with store values
+	$: selectedId = $selectedPlaylist?.id || '';
+	$: targetId = $targetPlaylist?.id || '';
 
 	onMount(async () => {
 		try {
@@ -228,7 +232,7 @@
 		justify-content: center;
 		font-weight: bold;
 		font-size: 1.2rem;
-		color: white;
+		color: #f3f3f3;
 		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 

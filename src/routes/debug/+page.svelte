@@ -199,7 +199,7 @@
 	button {
 		padding: 10px 15px;
 		background: #1db954;
-		color: white;
+		color: #f3f3f3;
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;

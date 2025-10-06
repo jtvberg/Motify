@@ -441,6 +441,19 @@
 		padding: 2rem;
 	}
 
+	.loading {
+		display: flex;
+		color: #f3f3f3;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		gap: 0.5rem;
+	}
+
+	.loading i {
+		color: #1db954;
+	}
+
 	.spinning {
 		animation: spin 1s linear infinite;
 	}
@@ -588,7 +601,7 @@
 
 	.play-btn {
 		background: #1db954;
-		color: white;
+		color: #f3f3f3;
 	}
 
 	.remove-btn {
@@ -618,7 +631,7 @@
 
 	.unavailable-badge {
 		background: rgba(255, 69, 58, 0.8);
-		color: white;
+		color: #f3f3f3;
 		font-size: 0.7rem;
 		padding: 2px 6px;
 		border-radius: 4px;
