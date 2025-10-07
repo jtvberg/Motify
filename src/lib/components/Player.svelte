@@ -297,11 +297,11 @@
 		backdrop-filter: blur(20px);
 		border-radius: 12px;
 		padding: 1.5rem;
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-		border: 1px solid #ffffff1a;
+		border: 1px solid #1e1e1eff;
 	}
 
 	.track-info {
@@ -309,7 +309,6 @@
 		align-items: center;
 		justify-content: center;
 		gap: 1rem;
-		min-width: 0;
 	}
 
 	.album-cover {
@@ -331,6 +330,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		margin-bottom: 0.25rem;
+		width: 100%;
 	}
 
 	.artist-name {
@@ -338,6 +338,7 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		width: 100%;
 	}
 
 	.playlist-position {
@@ -351,6 +352,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		width: 1px;
 	}
 
 	.control-buttons {

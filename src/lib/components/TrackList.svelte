@@ -174,36 +174,61 @@
 <div class="track-list-container">
 	{#if $selectedPlaylist}
 		<div class="playlist-header">
-			{#if $selectedPlaylist.images?.[0]?.url}
-				<img 
-					src={$selectedPlaylist.images[0].url} 
-					alt="Playlist cover"
-					class="playlist-cover"
-				/>
-			{:else}
-				<div class="playlist-cover playlist-cover-default">
-					<i class="fas fa-music"></i>
+			<div class="playlist-info-container">
+				<div class="playlist-selected-info">
+					{#if $selectedPlaylist.images?.[0]?.url}
+						<img 
+							src={$selectedPlaylist.images[0].url} 
+							alt="Playlist cover"
+							class="playlist-cover"
+						/>
+					{:else}
+						<div class="playlist-cover playlist-cover-default">
+							<i class="fas fa-music"></i>
+						</div>
+					{/if}
+					<div class="playlist-info">
+						<h2>{$selectedPlaylist.name}</h2>
+						<p>{$selectedPlaylist.description || 'No description'}</p>
+						<span class="track-count">{tracks.length} tracks</span>
+					</div>
 				</div>
-			{/if}
-			<div class="playlist-info">
-				<h2>{$selectedPlaylist.name}</h2>
-				<p>{$selectedPlaylist.description || 'No description'}</p>
-				<span class="track-count">{tracks.length} tracks</span>
+				<div class="playlist-separator fa fa-right-long"></div>
+				<div class="playlist-target-info">
+					{#if $targetPlaylist && $targetPlaylist.images?.[0]?.url}
+						<img 
+							src={$targetPlaylist.images[0].url} 
+							alt="Playlist cover"
+							class="playlist-cover"
+						/>
+					{:else}
+						<div class="playlist-cover playlist-cover-default">
+							<i class="fas fa-music"></i>
+						</div>
+					{/if}
+					<div class="playlist-info playlist-info-right">
+						<h2>{$targetPlaylist ? $targetPlaylist.name : ''}</h2>
+						<p>{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</p>
+					</div>
+				</div>
 			</div>
 			<div class="playlist-actions">
-				<button class="playlist-selector-btn" on:click={openPlaylistSelector}>
+				<button
+					class="playlist-selector-btn"
+					on:click={openPlaylistSelector}
+					aria-label="Change playlists"
+					title="Change selected playlists"
+				>
 					<i class="fas fa-list"></i>
-					Change Playlists
 				</button>
 				<button 
 					class="refresh-btn" 
 					on:click={refreshPlaylist}
 					disabled={$isRefreshingPlaylist}
 					aria-label="Refresh playlist"
-					title="Refresh playlist to sync changes from other devices"
+					title="Refresh source playlist"
 				>
 					<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
-					{$isRefreshingPlaylist ? 'Refreshing...' : 'Refresh'}
 				</button>
 			</div>
 		</div>
@@ -348,24 +373,49 @@
 	}
 
 	.track-list-container {
-		background: #ffffff0d;
+		background: #ffffff04;
 		backdrop-filter: blur(10px);
 		border-radius: 12px;
-		border: 1px solid #ffffff1a;
+		border: 1px solid #1e1e1eff;
 		overflow: hidden;
 	}
 
 	.playlist-header {
+    	display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1.5rem;
+		background: linear-gradient(135deg, #061a0d33, #1ed7601a);
+	}
+
+	.playlist-info-container {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+    	justify-content: space-around;
+	}
+
+	.playlist-selected-info, .playlist-target-info {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.playlist-target-info {
+		align-items: flex-end;
+	}
+
+	.playlist-separator {
 		display: flex;
 		align-items: center;
-		gap: 1.5rem;
-		padding: 2rem;
-		background: linear-gradient(135deg, #1db95433, #1ed7601a);
+		justify-content: center;
+		height: 142px;
+		color: #b3b3b3ff;
+		font-size: clamp(2rem, 5vw, 50px);
 	}
 
 	.playlist-cover {
-		width: 112px;
-		height: 112px;
+		width: 142px;
+		height: 142px;
 		border-radius: 8px;
 		object-fit: cover;
 	}
@@ -384,18 +434,28 @@
 	}
 
 	.playlist-info {
-		flex: 1;
+    	flex: 1;
+    	display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		line-height: 1;
+		gap: .5rem;
 	}
 
 	.playlist-info h2 {
-		margin: 0 0 0.5rem 0;
+		margin: 0;
 		font-size: 1.8rem;
 		font-weight: 700;
 	}
 
 	.playlist-info p {
-		margin: 0 0 0.5rem 0;
+		margin: 0;
 		color: #b3b3b3ff;
+	}
+
+	.playlist-info-right {
+		align-items: flex-end;
+		text-align: right;
 	}
 
 	.track-count {
@@ -405,7 +465,9 @@
 
 	.playlist-actions {
 		display: flex;
+		justify-content: center;
 		gap: 1rem;
+		margin-top: 1rem;
 	}
 
 	.refresh-btn, .playlist-selector-btn {
@@ -499,7 +561,7 @@
 	}
 
 	.track-item {
-		border-bottom: 1px solid #ffffff0d;
+		border-bottom: 1px solid #1e1e1eff;
 		transition: background-color 0.2s ease;
 		content-visibility: auto;
 	}
@@ -665,14 +727,19 @@
 	}
 
 	@media (max-width: 768px) {
-		.playlist-header {
-			flex-direction: column;
-			text-align: center;
-			gap: 0rem;
-		}
-
-		.playlist-actions {
-			margin-top: 1rem;
+		.refresh-btn, .playlist-selector-btn {
+			background: #ffffff1a;
+			color: #ffffffff;
+			border: 1px solid #ffffff33;
+			padding: 0.75rem;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			font-size: 1rem;
+			align-items: center;
+			gap: 0.5rem;
+			font-weight: 500;
 		}
 
 		.track-header, .track-item {

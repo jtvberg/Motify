@@ -11,8 +11,6 @@
 	let targetId = '';
 
 	$: userPlaylists = $playlists;
-	
-	// Sync local variables with store values
 	$: selectedId = $selectedPlaylist?.id || '';
 	$: targetId = $targetPlaylist?.id || '';
 
