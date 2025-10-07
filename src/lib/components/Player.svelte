@@ -467,6 +467,10 @@
 			align-items: center;
 		}
 
+		.track-name, .artist-name {
+			text-align: center;
+		}
+
 		.player-controls {
 			width: 100%;
 		}
