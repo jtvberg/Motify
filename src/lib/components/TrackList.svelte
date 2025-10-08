@@ -188,12 +188,12 @@
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<h2>{$selectedPlaylist.name}</h2>
-						<p>{$selectedPlaylist.description || 'No description'}</p>
+						<h2 title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</h2>
+						<p title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</p>
 						<span class="track-count">{tracks.length} tracks</span>
 					</div>
 				</div>
-				<div class="playlist-separator fa fa-right-long"></div>
+				<div class="playlist-separator fa fa-angles-right"></div>
 				<div class="playlist-target-info">
 					{#if $targetPlaylist && $targetPlaylist.images?.[0]?.url}
 						<img 
@@ -390,7 +390,7 @@
 
 	.playlist-info-container {
 		display: grid;
-		grid-template-columns: 1fr auto 1fr;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     	justify-content: space-around;
 	}
 
@@ -446,11 +446,19 @@
 		margin: 0;
 		font-size: 1.8rem;
 		font-weight: 700;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding-bottom: 2px;
 	}
 
 	.playlist-info p {
 		margin: 0;
 		color: #b3b3b3ff;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding-bottom: 2px;
 	}
 
 	.playlist-info-right {
@@ -593,13 +601,6 @@
 		cursor: pointer;
 	}
 
-	.track-title .track-name {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		font-weight: 600;
-	}
-
 	.current-track-title {
 		color: #1db954ff !important;
 		font-weight: 700;
@@ -626,11 +627,18 @@
 		color: #ffffffb3;
 	}
 
-	.track-artist, .track-album {
+	.track-name, .track-artist, .track-album {
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		color: #b3b3b3ff;
+		padding-bottom: 1px;
+	}
+
+	.track-name {
+		font-weight: 600;
+		color: #f3f3f3ff;
+		padding-right: 16px;
 	}
 
 	.track-duration {
