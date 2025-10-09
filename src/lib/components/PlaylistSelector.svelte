@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { user, playlists, selectedPlaylist, targetPlaylist, isPlaylistSelectorOpen } from '$lib/stores';
+	import { user, playlists, selectedPlaylist, targetPlaylist, isPlaylistSelectorOpen, playlistSelections } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import type { SpotifyPlaylist } from '$lib/spotify';
 	import Settings from './Settings.svelte';
@@ -9,31 +9,92 @@
 	let userPlaylists: SpotifyPlaylist[] = [];
 	let selectedId = '';
 	let targetId = '';
+	let hasLoadedUserData = false;
 
 	$: userPlaylists = $playlists;
 	$: selectedId = $selectedPlaylist?.id || '';
 	$: targetId = $targetPlaylist?.id || '';
 
 	onMount(async () => {
-		try {
-			const userInfo = await spotifyAPI.getCurrentUser();
-			user.set(userInfo);
+		if (!$user || $playlists.length === 0) {
+			try {
+				if (!$user) {
+					const userInfo = await spotifyAPI.getCurrentUser();
+					user.set(userInfo);
+				}
 
-			const playlistsData = await spotifyAPI.getUserPlaylists();
-			playlists.set(playlistsData);
-		} catch (error) {
-			console.error('Failed to load user data:', error);
+				if ($playlists.length === 0) {
+					const playlistsData = await spotifyAPI.getUserPlaylists();
+					playlists.set(playlistsData);
+
+					restorePlaylistSelections(playlistsData);
+				}
+				
+				hasLoadedUserData = true;
+			} catch (error) {
+				console.error('Failed to load user data:', error);
+			}
 		}
 	});
 
+	function restorePlaylistSelections(playlistsData: SpotifyPlaylist[]) {
+		const selections = $playlistSelections;
+
+		if (selections.source && !$selectedPlaylist) {
+			const sourcePlaylist = playlistsData.find(p => 
+				selections.source.includes(p.id) || 
+				`https://open.spotify.com/playlist/${p.id}` === selections.source ||
+				selections.source.includes(`playlist/${p.id}`)
+			);
+			if (sourcePlaylist) {
+				console.log('Restoring source playlist:', sourcePlaylist.name);
+				selectedPlaylist.set(sourcePlaylist);
+				selectedId = sourcePlaylist.id;
+			}
+		}
+
+		if (selections.target && !$targetPlaylist) {
+			const targetPlaylistData = playlistsData.find(p => 
+				selections.target.includes(p.id) || 
+				`https://open.spotify.com/playlist/${p.id}` === selections.target ||
+				selections.target.includes(`playlist/${p.id}`)
+			);
+			if (targetPlaylistData) {
+				console.log('Restoring target playlist:', targetPlaylistData.name);
+				targetPlaylist.set(targetPlaylistData);
+				targetId = targetPlaylistData.id;
+			}
+		}
+	}
+
 	function handleSelectedPlaylistChange() {
 		const playlist = userPlaylists.find(p => p.id === selectedId);
-		selectedPlaylist.set(playlist || null);
+		const newPlaylist = playlist || null;
+
+		if ($selectedPlaylist?.id !== newPlaylist?.id) {
+			selectedPlaylist.set(newPlaylist);
+
+			const sourceUrl = playlist ? `https://open.spotify.com/playlist/${playlist.id}` : '';
+			playlistSelections.update(selections => ({
+				...selections,
+				source: sourceUrl
+			}));
+		}
 	}
 
 	function handleTargetPlaylistChange() {
 		const playlist = userPlaylists.find(p => p.id === targetId);
-		targetPlaylist.set(playlist || null);
+		const newPlaylist = playlist || null;
+
+		if ($targetPlaylist?.id !== newPlaylist?.id) {
+			targetPlaylist.set(newPlaylist);
+
+			const targetUrl = playlist ? `https://open.spotify.com/playlist/${playlist.id}` : '';
+			playlistSelections.update(selections => ({
+				...selections,
+				target: targetUrl
+			}));
+		}
 	}
 
 	function closeModal() {

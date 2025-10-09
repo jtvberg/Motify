@@ -9,7 +9,8 @@
 		clearTrackPlayabilityCache,
 		togglePlayPause,
 		removeTrack,
-		moveTrack
+		moveTrack,
+		copyTrack
 	} from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import type { SpotifyTrack } from '$lib/spotify';
@@ -159,6 +160,10 @@
 
 	async function moveTrackHandler(track: SpotifyTrack) {
 		await moveTrack(track, tracks, stores, services, handleAPIError);
+	}
+
+	async function copyTrackHandler(track: SpotifyTrack) {
+		await copyTrack(track, tracks, stores, services, handleAPIError);
 	}
 
 	function openPlaylistSelector() {
@@ -335,7 +340,7 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn move-btn far fa-square-plus fa-xl" 
+									class="action-btn move-btn fa fa-plus-minus fa-xl" 
 									on:click={() => moveTrackHandler(track)}
 									aria-label="Move to target playlist"
 									role="button"
@@ -343,9 +348,27 @@
 								</div>
 							{:else}
 								<div 
-									class="action-btn move-btn far fa-square-plus fa-xl action-btn-disabled" 
+									class="action-btn move-btn fa fa-plus-minus fa-xl action-btn-disabled" 
 									aria-label="Move to target playlist"
 									title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+								>
+								</div>
+							{/if}
+							{#if trackPlayable && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_interactive_supports_focus -->
+								<div 
+									class="action-btn copy-btn far fa-square-plus fa-xl" 
+									on:click={() => copyTrackHandler(track)}
+									aria-label="Copy to target playlist"
+									role="button"
+								>
+								</div>
+							{:else}
+								<div 
+									class="action-btn copy-btn far fa-square-plus fa-xl action-btn-disabled" 
+									aria-label="Copy to target playlist"
+									title={$targetPlaylist ? 'Select a different target playlist to enable copying tracks' : 'Select a target playlist to enable copying tracks'}
 								>
 								</div>
 							{/if}
@@ -663,11 +686,7 @@
 		color: #f3f3f3ff;
 	}
 
-	.remove-btn {
-		color: #b3b3b3ff;
-	}
-
-	.move-btn {
+	.remove-btn, .copy-btn, .move-btn {
 		color: #b3b3b3ff;
 	}
 
@@ -725,7 +744,7 @@
 
 	@media (max-width: 768px) {
 		.track-header, .track-item {
-			grid-template-columns: 1fr 120px;
+			grid-template-columns: 1fr 160px;
 			gap: 1rem;
 			align-items: unset;
 		}
@@ -771,8 +790,13 @@
 			background: #ffffff08 !important;
 		}
 
-		.move-btn:hover {
+		.copy-btn:hover {
 			color: #007affcc;
+			transform: scale(1.1);
+		}
+
+		.move-btn:hover {
+			color: #ffca3a;
 			transform: scale(1.1);
 		}
 

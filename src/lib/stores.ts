@@ -21,6 +21,11 @@ export interface ScraperSettings {
 	releaseRadarUrl: string;
 }
 
+export interface PlaylistSelections {
+	source: string;
+	target: string;
+}
+
 function createSettingsStore() {
 	const storedSettings = typeof localStorage !== 'undefined' 
 		? localStorage.getItem('motify-scraper-settings') 
@@ -57,4 +62,41 @@ function createSettingsStore() {
 	};
 }
 
+function createPlaylistSelectionsStore() {
+	const storedSelections = typeof localStorage !== 'undefined' 
+		? localStorage.getItem('motify-selected-playlists') 
+		: null;
+	
+	const defaultSelections: PlaylistSelections = {
+		source: '',
+		target: ''
+	};
+	
+	const initialSelections = storedSelections 
+		? { ...defaultSelections, ...JSON.parse(storedSelections) }
+		: defaultSelections;
+
+	const { subscribe, set, update } = writable<PlaylistSelections>(initialSelections);
+
+	return {
+		subscribe,
+		set: (value: PlaylistSelections) => {
+			if (typeof localStorage !== 'undefined') {
+				localStorage.setItem('motify-selected-playlists', JSON.stringify(value));
+			}
+			set(value);
+		},
+		update: (fn: (value: PlaylistSelections) => PlaylistSelections) => {
+			update((value) => {
+				const newValue = fn(value);
+				if (typeof localStorage !== 'undefined') {
+					localStorage.setItem('motify-selected-playlists', JSON.stringify(newValue));
+				}
+				return newValue;
+			});
+		}
+	};
+}
+
 export const scraperSettings = createSettingsStore();
+export const playlistSelections = createPlaylistSelectionsStore();

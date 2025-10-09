@@ -1,7 +1,8 @@
 import { spotifyAPI } from './spotify';
 import { webPlaybackService } from './webPlayback';
 import { tokenManager } from './tokenManager';
-import { isAuthenticated } from './stores';
+import { isAuthenticated, user, playlists, selectedPlaylist, targetPlaylist, playlistSelections } from './stores';
+import type { SpotifyPlaylist } from './spotify';
 
 class InitializationService {
     private isInitialized = false;
@@ -48,6 +49,14 @@ class InitializationService {
             isAuthenticated.set(true);
 
             try {
+                console.log('Loading user data and playlists...');
+                await this.loadUserDataAndPlaylists();
+                console.log('User data and playlists loaded successfully');
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+            }
+
+            try {
                 console.log('Initializing Web Playback SDK...');
                 await webPlaybackService.initialize();
                 console.log('Web Playback SDK ready');
@@ -64,11 +73,67 @@ class InitializationService {
         }
     }
 
+    private async loadUserDataAndPlaylists(): Promise<void> {
+        try {
+            const userInfo = await spotifyAPI.getCurrentUser();
+            user.set(userInfo);
+
+            const playlistsData = await spotifyAPI.getUserPlaylists();
+            playlists.set(playlistsData);
+
+            await this.restorePlaylistSelections(playlistsData);
+        } catch (error) {
+            console.error('Error loading user data and playlists:', error);
+            throw error;
+        }
+    }
+
+    private async restorePlaylistSelections(playlistsData: SpotifyPlaylist[]): Promise<void> {
+        try {
+            let selections: any;
+            playlistSelections.subscribe(value => { selections = value; })();
+
+            if (selections.source) {
+                const sourcePlaylist = playlistsData.find(p => 
+                    selections.source.includes(p.id) || 
+                    `https://open.spotify.com/playlist/${p.id}` === selections.source ||
+                    selections.source.includes(`playlist/${p.id}`)
+                );
+                if (sourcePlaylist) {
+                    console.log('Restored source playlist:', sourcePlaylist.name);
+                    selectedPlaylist.set(sourcePlaylist);
+                }
+            }
+
+            if (selections.target) {
+                const targetPlaylistData = playlistsData.find(p => 
+                    selections.target.includes(p.id) || 
+                    `https://open.spotify.com/playlist/${p.id}` === selections.target ||
+                    selections.target.includes(`playlist/${p.id}`)
+                );
+                if (targetPlaylistData) {
+                    console.log('Restored target playlist:', targetPlaylistData.name);
+                    targetPlaylist.set(targetPlaylistData);
+                }
+            }
+        } catch (error) {
+            console.error('Error restoring playlist selections:', error);
+        }
+    }
+
     async handleAuthentication(accessToken: string): Promise<void> {
         console.log('Handling authentication with new token');
         
         spotifyAPI.setAccessToken(accessToken);
         isAuthenticated.set(true);
+
+        try {
+            console.log('Loading user data and playlists after authentication...');
+            await this.loadUserDataAndPlaylists();
+            console.log('User data and playlists loaded after authentication');
+        } catch (error) {
+            console.error('Failed to load user data after authentication:', error);
+        }
 
         if (!this.isWebPlaybackReady()) {
             try {
@@ -95,6 +160,13 @@ class InitializationService {
         this.isInitialized = false;
         this.isInitializing = false;
         this.initializationPromise = null;
+        
+        isAuthenticated.set(false);
+        user.set(null);
+        playlists.set([]);
+        selectedPlaylist.set(null);
+        targetPlaylist.set(null);
+        
         console.log('Initialization service reset');
     }
 

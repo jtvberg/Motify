@@ -158,7 +158,6 @@ export function findNextPlayableTrack(tracks: any[], startIndex: number, directi
 	return -1;
 }
 
-// Playback utility functions
 import type { Writable } from 'svelte/store';
 import type { SpotifyTrack } from './spotify';
 
@@ -458,7 +457,6 @@ export async function playNextTrack(
 	}
 }
 
-// Track management utility functions
 export async function removeTrack(
 	track: SpotifyTrack,
 	tracks: SpotifyTrack[],
@@ -639,6 +637,114 @@ export async function moveTrack(
 		if (services.toastStore) {
 			services.toastStore.add({
 				message: `Failed to move "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
+		}
+		
+		return tracks;
+	}
+}
+
+export async function copyTrack(
+	track: SpotifyTrack,
+	tracks: SpotifyTrack[],
+	stores: PlaybackStores,
+	services: PlaybackServices,
+	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
+): Promise<SpotifyTrack[]> {
+	let selectedPlaylist: any = null;
+	let targetPlaylist: any = null;
+	let currentTrack: SpotifyTrack | null = null;
+	
+	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
+	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
+	const currentTrackUnsub = stores.currentTrack.subscribe((value: SpotifyTrack | null) => { currentTrack = value; });
+	
+	selectedPlaylistUnsub();
+	targetPlaylistUnsub();
+	currentTrackUnsub();
+	
+	if (!targetPlaylist || !selectedPlaylist) {
+		console.error('No target or selected playlist');
+		return tracks;
+	}
+	
+	const isCurrentlyPlaying = (currentTrack as unknown as SpotifyTrack)?.id === track.id;
+	const currentIndex = tracks.findIndex(t => t.id === track.id);
+	
+	try {
+		const { getOperationalUri, isTrackRelinked } = await import('./spotify');
+		
+		const operationalUri = getOperationalUri(track);
+		const isRelinked = isTrackRelinked(track);
+		console.log(`Copying track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+
+		const targetTracks = await handleAPIError(() => services.spotifyAPI.getPlaylistTracks(targetPlaylist.id));
+		const trackAlreadyExists = targetTracks && Array.isArray(targetTracks) && targetTracks.some((t: SpotifyTrack) => t.id === track.id);
+		
+		if (!trackAlreadyExists) {
+			await services.spotifyAPI.addTrackToPlaylist(targetPlaylist.id, operationalUri);
+		}
+
+		await services.spotifyAPI.removeTrackFromPlaylist(selectedPlaylist.id, operationalUri);
+
+		const updatedTracks = tracks.filter(t => t.id !== track.id);
+		stores.currentTracks.set(updatedTracks);
+
+		try {
+			const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
+			if (updatedTargetPlaylist) {
+				stores.targetPlaylist.set(updatedTargetPlaylist);
+				console.log(`Updated target playlist "${targetPlaylist.name}" with latest data from API`);
+			}
+		} catch (error) {
+			console.warn('Failed to refresh target playlist data:', error);
+		}
+
+		if (services.toastStore) {
+			if (trackAlreadyExists) {
+				services.toastStore.add({
+					message: `"${track.name}" was already in ${targetPlaylist.name}, removed from ${selectedPlaylist.name}`,
+					type: 'info'
+				});
+			} else {
+				services.toastStore.add({
+					message: `Copied "${track.name}" from ${selectedPlaylist.name} to ${targetPlaylist.name}`,
+					type: 'success'
+				});
+			}
+		}
+
+		if (isCurrentlyPlaying && updatedTracks.length > 0) {
+			const startSearchIndex = Math.min(currentIndex, updatedTracks.length - 1);
+
+			if (startSearchIndex >= 0 && isTrackPlayable(updatedTracks[startSearchIndex])) {
+				const nextTrack = updatedTracks[startSearchIndex];
+				console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
+				await playTrack(nextTrack, updatedTracks, stores, services);
+			} else {
+				const nextPlayableIndex = findNextPlayableTrack(updatedTracks, startSearchIndex, 1);
+				
+				if (nextPlayableIndex !== -1) {
+					const nextTrack = updatedTracks[nextPlayableIndex];
+					console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
+					await playTrack(nextTrack, updatedTracks, stores, services);
+				} else {
+					console.log('No playable tracks remaining after move');
+					stores.currentTrack.set(null);
+					stores.currentTrackIndex.set(-1);
+					stores.isPlaying.set(false);
+				}
+			}
+		}
+		
+		return updatedTracks;
+	} catch (error) {
+		console.error('Failed to copy track:', error);
+
+		if (services.toastStore) {
+			services.toastStore.add({
+				message: `Failed to copy "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
 				type: 'error'
 			});
 		}
