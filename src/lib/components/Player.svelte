@@ -262,10 +262,10 @@
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
-					<div class="track-button track-move far fa-square-plus fa-xl" role="button" on:click={moveCurrentTrack} aria-label="Move track to target playlist"></div>
+					<div class="track-button track-move fa fa-plus-minus fa-xl" role="button" on:click={moveCurrentTrack} aria-label="Move track to target playlist"></div>
 				{:else}
 					<div 
-						class="track-button track-move far fa-square-plus fa-xl track-button-disabled" 
+						class="track-button track-move fa fa-plus-minus fa-xl track-button-disabled" 
 						aria-label="Move track to target playlist"
 						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
 					></div>
