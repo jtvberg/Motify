@@ -172,60 +172,62 @@
 			<div class="playlist-info-container">
 				<div class="playlist-selected-info">
 					{#if $selectedPlaylist.images?.[0]?.url}
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 						<img 
 							src={$selectedPlaylist.images[0].url} 
 							alt="Playlist cover"
 							class="playlist-cover"
+							on:click={openPlaylistSelector}
 						/>
 					{:else}
-						<div class="playlist-cover playlist-cover-default">
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div class="playlist-cover playlist-cover-default" on:click={openPlaylistSelector}>
 							<i class="fas fa-music"></i>
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<span class="playlist-title" title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</span>
-						<span class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</span>
-						<span class="playlist-track-count">{tracks.length} tracks</span>
+						<div class="playlist-title" title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</div>
+						<div class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</div>
+						<div class="playlist-track-count">{tracks.length} tracks</div>
 					</div>
+						<div class="playlist-actions">
+							<button 
+								class="refresh-btn" 
+								on:click={refreshPlaylist}
+								disabled={$isRefreshingPlaylist}
+								aria-label="Refresh playlist"
+								title="Refresh source playlist"
+							>
+								<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
+							</button>
+						</div>
 				</div>
 				<div class="playlist-separator fa fa-angles-right"></div>
 				<div class="playlist-target-info">
 					{#if $targetPlaylist && $targetPlaylist.images?.[0]?.url}
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 						<img 
 							src={$targetPlaylist.images[0].url} 
 							alt="Playlist cover"
 							class="playlist-cover"
+							on:click={openPlaylistSelector}
 						/>
 					{:else}
-						<div class="playlist-cover playlist-cover-default">
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div class="playlist-cover playlist-cover-default" on:click={openPlaylistSelector}>
 							<i class="fas fa-music"></i>
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<span class="playlist-title" title="{$targetPlaylist?.name || ''}">{$targetPlaylist ? $targetPlaylist.name : ''}</span>
-						<span class="playlist-description" title="{$targetPlaylist?.description || 'No description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</span>
-						<span class="playlist-track-count">{$targetPlaylist?.tracks?.total || 0} tracks</span>
+						<div class="playlist-title" title="{$targetPlaylist?.name || ''}">{$targetPlaylist ? $targetPlaylist.name : ''}</div>
+						<div class="playlist-description" title="{$targetPlaylist?.description || 'No description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</div>
+						<div class="playlist-track-count">{$targetPlaylist?.tracks?.total || 0} tracks</div>
 					</div>
 				</div>
-			</div>
-			<div class="playlist-actions">
-				<button
-					class="playlist-selector-btn"
-					on:click={openPlaylistSelector}
-					aria-label="Change playlists"
-					title="Change selected playlists"
-				>
-					<i class="fas fa-list"></i>
-				</button>
-				<button 
-					class="refresh-btn" 
-					on:click={refreshPlaylist}
-					disabled={$isRefreshingPlaylist}
-					aria-label="Refresh playlist"
-					title="Refresh source playlist"
-				>
-					<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
-				</button>
 			</div>
 		</div>
 
@@ -407,6 +409,7 @@
 		height: clamp(142px, 15vw, 300px);
 		border-radius: 8px;
 		object-fit: cover;
+		cursor: pointer;
 	}
 
 	.playlist-cover-default {
@@ -466,17 +469,16 @@
 	}
 
 	.refresh-btn, .playlist-selector-btn {
-		background: #ffffff1a;
-		color: #ffffffff;
-		border: 1px solid #ffffff33;
-		padding: 0.75rem;
-		border-radius: 8px;
+		background: #1db95433;
+		color: #1db954ff;
+		border: 1px solid #1db95433;
+		padding: 0.5rem;
+		border-radius: 5px;
 		cursor: pointer;
 		transition: all 0.3s ease;
 		display: flex;
-		font-size: 1rem;
+		font-size: .75rem;
 		align-items: center;
-		gap: 0.5rem;
 		font-weight: 500;
 	}
 
@@ -722,21 +724,6 @@
 	}
 
 	@media (max-width: 768px) {
-		.refresh-btn, .playlist-selector-btn {
-			background: #ffffff1a;
-			color: #ffffffff;
-			border: 1px solid #ffffff33;
-			padding: 0.75rem;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: all 0.3s ease;
-			display: flex;
-			font-size: 1rem;
-			align-items: center;
-			gap: 0.5rem;
-			font-weight: 500;
-		}
-
 		.track-header, .track-item {
 			grid-template-columns: 1fr 120px;
 			gap: 1rem;
