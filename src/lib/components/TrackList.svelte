@@ -183,9 +183,9 @@
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<h2 title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</h2>
-						<p title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</p>
-						<span class="track-count">{tracks.length} tracks</span>
+						<span class="playlist-title" title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</span>
+						<span class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</span>
+						<span class="playlist-track-count">{tracks.length} tracks</span>
 					</div>
 				</div>
 				<div class="playlist-separator fa fa-angles-right"></div>
@@ -202,9 +202,9 @@
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<h2>{$targetPlaylist ? $targetPlaylist.name : ''}</h2>
-						<p>{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</p>
-						<span class="track-count">{$targetPlaylist?.tracks?.total || 0} tracks</span>
+						<h2 class="playlist-title">{$targetPlaylist ? $targetPlaylist.name : ''}</h2>
+						<p class="playlist-description">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</p>
+						<span class="playlist-track-count">{$targetPlaylist?.tracks?.total || 0} tracks</span>
 					</div>
 				</div>
 			</div>
@@ -434,28 +434,30 @@
 		gap: .5rem;
 	}
 
-	.playlist-info h2 {
+	.playlist-title {
 		margin: 0;
 		font-size: 1.8rem;
 		font-weight: 700;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		text-align: center;
 		padding-bottom: 2px;
 	}
 
-	.playlist-info p {
+	.playlist-description {
 		margin: 0;
-		color: #b3b3b3ff;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		text-align: center;
 		padding-bottom: 2px;
 	}
 
-	.track-count {
+	.playlist-track-count {
 		color: #1db954ff;
 		font-weight: 600;
+		text-align: center;
 	}
 
 	.playlist-actions {
