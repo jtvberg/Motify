@@ -585,6 +585,16 @@ export async function moveTrack(
 		const updatedTracks = tracks.filter(t => t.id !== track.id);
 		stores.currentTracks.set(updatedTracks);
 
+		try {
+			const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
+			if (updatedTargetPlaylist) {
+				stores.targetPlaylist.set(updatedTargetPlaylist);
+				console.log(`Updated target playlist "${targetPlaylist.name}" with latest data from API`);
+			}
+		} catch (error) {
+			console.warn('Failed to refresh target playlist data:', error);
+		}
+
 		if (services.toastStore) {
 			if (trackAlreadyExists) {
 				services.toastStore.add({
