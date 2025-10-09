@@ -202,8 +202,8 @@
 						</div>
 					{/if}
 					<div class="playlist-info">
-						<h2 class="playlist-title">{$targetPlaylist ? $targetPlaylist.name : ''}</h2>
-						<p class="playlist-description">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</p>
+						<span class="playlist-title" title="{$targetPlaylist?.name || ''}">{$targetPlaylist ? $targetPlaylist.name : ''}</span>
+						<span class="playlist-description" title="{$targetPlaylist?.description || 'No description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</span>
 						<span class="playlist-track-count">{$targetPlaylist?.tracks?.total || 0} tracks</span>
 					</div>
 				</div>
@@ -364,10 +364,6 @@
 </div>
 
 <style>
-	h2 {
-		margin: 0;
-	}
-
 	.track-list-container {
 		background: #ffffff04;
 		backdrop-filter: blur(10px);
@@ -432,6 +428,7 @@
 		align-items: center;
 		line-height: 1;
 		gap: .5rem;
+		max-width: -webkit-fill-available;
 	}
 
 	.playlist-title {
@@ -442,6 +439,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		text-align: center;
+		max-width: -webkit-fill-available;
 		padding-bottom: 2px;
 	}
 
@@ -451,6 +449,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		text-align: center;
+		max-width: -webkit-fill-available;
 		padding-bottom: 2px;
 	}
 
