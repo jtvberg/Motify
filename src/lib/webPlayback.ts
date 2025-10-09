@@ -56,7 +56,7 @@ class WebPlaybackService {
     }
 
     private getDeviceName(): string {
-        return 'Motify Web Player';
+        return 'Motify';
     }
 
     async initialize(): Promise<void> {
