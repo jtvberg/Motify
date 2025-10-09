@@ -201,9 +201,10 @@
 							<i class="fas fa-music"></i>
 						</div>
 					{/if}
-					<div class="playlist-info playlist-info-right">
+					<div class="playlist-info">
 						<h2>{$targetPlaylist ? $targetPlaylist.name : ''}</h2>
 						<p>{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</p>
+						<span class="track-count">{$targetPlaylist?.tracks?.total || 0} tracks</span>
 					</div>
 				</div>
 			</div>
@@ -392,25 +393,22 @@
 	.playlist-selected-info, .playlist-target-info {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.playlist-target-info {
-		align-items: flex-end;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
 	.playlist-separator {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		height: 142px;
+		height: clamp(142px, 15vw, 300px);
 		color: #b3b3b3ff;
 		font-size: clamp(2rem, 6vw, 60px);
 	}
 
 	.playlist-cover {
-		width: 142px;
-		height: 142px;
+		width: clamp(142px, 15vw, 300px);
+		height: clamp(142px, 15vw, 300px);
 		border-radius: 8px;
 		object-fit: cover;
 	}
@@ -429,10 +427,9 @@
 	}
 
 	.playlist-info {
-    	flex: 1;
     	display: flex;
 		flex-direction: column;
-		justify-content: flex-start;
+		align-items: center;
 		line-height: 1;
 		gap: .5rem;
 	}
@@ -454,11 +451,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		padding-bottom: 2px;
-	}
-
-	.playlist-info-right {
-		align-items: flex-end;
-		text-align: right;
 	}
 
 	.track-count {
