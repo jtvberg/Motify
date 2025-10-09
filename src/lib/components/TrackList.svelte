@@ -7,7 +7,6 @@
 		formatDuration, 
 		isTrackPlayable,
 		clearTrackPlayabilityCache,
-		playTrack,
 		togglePlayPause,
 		removeTrack,
 		moveTrack
@@ -148,10 +147,6 @@
 		} finally {
 			isRefreshingPlaylist.set(false);
 		}
-	}
-
-	async function playTrackHandler(track: SpotifyTrack) {
-		await playTrack(track, tracks, stores, services);
 	}
 
 	async function togglePlayPauseHandler(track: SpotifyTrack) {
@@ -410,7 +405,7 @@
 		justify-content: center;
 		height: 142px;
 		color: #b3b3b3ff;
-		font-size: clamp(2rem, 5vw, 50px);
+		font-size: clamp(2rem, 6vw, 60px);
 	}
 
 	.playlist-cover {
@@ -475,7 +470,6 @@
 		display: flex;
 		justify-content: center;
 		gap: 1rem;
-		margin-top: 1rem;
 	}
 
 	.refresh-btn, .playlist-selector-btn {

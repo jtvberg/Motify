@@ -50,7 +50,7 @@
 <style>
 	.main-app {
 		min-height: 100vh;
-		padding: 2rem;
+		padding-inline: 2rem;
 	}
 
 	.container {
