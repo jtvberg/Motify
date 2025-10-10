@@ -333,6 +333,7 @@
 								class="action-btn remove-btn far fa-trash-can fa-xl" 
 								on:click={() => removeTrackHandler(track)}
 								aria-label="Remove from playlist"
+								title="Remove from playlist"
 								role="button"
 							>
 							</div>
@@ -343,6 +344,7 @@
 									class="action-btn move-btn fa fa-plus-minus fa-xl" 
 									on:click={() => moveTrackHandler(track)}
 									aria-label="Move to target playlist"
+									title="Move to target playlist"
 									role="button"
 								>
 								</div>
@@ -361,6 +363,7 @@
 									class="action-btn copy-btn far fa-square-plus fa-xl" 
 									on:click={() => copyTrackHandler(track)}
 									aria-label="Copy to target playlist"
+									title="Copy to target playlist"
 									role="button"
 								>
 								</div>

@@ -249,22 +249,52 @@
 			<div class="control-buttons">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div class="track-button track-remove far fa-trash-can fa-xl" role="button" on:click={removeCurrentTrack} aria-label="Remove track"></div>
-				<button class="control-btn" on:click={previousTrack} aria-label="Previous track">
-					<i class="fas fa-step-backward"></i>
-				</button>
-				<button class="play-btn" on:click={togglePlaybackHandler} aria-label={$isPlaying ? 'Pause' : 'Play'}>
-					<i class="fas {$isPlaying ? 'fa-pause' : 'fa-play'}"></i>
-				</button>
-				<button class="control-btn" on:click={nextTrack} aria-label="Next track">
-					<i class="fas fa-step-forward"></i>
-				</button>
+				<div
+					class="track-button track-remove far fa-trash-can fa-xl"
+					role="button"
+					on:click={removeCurrentTrack}
+					aria-label="Remove track"
+					title="Remove track from playlist"
+				></div>
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="control-btn fas fa-step-backward fa-xl"
+					role="button"
+					on:click={previousTrack}
+					aria-label="Previous track"
+					title="Previous track"
+				></div>
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div 
+					class="play-btn fas fa-2xl' {$isPlaying ? 'fa-circle-pause' : 'fa-circle-play'}"
+					role="button"
+					on:click={togglePlaybackHandler}
+					aria-label={$isPlaying ? 'Pause' : 'Play'}
+					title={$isPlaying ? 'Pause' : 'Play'}
+				></div>
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="control-btn fas fa-step-forward fa-xl"
+					role="button"
+					on:click={nextTrack}
+					aria-label="Next track"
+					title="Next track"
+				></div>
 				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
-					<div class="track-button track-move fa fa-plus-minus fa-xl" role="button" on:click={moveCurrentTrack} aria-label="Move track to target playlist"></div>
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="track-button track-move fa fa-plus-minus fa-xl"
+						role="button"
+						on:click={moveCurrentTrack}
+						aria-label="Move track to target playlist"
+						title="Move track to target playlist"
+					></div>
 				{:else}
-					<div 
+					<div
 						class="track-button track-move fa fa-plus-minus fa-xl track-button-disabled" 
 						aria-label="Move track to target playlist"
 						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
@@ -273,6 +303,15 @@
 			</div>
 
 			<div class="progress-container">
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div 
+					class="playback-btn fa fa-repeat"
+					role="button"
+					on:click={previousTrack}
+					aria-label="Repeat"
+					title="Repeat"
+				></div>
 				<span class="time">{formatTime($playbackPosition)}</span>
 				<input
 					type="range"
@@ -286,6 +325,15 @@
 					on:change={handleSeek}
 				/>
 				<span class="time">{formatTime($trackDuration)}</span>
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="playback-btn fa fa-shuffle"
+					role="button"
+					on:click={nextTrack}
+					aria-label="Shuffle playlist"
+					title="Shuffle playlist"
+				></div>
 			</div>
 		</div>
 	</div>
@@ -363,33 +411,16 @@
 	}
 
 	.control-btn {
-		background: #ffffff1a;
-		color: #ffffffff;
-		border: none;
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
 		cursor: pointer;
+		color: #ffffffff;
 		transition: all 0.3s ease;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding-top: 2px;
 	}
 
 	.play-btn {
-		background: #1db954ff;
-		color: black;
-		border: none;
-		width: 50px;
-		height: 50px;
-		border-radius: 50%;
-		cursor: pointer;
+		color: #1db954ff;
 		transition: all 0.3s ease;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.2rem;
+		font-size: 3rem;
+		cursor: pointer;
 	}
 
 	.track-button {
@@ -409,6 +440,13 @@
 		display: flex;
 		align-items: center;
 		gap: 1rem;
+	}
+
+	.playback-btn {
+		color: #b3b3b3ff;
+		font-size: 1.2rem;
+		cursor: pointer;
+		transition: color 0.3s ease;
 	}
 
 	.time {
@@ -432,8 +470,8 @@
 	.progress-bar::-webkit-slider-thumb {
 		-webkit-appearance: none;
 		appearance: none;
-		width: 12px;
-		height: 12px;
+		width: 16px;
+		height: 16px;
 		border-radius: 50%;
 		background: #1db954ff;
 		cursor: pointer;
@@ -478,12 +516,10 @@
 
 	@media (hover: hover) {
 		.control-btn:hover {
-			background: #ffffff33;
 			transform: scale(1.1);
 		}
 
 		.play-btn:hover {
-			background: #1ed760ff;
 			transform: scale(1.1);
 		}
 
@@ -498,6 +534,10 @@
 		.track-button-disabled:hover {
 			color: #666666ff !important;
 			transform: none !important;
+		}
+
+		.playback-btn:hover {
+			color: #ffffffff;
 		}
 	}
 </style>
