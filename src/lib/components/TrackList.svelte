@@ -791,12 +791,12 @@
 		}
 
 		.copy-btn:hover {
-			color: #007affcc;
+			color: #00ff0dcc;
 			transform: scale(1.1);
 		}
 
 		.move-btn:hover {
-			color: #ffca3a;
+			color: #007affcc;
 			transform: scale(1.1);
 		}
 

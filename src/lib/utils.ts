@@ -457,6 +457,43 @@ export async function playNextTrack(
 	}
 }
 
+async function removeTrackFromPlaylist(
+	track: SpotifyTrack,
+	playlistId: string,
+	services: PlaybackServices
+): Promise<void> {
+	const { getOperationalUri, isTrackRelinked } = await import('./spotify');
+	
+	const operationalUri = getOperationalUri(track);
+	const isRelinked = isTrackRelinked(track);
+	console.log(`Removing track "${track.name}" from playlist - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+	
+	await services.spotifyAPI.removeTrackFromPlaylist(playlistId, operationalUri);
+}
+
+async function addTrackToPlaylist(
+	track: SpotifyTrack,
+	playlistId: string,
+	services: PlaybackServices,
+	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
+): Promise<boolean> {
+	const { getOperationalUri, isTrackRelinked } = await import('./spotify');
+	
+	const operationalUri = getOperationalUri(track);
+	const isRelinked = isTrackRelinked(track);
+	console.log(`Adding track "${track.name}" to playlist - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+
+	const targetTracks = await handleAPIError(() => services.spotifyAPI.getPlaylistTracks(playlistId));
+	const trackAlreadyExists = targetTracks && Array.isArray(targetTracks) && targetTracks.some((t: SpotifyTrack) => t.id === track.id);
+	
+	if (!trackAlreadyExists) {
+		await services.spotifyAPI.addTrackToPlaylist(playlistId, operationalUri);
+		return true;
+	}
+	
+	return false;
+}
+
 export async function removeTrack(
 	track: SpotifyTrack,
 	tracks: SpotifyTrack[],
@@ -482,12 +519,7 @@ export async function removeTrack(
 	const currentIndex = tracks.findIndex(t => t.id === track.id);
 	
 	try {
-		const { getOperationalUri, isTrackRelinked } = await import('./spotify');
-		
-		const operationalUri = getOperationalUri(track);
-		const isRelinked = isTrackRelinked(track);
-		console.log(`Removing track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
-		await services.spotifyAPI.removeTrackFromPlaylist(selectedPlaylist.id, operationalUri);
+		await removeTrackFromPlaylist(track, selectedPlaylist.id, services);
 
 		const updatedTracks = tracks.filter(t => t.id !== track.id);
 		stores.currentTracks.set(updatedTracks);
@@ -565,20 +597,9 @@ export async function moveTrack(
 	const currentIndex = tracks.findIndex(t => t.id === track.id);
 	
 	try {
-		const { getOperationalUri, isTrackRelinked } = await import('./spotify');
-		
-		const operationalUri = getOperationalUri(track);
-		const isRelinked = isTrackRelinked(track);
-		console.log(`Moving track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+		const trackWasAdded = await addTrackToPlaylist(track, targetPlaylist.id, services, handleAPIError);
 
-		const targetTracks = await handleAPIError(() => services.spotifyAPI.getPlaylistTracks(targetPlaylist.id));
-		const trackAlreadyExists = targetTracks && Array.isArray(targetTracks) && targetTracks.some((t: SpotifyTrack) => t.id === track.id);
-		
-		if (!trackAlreadyExists) {
-			await services.spotifyAPI.addTrackToPlaylist(targetPlaylist.id, operationalUri);
-		}
-
-		await services.spotifyAPI.removeTrackFromPlaylist(selectedPlaylist.id, operationalUri);
+		await removeTrackFromPlaylist(track, selectedPlaylist.id, services);
 
 		const updatedTracks = tracks.filter(t => t.id !== track.id);
 		stores.currentTracks.set(updatedTracks);
@@ -594,7 +615,7 @@ export async function moveTrack(
 		}
 
 		if (services.toastStore) {
-			if (trackAlreadyExists) {
+			if (!trackWasAdded) {
 				services.toastStore.add({
 					message: `"${track.name}" was already in ${targetPlaylist.name}, removed from ${selectedPlaylist.name}`,
 					type: 'info'
@@ -652,44 +673,19 @@ export async function copyTrack(
 	services: PlaybackServices,
 	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
 ): Promise<SpotifyTrack[]> {
-	let selectedPlaylist: any = null;
 	let targetPlaylist: any = null;
-	let currentTrack: SpotifyTrack | null = null;
 	
-	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
 	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
-	const currentTrackUnsub = stores.currentTrack.subscribe((value: SpotifyTrack | null) => { currentTrack = value; });
 	
-	selectedPlaylistUnsub();
 	targetPlaylistUnsub();
-	currentTrackUnsub();
 	
-	if (!targetPlaylist || !selectedPlaylist) {
-		console.error('No target or selected playlist');
+	if (!targetPlaylist) {
+		console.error('No target playlist');
 		return tracks;
 	}
 	
-	const isCurrentlyPlaying = (currentTrack as unknown as SpotifyTrack)?.id === track.id;
-	const currentIndex = tracks.findIndex(t => t.id === track.id);
-	
 	try {
-		const { getOperationalUri, isTrackRelinked } = await import('./spotify');
-		
-		const operationalUri = getOperationalUri(track);
-		const isRelinked = isTrackRelinked(track);
-		console.log(`Copying track "${track.name}" - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
-
-		const targetTracks = await handleAPIError(() => services.spotifyAPI.getPlaylistTracks(targetPlaylist.id));
-		const trackAlreadyExists = targetTracks && Array.isArray(targetTracks) && targetTracks.some((t: SpotifyTrack) => t.id === track.id);
-		
-		if (!trackAlreadyExists) {
-			await services.spotifyAPI.addTrackToPlaylist(targetPlaylist.id, operationalUri);
-		}
-
-		await services.spotifyAPI.removeTrackFromPlaylist(selectedPlaylist.id, operationalUri);
-
-		const updatedTracks = tracks.filter(t => t.id !== track.id);
-		stores.currentTracks.set(updatedTracks);
+		const trackWasAdded = await addTrackToPlaylist(track, targetPlaylist.id, services, handleAPIError);
 
 		try {
 			const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
@@ -702,43 +698,20 @@ export async function copyTrack(
 		}
 
 		if (services.toastStore) {
-			if (trackAlreadyExists) {
+			if (!trackWasAdded) {
 				services.toastStore.add({
-					message: `"${track.name}" was already in ${targetPlaylist.name}, removed from ${selectedPlaylist.name}`,
+					message: `"${track.name}" was already in ${targetPlaylist.name}`,
 					type: 'info'
 				});
 			} else {
 				services.toastStore.add({
-					message: `Copied "${track.name}" from ${selectedPlaylist.name} to ${targetPlaylist.name}`,
+					message: `Copied "${track.name}" to ${targetPlaylist.name}`,
 					type: 'success'
 				});
 			}
 		}
 
-		if (isCurrentlyPlaying && updatedTracks.length > 0) {
-			const startSearchIndex = Math.min(currentIndex, updatedTracks.length - 1);
-
-			if (startSearchIndex >= 0 && isTrackPlayable(updatedTracks[startSearchIndex])) {
-				const nextTrack = updatedTracks[startSearchIndex];
-				console.log(`Auto-playing track that moved into moved position: ${nextTrack.name}`);
-				await playTrack(nextTrack, updatedTracks, stores, services);
-			} else {
-				const nextPlayableIndex = findNextPlayableTrack(updatedTracks, startSearchIndex, 1);
-				
-				if (nextPlayableIndex !== -1) {
-					const nextTrack = updatedTracks[nextPlayableIndex];
-					console.log(`Auto-playing next playable track after move: ${nextTrack.name}`);
-					await playTrack(nextTrack, updatedTracks, stores, services);
-				} else {
-					console.log('No playable tracks remaining after move');
-					stores.currentTrack.set(null);
-					stores.currentTrackIndex.set(-1);
-					stores.isPlaying.set(false);
-				}
-			}
-		}
-		
-		return updatedTracks;
+		return tracks;
 	} catch (error) {
 		console.error('Failed to copy track:', error);
 
