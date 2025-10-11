@@ -11,7 +11,8 @@
 		playPreviousTrack,
 		playNextTrack,
 		removeTrack,
-		moveTrack
+		moveTrack,
+		copyTrack
 	} from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
@@ -203,6 +204,25 @@
 		const updatedTracks = await moveTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
 	}
 
+
+	async function copyCurrentTrack() {
+		if (!$currentTrack || !$currentTracks.length) {
+			console.log('No current track to move');
+			return;
+		}
+
+		if (!$targetPlaylist) {
+			console.log('No target playlist selected');
+			return;
+		}
+
+		const updatedTracks = await copyTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
+	}
+
+	async function addCurrentTrack() {
+		// implement if needed
+	}
+
 	function handleSeekStart() {
 		isDragging = true;
 	}
@@ -246,16 +266,33 @@
 					</div>
 				{/if}
 			</div>
-			<div class="control-buttons">
+			<div class="control-btns">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
-					class="track-button track-remove far fa-trash-can fa-xl"
+					class="track-btn track-remove far fa-trash-can fa-xl"
 					role="button"
 					on:click={removeCurrentTrack}
 					aria-label="Remove track"
 					title="Remove track from playlist"
 				></div>
+				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="track-btn track-move fa fa-plus-minus fa-xl"
+						role="button"
+						on:click={moveCurrentTrack}
+						aria-label="Move track to target playlist"
+						title="Move track to target playlist"
+					></div>
+				{:else}
+					<div
+						class="track-btn track-move fa fa-plus-minus fa-xl track-btn-disabled" 
+						aria-label="Move track to target playlist"
+						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+					></div>
+				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
@@ -287,19 +324,28 @@
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
-						class="track-button track-move fa fa-plus-minus fa-xl"
+						class="track-btn track-copy far fa-square-plus fa-xl"
 						role="button"
-						on:click={moveCurrentTrack}
-						aria-label="Move track to target playlist"
-						title="Move track to target playlist"
+						on:click={copyCurrentTrack}
+						aria-label="Copy track to target playlist"
+						title="Copy track to target playlist"
 					></div>
 				{:else}
 					<div
-						class="track-button track-move fa fa-plus-minus fa-xl track-button-disabled" 
-						aria-label="Move track to target playlist"
-						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+						class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
+						aria-label="Copy track to target playlist"
+						title={$targetPlaylist ? 'Select a different target playlist to enable copying tracks' : 'Select a target playlist to enable copying tracks'}
 					></div>
 				{/if}
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div
+					class="track-btn track-add far fa-circle-check fa-xl"
+					role="button"
+					on:click={addCurrentTrack}
+					aria-label="Add track to library"
+					title="Add track to library"
+				></div>
 			</div>
 
 			<div class="progress-container">
@@ -403,11 +449,11 @@
 		width: 1px;
 	}
 
-	.control-buttons {
+	.control-btns {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 
 	.control-btn {
@@ -423,14 +469,21 @@
 		cursor: pointer;
 	}
 
-	.track-button {
+	.track-btn {
 		color: #b3b3b3ff;
 		cursor: pointer;
 		transition: color 0.3s ease;
-		margin-inline: 1rem;
 	}
 
-	.track-button-disabled {
+	.track-remove, .track-move {
+		margin-right: 1rem;
+	}
+
+	.track-copy, .track-add {
+		margin-left: 1rem;
+	}
+
+	.track-btn-disabled {
 		opacity: 0.5;
 		cursor: not-allowed !important;
 		color: #666666ff !important;
@@ -523,15 +576,11 @@
 			transform: scale(1.1);
 		}
 
-		.track-remove:hover {
-			color: #ff453aff;
+		.track-btn:hover {
+			color: #1db954ff;
 		}
 
-		.track-move:hover {
-			color: #007affcc;
-		}
-
-		.track-button-disabled:hover {
+		.track-btn-disabled:hover {
 			color: #666666ff !important;
 			transform: none !important;
 		}

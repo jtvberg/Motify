@@ -166,6 +166,10 @@
 		await copyTrack(track, tracks, stores, services, handleAPIError);
 	}
 
+	async function addTrackHandler(track: SpotifyTrack) {
+		// implement if needed
+	}
+
 	function openPlaylistSelector() {
 		isPlaylistSelectorOpen.set(true);
 	}
@@ -375,6 +379,16 @@
 								>
 								</div>
 							{/if}
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_interactive_supports_focus -->
+							<div 
+								class="action-btn add-btn far fa-circle-check fa-xl" 
+								on:click={() => addTrackHandler(track)}
+								aria-label="Add to library"
+								title="Add to library"
+								role="button"
+							>
+							</div>
 						</div>
 					</div>
 				{/each}
@@ -667,6 +681,7 @@
 	}
 
 	.action-btn {
+		color: #b3b3b3ff;
 		width: 32px;
 		height: 32px;
 		border: none;
@@ -687,10 +702,6 @@
 	.play-btn {
 		background: #1db954ff;
 		color: #f3f3f3ff;
-	}
-
-	.remove-btn, .copy-btn, .move-btn {
-		color: #b3b3b3ff;
 	}
 
 	/* Unavailable track styles */
@@ -747,7 +758,7 @@
 
 	@media (max-width: 768px) {
 		.track-header, .track-item {
-			grid-template-columns: 1fr 160px;
+			grid-template-columns: 1fr 200px;
 			gap: 1rem;
 			align-items: unset;
 		}
@@ -793,18 +804,8 @@
 			background: #ffffff08 !important;
 		}
 
-		.copy-btn:hover {
+		.action-btn:hover {
 			color: #00ff0dcc;
-			transform: scale(1.1);
-		}
-
-		.move-btn:hover {
-			color: #007affcc;
-			transform: scale(1.1);
-		}
-
-		.remove-btn:hover {
-			color: #ff453aff;
 			transform: scale(1.1);
 		}
 
