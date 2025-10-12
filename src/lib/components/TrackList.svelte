@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
-	import { libraryService } from '$lib/libraryService';
 	import { 
 		formatDuration, 
 		isTrackPlayable,
@@ -390,10 +389,10 @@
 							<!-- svelte-ignore a11y_click_events_have_key_events -->
 							<!-- svelte-ignore a11y_interactive_supports_focus -->
 							<div 
-								class="action-btn add-btn {isTrackInLibrary(track.id) ? 'fas' : 'far'} fa-heart fa-xl {isTrackInLibrary(track.id) ? 'in-library' : ''}" 
-								on:click={() => addTrackHandler(track)}
-								aria-label={isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library'}
-								title={isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library'}
+								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (isTrackInLibrary(track.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + (isTrackInLibrary(track.id) ? 'in-library' : '')}" 
+								on:click={$isLibraryLoading ? null : () => addTrackHandler(track)}
+								aria-label={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library')}
+								title={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library')}
 								role="button"
 							>
 							</div>

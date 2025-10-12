@@ -1,5 +1,5 @@
 import { spotifyAPI } from './spotify';
-import { userLibrary } from './stores';
+import { userLibrary, isLibraryLoading } from './stores';
 import { get } from 'svelte/store';
 
 class LibraryService {
@@ -16,6 +16,7 @@ class LibraryService {
 
 	private async performLoad(): Promise<void> {
 		try {
+			isLibraryLoading.set(true);
 			console.log('Loading user library...');
 			const trackIds = await spotifyAPI.getUserSavedTracks();
 			userLibrary.set(new Set(trackIds));
@@ -24,6 +25,7 @@ class LibraryService {
 			console.error('Failed to load user library:', error);
 			userLibrary.set(new Set());
 		} finally {
+			isLibraryLoading.set(false);
 			this.loadingPromise = null;
 		}
 	}
@@ -34,31 +36,47 @@ class LibraryService {
 	}
 
 	async addTrackToLibrary(trackId: string): Promise<void> {
+		// Optimistically update UI immediately
+		userLibrary.update(lib => {
+			const newLib = new Set(lib);
+			newLib.add(trackId);
+			return newLib;
+		});
+
 		try {
 			await spotifyAPI.saveTracksForUser([trackId]);
-			userLibrary.update(lib => {
-				const newLib = new Set(lib);
-				newLib.add(trackId);
-				return newLib;
-			});
 			console.log(`Track ${trackId} added to library`);
 		} catch (error) {
 			console.error('Failed to add track to library:', error);
-			throw error;
-		}
-	}
-
-	async removeTrackFromLibrary(trackId: string): Promise<void> {
-		try {
-			await spotifyAPI.removeUserSavedTracks([trackId]);
+			// Revert optimistic update on failure
 			userLibrary.update(lib => {
 				const newLib = new Set(lib);
 				newLib.delete(trackId);
 				return newLib;
 			});
+			throw error;
+		}
+	}
+
+	async removeTrackFromLibrary(trackId: string): Promise<void> {
+		// Optimistically update UI immediately
+		userLibrary.update(lib => {
+			const newLib = new Set(lib);
+			newLib.delete(trackId);
+			return newLib;
+		});
+
+		try {
+			await spotifyAPI.removeUserSavedTracks([trackId]);
 			console.log(`Track ${trackId} removed from library`);
 		} catch (error) {
 			console.error('Failed to remove track from library:', error);
+			// Revert optimistic update on failure
+			userLibrary.update(lib => {
+				const newLib = new Set(lib);
+				newLib.add(trackId);
+				return newLib;
+			});
 			throw error;
 		}
 	}
@@ -77,6 +95,7 @@ class LibraryService {
 
 	clearLibrary(): void {
 		userLibrary.set(new Set());
+		isLibraryLoading.set(false);
 	}
 }
 
