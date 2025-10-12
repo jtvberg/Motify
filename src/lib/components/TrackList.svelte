@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
+	import { libraryService } from '$lib/libraryService';
 	import { 
 		formatDuration, 
 		isTrackPlayable,
@@ -10,7 +11,8 @@
 		togglePlayPause,
 		removeTrack,
 		moveTrack,
-		copyTrack
+		copyTrack,
+		toggleTrackInLibrary
 	} from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import type { SpotifyTrack } from '$lib/spotify';
@@ -167,7 +169,11 @@
 	}
 
 	async function addTrackHandler(track: SpotifyTrack) {
-		// implement if needed
+		await toggleTrackInLibrary(track, services);
+	}
+
+	function isTrackInLibrary(trackId: string): boolean {
+		return libraryService.isTrackInLibrary(trackId);
 	}
 
 	function openPlaylistSelector() {
@@ -382,7 +388,7 @@
 							<!-- svelte-ignore a11y_click_events_have_key_events -->
 							<!-- svelte-ignore a11y_interactive_supports_focus -->
 							<div 
-								class="action-btn add-btn far fa-circle-check fa-xl" 
+								class="action-btn add-btn far fa-heart fa-xl" 
 								on:click={() => addTrackHandler(track)}
 								aria-label="Add to library"
 								title="Add to library"
@@ -702,6 +708,10 @@
 	.play-btn {
 		background: #1db954ff;
 		color: #f3f3f3ff;
+	}
+
+	.add-btn.in-library {
+		color: #1db954ff;
 	}
 
 	/* Unavailable track styles */

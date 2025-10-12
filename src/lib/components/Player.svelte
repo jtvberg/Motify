@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex, selectedPlaylist, targetPlaylist } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
+	import { libraryService } from '$lib/libraryService';
 	import { 
 		formatTime,
 		togglePlayback,
@@ -12,7 +13,8 @@
 		playNextTrack,
 		removeTrack,
 		moveTrack,
-		copyTrack
+		copyTrack,
+		toggleTrackInLibrary
 	} from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
@@ -220,7 +222,16 @@
 	}
 
 	async function addCurrentTrack() {
-		// implement if needed
+		if (!$currentTrack) {
+			console.log('No current track to add to library');
+			return;
+		}
+
+		await toggleTrackInLibrary($currentTrack, services);
+	}
+
+	function isTrackInLibrary(trackId: string): boolean {
+		return libraryService.isTrackInLibrary(trackId);
 	}
 
 	function handleSeekStart() {
@@ -340,14 +351,13 @@
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
-					class="track-btn track-add far fa-circle-check fa-xl"
+					class="track-btn track-add {$currentTrack && isTrackInLibrary($currentTrack.id) ? 'fas' : 'far'} fa-heart fa-xl {$currentTrack && isTrackInLibrary($currentTrack.id) ? 'in-library' : ''}"
 					role="button"
 					on:click={addCurrentTrack}
-					aria-label="Add track to library"
-					title="Add track to library"
+					aria-label={$currentTrack && isTrackInLibrary($currentTrack.id) ? 'Remove from library' : 'Add to library'}
+					title={$currentTrack && isTrackInLibrary($currentTrack.id) ? 'Remove from library' : 'Add to library'}
 				></div>
 			</div>
-
 			<div class="progress-container">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -489,10 +499,14 @@
 		color: #666666ff !important;
 	}
 
+	.track-add.in-library {
+		color: #1db954ff;
+	}
+
 	.progress-container {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	.playback-btn {

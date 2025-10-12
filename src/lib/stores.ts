@@ -15,6 +15,7 @@ export const isAuthenticated = writable(false);
 export const currentPlaylistSnapshot = writable<string | null>(null);
 export const isRefreshingPlaylist = writable(false);
 export const isPlaylistSelectorOpen = writable(false);
+export const userLibrary = writable<Set<string>>(new Set());
 
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;

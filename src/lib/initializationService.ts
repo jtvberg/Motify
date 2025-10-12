@@ -1,6 +1,7 @@
 import { spotifyAPI } from './spotify';
 import { webPlaybackService } from './webPlayback';
 import { tokenManager } from './tokenManager';
+import { libraryService } from './libraryService';
 import { isAuthenticated, user, playlists, selectedPlaylist, targetPlaylist, playlistSelections } from './stores';
 import type { SpotifyPlaylist } from './spotify';
 
@@ -81,7 +82,11 @@ class InitializationService {
             const playlistsData = await spotifyAPI.getUserPlaylists();
             playlists.set(playlistsData);
 
-            await this.restorePlaylistSelections(playlistsData);
+            // Load user library in parallel with playlist selections
+            const [_, __] = await Promise.all([
+                this.restorePlaylistSelections(playlistsData),
+                libraryService.loadUserLibrary()
+            ]);
         } catch (error) {
             console.error('Error loading user data and playlists:', error);
             throw error;
@@ -166,6 +171,7 @@ class InitializationService {
         playlists.set([]);
         selectedPlaylist.set(null);
         targetPlaylist.set(null);
+        libraryService.clearLibrary();
         
         console.log('Initialization service reset');
     }

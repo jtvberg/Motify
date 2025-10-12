@@ -531,6 +531,93 @@ class SpotifyAPI {
 			method: 'POST'
 		});
 	}
+
+	async getUserSavedTracks(): Promise<string[]> {
+		let allTrackIds: string[] = [];
+		let url: string | null = '/me/tracks?limit=50';
+		let pageCount = 0;
+		
+		console.log('Fetching user saved tracks...');
+		
+		try {
+			while (url) {
+				pageCount++;
+				
+				const response = await this.makeRequest(url);
+				
+				if (!response || !response.items) {
+					console.warn('Invalid response while fetching saved tracks');
+					break;
+				}
+				
+				const trackIds = response.items
+					.map((item: any) => item.track?.id)
+					.filter((id: string) => id !== null && id !== undefined);
+				
+				allTrackIds = allTrackIds.concat(trackIds);
+
+				if (response.next) {
+					const nextUrl = new URL(response.next);
+					url = nextUrl.pathname + nextUrl.search;
+					console.log(`Fetching next page of saved tracks (page ${pageCount + 1})...`);
+				} else {
+					url = null;
+				}
+
+				if (pageCount > 50) {
+					console.warn('Reached maximum page count for saved tracks');
+					break;
+				}
+			}
+		} catch (error) {
+			console.error('Error during saved tracks pagination:', error);
+			throw error;
+		}
+		
+		console.log(`Finished fetching all ${allTrackIds.length} saved tracks`);
+		return allTrackIds;
+	}
+
+	async checkUserSavedTracks(trackIds: string[]): Promise<boolean[]> {
+		const batchSize = 50;
+		const results: boolean[] = [];
+		
+		for (let i = 0; i < trackIds.length; i += batchSize) {
+			const batch = trackIds.slice(i, i + batchSize);
+			const response = await this.makeRequest(`/me/tracks/contains?ids=${batch.join(',')}`);
+			results.push(...response);
+		}
+		
+		return results;
+	}
+
+	async saveTracksForUser(trackIds: string[]): Promise<void> {
+		const batchSize = 50;
+		
+		for (let i = 0; i < trackIds.length; i += batchSize) {
+			const batch = trackIds.slice(i, i + batchSize);
+			await this.makeRequest('/me/tracks', {
+				method: 'PUT',
+				body: JSON.stringify({
+					ids: batch
+				})
+			});
+		}
+	}
+
+	async removeUserSavedTracks(trackIds: string[]): Promise<void> {
+		const batchSize = 50;
+		
+		for (let i = 0; i < trackIds.length; i += batchSize) {
+			const batch = trackIds.slice(i, i + batchSize);
+			await this.makeRequest('/me/tracks', {
+				method: 'DELETE',
+				body: JSON.stringify({
+					ids: batch
+				})
+			});
+		}
+	}
 }
 
 export const spotifyAPI = new SpotifyAPI();

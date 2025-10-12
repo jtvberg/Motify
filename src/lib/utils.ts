@@ -725,3 +725,36 @@ export async function copyTrack(
 		return tracks;
 	}
 }
+
+export async function toggleTrackInLibrary(
+	track: SpotifyTrack,
+	services: PlaybackServices
+): Promise<boolean> {
+	const { libraryService } = await import('./libraryService');
+	
+	try {
+		const isNowInLibrary = await libraryService.toggleTrackInLibrary(track.id);
+		
+		if (services.toastStore) {
+			services.toastStore.add({
+				message: isNowInLibrary 
+					? `Added "${track.name}" to your library` 
+					: `Removed "${track.name}" from your library`,
+				type: 'success'
+			});
+		}
+		
+		return isNowInLibrary;
+	} catch (error) {
+		console.error('Failed to toggle track in library:', error);
+		
+		if (services.toastStore) {
+			services.toastStore.add({
+				message: `Failed to update library: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
+		}
+		
+		throw error;
+	}
+}
