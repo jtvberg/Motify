@@ -24,6 +24,11 @@
 	let isPlayerReady = false;
 
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
+	
+	// Reactive function to check if track is in library
+	$: isTrackInLibrary = (trackId: string): boolean => {
+		return $userLibrary.has(trackId);
+	};
 
 	const stores = {
 		isPlaying,
@@ -228,10 +233,6 @@
 		}
 
 		await toggleTrackInLibrary($currentTrack, services);
-	}
-
-	function isTrackInLibrary(trackId: string): boolean {
-		return libraryService.isTrackInLibrary(trackId);
 	}
 
 	function handleSeekStart() {

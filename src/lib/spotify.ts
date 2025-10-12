@@ -322,6 +322,9 @@ class SpotifyAPI {
 					try {
 						const nextUrl = new URL(response.next);
 						let path = nextUrl.pathname;
+						if (path.startsWith('/v1')) {
+							path = path.substring(3);
+						}
 						url = path + nextUrl.search;
 					} catch (urlError) {
 						console.error('Failed to parse next playlist URL:', response.next, urlError);
@@ -557,9 +560,18 @@ class SpotifyAPI {
 				allTrackIds = allTrackIds.concat(trackIds);
 
 				if (response.next) {
-					const nextUrl = new URL(response.next);
-					url = nextUrl.pathname + nextUrl.search;
-					console.log(`Fetching next page of saved tracks (page ${pageCount + 1})...`);
+					try {
+						const nextUrl = new URL(response.next);
+						let path = nextUrl.pathname;
+						if (path.startsWith('/v1')) {
+							path = path.substring(3);
+						}
+						url = path + nextUrl.search;
+						console.log(`Fetching next page of saved tracks (page ${pageCount + 1})...`);
+					} catch (urlError) {
+						console.error('Failed to parse next saved tracks URL:', response.next, urlError);
+						break;
+					}
 				} else {
 					url = null;
 				}
@@ -576,19 +588,6 @@ class SpotifyAPI {
 		
 		console.log(`Finished fetching all ${allTrackIds.length} saved tracks`);
 		return allTrackIds;
-	}
-
-	async checkUserSavedTracks(trackIds: string[]): Promise<boolean[]> {
-		const batchSize = 50;
-		const results: boolean[] = [];
-		
-		for (let i = 0; i < trackIds.length; i += batchSize) {
-			const batch = trackIds.slice(i, i + batchSize);
-			const response = await this.makeRequest(`/me/tracks/contains?ids=${batch.join(',')}`);
-			results.push(...response);
-		}
-		
-		return results;
 	}
 
 	async saveTracksForUser(trackIds: string[]): Promise<void> {

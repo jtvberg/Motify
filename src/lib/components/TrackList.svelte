@@ -21,6 +21,11 @@
 	let loading = false;
 
 	$: tracks = $currentTracks;
+	
+	// Reactive function to check if track is in library
+	$: isTrackInLibrary = (trackId: string): boolean => {
+		return $userLibrary.has(trackId);
+	};
 
 	const dummyTrackDuration = {
 		set: () => {},
@@ -169,11 +174,8 @@
 	}
 
 	async function addTrackHandler(track: SpotifyTrack) {
+		console.log(isTrackInLibrary(track.id));
 		await toggleTrackInLibrary(track, services);
-	}
-
-	function isTrackInLibrary(trackId: string): boolean {
-		return libraryService.isTrackInLibrary(trackId);
 	}
 
 	function openPlaylistSelector() {
@@ -388,10 +390,10 @@
 							<!-- svelte-ignore a11y_click_events_have_key_events -->
 							<!-- svelte-ignore a11y_interactive_supports_focus -->
 							<div 
-								class="action-btn add-btn far fa-heart fa-xl" 
+								class="action-btn add-btn {isTrackInLibrary(track.id) ? 'fas' : 'far'} fa-heart fa-xl {isTrackInLibrary(track.id) ? 'in-library' : ''}" 
 								on:click={() => addTrackHandler(track)}
-								aria-label="Add to library"
-								title="Add to library"
+								aria-label={isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library'}
+								title={isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library'}
 								role="button"
 							>
 							</div>
