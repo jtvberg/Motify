@@ -20,8 +20,6 @@
 	let loading = false;
 
 	$: tracks = $currentTracks;
-	
-	// Reactive function to check if track is in library
 	$: isTrackInLibrary = (trackId: string): boolean => {
 		return $userLibrary.has(trackId);
 	};
@@ -206,9 +204,9 @@
 					<div class="playlist-info">
 						<div class="playlist-title" title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</div>
 						<div class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</div>
-						<div class="playlist-track-count">{tracks.length} tracks</div>
+						<div class="playlist-track-count">{tracks.length > 0 ? tracks.length + ' tracks' : ''}</div>
 					</div>
-						<div class="playlist-actions">
+						<!-- <div class="playlist-actions">
 							<button 
 								class="refresh-btn" 
 								on:click={refreshPlaylist}
@@ -218,7 +216,7 @@
 							>
 								<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
 							</button>
-						</div>
+						</div> -->
 				</div>
 				<div class="playlist-separator fa fa-angles-right"></div>
 				<div class="playlist-target-info">
@@ -241,12 +239,11 @@
 					<div class="playlist-info">
 						<div class="playlist-title" title="{$targetPlaylist?.name || ''}">{$targetPlaylist ? $targetPlaylist.name : ''}</div>
 						<div class="playlist-description" title="{$targetPlaylist?.description || 'No description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</div>
-						<div class="playlist-track-count">{$targetPlaylist?.tracks?.total || 0} tracks</div>
+						<div class="playlist-track-count">{$targetPlaylist ? ($targetPlaylist.tracks?.total || 0) + ' tracks' : ''}</div>
 					</div>
 				</div>
 			</div>
 		</div>
-
 		{#if loading}
 			<div class="loading">
 				<i class="fas fa-spinner fa-spin"></i>
@@ -267,7 +264,6 @@
 					<span class="track-duration">Duration</span>
 					<span class="track-actions">Actions</span>
 				</div>
-
 				{#each tracks as track, index}
 					{@const isCurrentTrack = $currentTrack && $currentTrack.id === track.id}
 					{@const trackPlayable = isTrackPlayable(track)}

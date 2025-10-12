@@ -82,11 +82,12 @@ class InitializationService {
             const playlistsData = await spotifyAPI.getUserPlaylists();
             playlists.set(playlistsData);
 
-            // Load user library in parallel with playlist selections
-            const [_, __] = await Promise.all([
-                this.restorePlaylistSelections(playlistsData),
-                libraryService.loadUserLibrary()
-            ]);
+            await this.restorePlaylistSelections(playlistsData);
+            
+            // Load library in the background without blocking initialization
+            libraryService.loadUserLibrary().catch(error => {
+                console.error('Failed to load user library in background:', error);
+            });
         } catch (error) {
             console.error('Error loading user data and playlists:', error);
             throw error;

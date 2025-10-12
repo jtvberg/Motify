@@ -36,7 +36,6 @@ class LibraryService {
 	}
 
 	async addTrackToLibrary(trackId: string): Promise<void> {
-		// Optimistically update UI immediately
 		userLibrary.update(lib => {
 			const newLib = new Set(lib);
 			newLib.add(trackId);
@@ -48,7 +47,6 @@ class LibraryService {
 			console.log(`Track ${trackId} added to library`);
 		} catch (error) {
 			console.error('Failed to add track to library:', error);
-			// Revert optimistic update on failure
 			userLibrary.update(lib => {
 				const newLib = new Set(lib);
 				newLib.delete(trackId);
@@ -59,7 +57,6 @@ class LibraryService {
 	}
 
 	async removeTrackFromLibrary(trackId: string): Promise<void> {
-		// Optimistically update UI immediately
 		userLibrary.update(lib => {
 			const newLib = new Set(lib);
 			newLib.delete(trackId);
@@ -71,7 +68,6 @@ class LibraryService {
 			console.log(`Track ${trackId} removed from library`);
 		} catch (error) {
 			console.error('Failed to remove track from library:', error);
-			// Revert optimistic update on failure
 			userLibrary.update(lib => {
 				const newLib = new Set(lib);
 				newLib.add(trackId);
