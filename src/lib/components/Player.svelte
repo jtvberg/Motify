@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
@@ -234,10 +234,15 @@
 	}
 
 	async function cycleRepeatMode() {
-		// Cycle through repeat modes: off -> track -> once -> off
-		// off = no repeat, next track in list is played automatically; class repeat-active is removed, repeat-once is hidden
-		// track = repeat current track indefinitely; class repeat-active is added, repeat-once is hidden
-		// once = repeat current track once, then stop playback; class repeat-active is added, repeat-once is shown
+		let newMode: 'off' | 'playlist' | 'track';
+		if ($repeatMode === 'off') {
+			newMode = 'playlist'; // after current track is played, the next track in the playlist is played; class repeat-active is added, repeat-track is hidden
+		} else if ($repeatMode === 'playlist') {
+			newMode = 'track'; // repeat current track until stopped; class repeat-active is added, repeat-track is shown
+		} else {
+			newMode = 'off'; // play current track once and then stop; class repeat-active is removed, repeat-track is hidden
+		}
+		repeatMode.set(newMode);
 	}
 
 	async function toggleShuffle() {
@@ -410,17 +415,21 @@
 				></div>
 			</div>
 			<div class="progress-container">
-				<div class="repeat-container">
-					<!-- svelte-ignore a11y_interactive_supports_focus -->
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_interactive_supports_focus -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<div class="playback-btn repeat-container"
+					role="button"
+					on:click={cycleRepeatMode}
+					aria-label="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
+					title="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
+				>
 					<div 
-						class="playback-btn repeat-btn fa fa-repeat repeat-active"
-						role="button"
-						on:click={cycleRepeatMode}
-						aria-label="Repeat"
-						title="Repeat"
+						class="repeat-btn fa fa-repeat"
+						class:repeat-active={$repeatMode === 'track' || $repeatMode === 'playlist'}
 					></div>
-					<div class="repeat-once">1</div>
+					{#if $repeatMode === 'track'}
+						<div class="repeat-track">1</div>
+					{/if}
 				</div>
 				<span class="time">{formatTime($playbackPosition)}</span>
 				<input
@@ -581,7 +590,7 @@
 		font-size: 1.2rem;
 	}
 
-	.repeat-once {
+	.repeat-track {
 		position: absolute;
 		top: -4px;
 		right: -4px;

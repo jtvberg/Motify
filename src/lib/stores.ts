@@ -19,6 +19,7 @@ export const isPlaylistSelectorOpen = writable(false);
 export const userLibrary = writable<Set<string>>(new Set());
 export const isLibraryLoading = writable(false);
 export const isShuffleOn = writable(false);
+export const repeatMode = writable<'off' | 'playlist' | 'track'>('off');
 
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;
