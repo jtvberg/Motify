@@ -83,8 +83,7 @@ class InitializationService {
             playlists.set(playlistsData);
 
             await this.restorePlaylistSelections(playlistsData);
-            
-            // Load library in the background without blocking initialization
+
             libraryService.loadUserLibrary().catch(error => {
                 console.error('Failed to load user library in background:', error);
             });

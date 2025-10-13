@@ -124,7 +124,7 @@
 <div class="modal-backdrop" on:click={handleBackdropClick} on:keydown={handleKeydown}>
 	<div class="modal-content">
 		<div class="modal-header">
-			<h2>Playlist Manager</h2>
+			<h2>Settings</h2>
 			<button class="close-btn" on:click={closeModal} aria-label="Close">
 				<i class="fas fa-times"></i>
 			</button>

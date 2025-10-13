@@ -10,7 +10,6 @@ export function formatTime(seconds: number): string {
 	return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-// Fisher-Yates shuffle algorithm
 export function shuffleArray<T>(array: T[]): T[] {
 	const shuffled = [...array];
 	for (let i = shuffled.length - 1; i > 0; i--) {
@@ -214,8 +213,6 @@ export async function playTrack(
 	
 	let playSuccessful = false;
 	let lastError: any = null;
-	
-	// Check if we have a selected playlist to enable shuffle/context playback
 	let selectedPlaylist: any = null;
 	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
 	selectedPlaylistUnsub();

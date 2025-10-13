@@ -237,22 +237,16 @@
 		const newShuffleState = !$isShuffleOn;
 		
 		if (newShuffleState) {
-			// Shuffling ON: Save original order and shuffle
 			console.log('Enabling shuffle - saving original order and shuffling tracks');
-			
-			// Save the original order if not already saved
+
 			if ($originalTrackOrder.length === 0) {
 				originalTrackOrder.set([...$currentTracks]);
 			}
-			
-			// Find current track before shuffling
+
 			const currentTrackId = $currentTrack?.id;
-			
-			// Shuffle the tracks
 			const shuffled = shuffleArray($currentTracks);
 			currentTracks.set(shuffled);
-			
-			// Update the current track index to match the new position
+
 			if (currentTrackId) {
 				const newIndex = shuffled.findIndex(t => t.id === currentTrackId);
 				if (newIndex >= 0) {
@@ -262,16 +256,13 @@
 			
 			console.log('Tracks shuffled. Original count:', $originalTrackOrder.length, 'Shuffled count:', shuffled.length);
 		} else {
-			// Shuffling OFF: Restore original order
 			console.log('Disabling shuffle - restoring original order');
 			
 			if ($originalTrackOrder.length > 0) {
 				const currentTrackId = $currentTrack?.id;
-				
-				// Restore original order
+
 				currentTracks.set([...$originalTrackOrder]);
-				
-				// Update the current track index to match the original position
+
 				if (currentTrackId) {
 					const originalIndex = $originalTrackOrder.findIndex(t => t.id === currentTrackId);
 					if (originalIndex >= 0) {
