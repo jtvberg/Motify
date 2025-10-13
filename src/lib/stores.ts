@@ -6,6 +6,7 @@ export const playlists = writable<SpotifyPlaylist[]>([]);
 export const selectedPlaylist = writable<SpotifyPlaylist | null>(null);
 export const targetPlaylist = writable<SpotifyPlaylist | null>(null);
 export const currentTracks = writable<SpotifyTrack[]>([]);
+export const originalTrackOrder = writable<SpotifyTrack[]>([]);
 export const currentTrackIndex = writable<number>(-1);
 export const isPlaying = writable(false);
 export const currentTrack = writable<SpotifyTrack | null>(null);
@@ -17,6 +18,7 @@ export const isRefreshingPlaylist = writable(false);
 export const isPlaylistSelectorOpen = writable(false);
 export const userLibrary = writable<Set<string>>(new Set());
 export const isLibraryLoading = writable(false);
+export const isShuffleOn = writable(false);
 
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
@@ -84,6 +84,8 @@
 		loading = true;
 		tracks = [];
 		currentTracks.set([]);
+		originalTrackOrder.set([]);
+		isShuffleOn.set(false);
 		
 		try {
 			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
@@ -93,6 +95,7 @@
 			if (tracksData) {
 				tracks = tracksData;
 				currentTracks.set(tracks);
+				originalTrackOrder.set([...tracks]);
 				currentPlaylistSnapshot.set($selectedPlaylist.snapshot_id);
 				console.log(`Successfully loaded ${tracks.length} tracks`);
 
@@ -130,6 +133,8 @@
 				const oldTrackCount = tracks.length;
 				tracks = tracksData;
 				currentTracks.set(tracks);
+				originalTrackOrder.set([...tracks]);
+				isShuffleOn.set(false);
 				currentPlaylistSnapshot.set(playlist.snapshot_id);
 
 				clearTrackPlayabilityCache();

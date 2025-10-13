@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
 	import { 
 		formatTime,
+		shuffleArray,
 		togglePlayback,
 		playPreviousTrack,
 		playNextTrack,
@@ -232,6 +233,60 @@
 		await toggleTrackInLibrary($currentTrack, services);
 	}
 
+	async function toggleShuffle() {
+		const newShuffleState = !$isShuffleOn;
+		
+		if (newShuffleState) {
+			// Shuffling ON: Save original order and shuffle
+			console.log('Enabling shuffle - saving original order and shuffling tracks');
+			
+			// Save the original order if not already saved
+			if ($originalTrackOrder.length === 0) {
+				originalTrackOrder.set([...$currentTracks]);
+			}
+			
+			// Find current track before shuffling
+			const currentTrackId = $currentTrack?.id;
+			
+			// Shuffle the tracks
+			const shuffled = shuffleArray($currentTracks);
+			currentTracks.set(shuffled);
+			
+			// Update the current track index to match the new position
+			if (currentTrackId) {
+				const newIndex = shuffled.findIndex(t => t.id === currentTrackId);
+				if (newIndex >= 0) {
+					currentTrackIndex.set(newIndex);
+				}
+			}
+			
+			console.log('Tracks shuffled. Original count:', $originalTrackOrder.length, 'Shuffled count:', shuffled.length);
+		} else {
+			// Shuffling OFF: Restore original order
+			console.log('Disabling shuffle - restoring original order');
+			
+			if ($originalTrackOrder.length > 0) {
+				const currentTrackId = $currentTrack?.id;
+				
+				// Restore original order
+				currentTracks.set([...$originalTrackOrder]);
+				
+				// Update the current track index to match the original position
+				if (currentTrackId) {
+					const originalIndex = $originalTrackOrder.findIndex(t => t.id === currentTrackId);
+					if (originalIndex >= 0) {
+						currentTrackIndex.set(originalIndex);
+					}
+				}
+				
+				console.log('Original order restored. Track count:', $originalTrackOrder.length);
+			}
+		}
+		
+		isShuffleOn.set(newShuffleState);
+		console.log('Shuffle toggled:', newShuffleState);
+	}
+
 	function handleSeekStart() {
 		isDragging = true;
 	}
@@ -360,7 +415,7 @@
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div 
-					class="playback-btn fa fa-repeat"
+					class="playback-btn repeat-btn fa fa-repeat"
 					role="button"
 					on:click={previousTrack}
 					aria-label="Repeat"
@@ -382,11 +437,11 @@
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
-					class="playback-btn fa fa-shuffle"
+					class="playback-btn shuffle-btn fa fa-shuffle {$isShuffleOn ? 'shuffle-active' : ''}"
 					role="button"
-					on:click={nextTrack}
+					on:click={toggleShuffle}
 					aria-label="Shuffle playlist"
-					title="Shuffle playlist"
+					title="Shuffle {$isShuffleOn ? 'on' : 'off'}"
 				></div>
 			</div>
 		</div>
@@ -512,6 +567,10 @@
 		font-size: 1.2rem;
 		cursor: pointer;
 		transition: color 0.3s ease;
+	}
+
+	.shuffle-active {
+		color: #1db954ff !important;
 	}
 
 	.time {

@@ -10,6 +10,16 @@ export function formatTime(seconds: number): string {
 	return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+// Fisher-Yates shuffle algorithm
+export function shuffleArray<T>(array: T[]): T[] {
+	const shuffled = [...array];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+	return shuffled;
+}
+
 export function extractPlaylistIdFromUrl(url: string): string {
 	if (!url) return '';
 
@@ -204,6 +214,11 @@ export async function playTrack(
 	
 	let playSuccessful = false;
 	let lastError: any = null;
+	
+	// Check if we have a selected playlist to enable shuffle/context playback
+	let selectedPlaylist: any = null;
+	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
+	selectedPlaylistUnsub();
 	
 	try {
 		if (deviceId) {

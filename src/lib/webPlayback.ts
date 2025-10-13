@@ -240,6 +240,36 @@ class WebPlaybackService {
 		}
 	}
 
+	async playFromContext(contextUri: string, offset: number): Promise<void> {
+		console.log('WebPlayback.playFromContext called with:', { contextUri, offset, playerReady: !!this.player, deviceId: this.deviceId });
+		
+		if (!this.player || !this.deviceId) {
+			const error = `Player not ready - player: ${!!this.player}, deviceId: ${this.deviceId}`;
+			console.error(error);
+			throw new Error(error);
+		}
+
+		console.log('Playing from context via Spotify API with device:', this.deviceId);
+		
+		try {
+			await this.activateDevice();
+			await new Promise(resolve => setTimeout(resolve, 500));
+			
+			const currentState = await this.player.getCurrentState();
+			if (currentState && !currentState.paused) {
+				console.log('Pausing current playback before starting new track');
+				await this.player.pause();
+				await new Promise(resolve => setTimeout(resolve, 200));
+			}
+			
+			await spotifyAPI.playFromContext(contextUri, offset, this.deviceId);
+			console.log('✅ Context playback started');
+		} catch (error) {
+			console.error('Context play failed:', error);
+			throw error;
+		}
+	}
+
 	async play(uri?: string): Promise<void> {
 		console.log('WebPlayback.play called with:', { uri, playerReady: !!this.player, deviceId: this.deviceId });
 		

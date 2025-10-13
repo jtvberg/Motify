@@ -61,6 +61,7 @@ export interface SpotifyPlaylist {
 	};
 	images: { url: string }[];
 	snapshot_id: string;
+	uri?: string;
 }
 
 export interface SpotifyUser {
@@ -291,7 +292,16 @@ class SpotifyAPI {
 		}
 
 		const text = await response.text();
-		return text ? JSON.parse(text) : {};
+		if (!text || text.trim() === '') {
+			return {};
+		}
+		
+		try {
+			return JSON.parse(text);
+		} catch (e) {
+			console.warn('Failed to parse response as JSON:', text);
+			return {};
+		}
 	}
 
 	async getCurrentUser(): Promise<SpotifyUser> {
@@ -438,6 +448,29 @@ class SpotifyAPI {
 		});
 	}
 
+	async playFromContext(contextUri: string, offset: number, deviceId?: string): Promise<void> {
+		console.log('SpotifyAPI.playFromContext called with:', { contextUri, offset, deviceId });
+		
+		const body: any = {
+			context_uri: contextUri,
+			offset: { position: offset }
+		};
+
+		let url = '/me/player/play';
+		if (deviceId) {
+			url += `?device_id=${deviceId}`;
+		}
+
+		console.log('Sending play request to:', url);
+		console.log('Request body:', body);
+
+		await this.makeRequest(url, {
+			method: 'PUT',
+			body: JSON.stringify(body)
+		});
+		console.log('Play request successful');
+	}
+
 	async playTrack(trackUri: string, deviceId?: string): Promise<void> {
 		console.log('SpotifyAPI.playTrack called with:', { trackUri, deviceId });
 		
@@ -532,6 +565,12 @@ class SpotifyAPI {
 	async previousTrack(): Promise<void> {
 		await this.makeRequest('/me/player/previous', {
 			method: 'POST'
+		});
+	}
+
+	async toggleShuffle(state: boolean): Promise<void> {
+		await this.makeRequest(`/me/player/shuffle?state=${state}`, {
+			method: 'PUT'
 		});
 	}
 
