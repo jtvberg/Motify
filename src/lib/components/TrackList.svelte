@@ -18,6 +18,7 @@
 
 	let tracks: SpotifyTrack[] = [];
 	let loading = false;
+	let currentLoadingPlaylistId: string | null = null;
 
 	$: tracks = $currentTracks;
 	$: isTrackInLibrary = (trackId: string): boolean => {
@@ -81,6 +82,11 @@
 	async function loadTracks() {
 		if (!$selectedPlaylist) return;
 		
+		const playlistIdToLoad = $selectedPlaylist.id;
+		const playlistName = $selectedPlaylist.name;
+
+		currentLoadingPlaylistId = playlistIdToLoad;
+		
 		loading = true;
 		tracks = [];
 		currentTracks.set([]);
@@ -88,16 +94,21 @@
 		isShuffleOn.set(false);
 		
 		try {
-			console.log(`Loading tracks for playlist: ${$selectedPlaylist.name}`);
+			console.log(`Loading tracks for playlist: ${playlistName} (ID: ${playlistIdToLoad})`);
 			
-			const tracksData = await handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id));
+			const tracksData = await handleAPIError(() => spotifyAPI.getPlaylistTracks(playlistIdToLoad));
+
+			if (currentLoadingPlaylistId !== playlistIdToLoad) {
+				console.log(`Ignoring stale results for playlist: ${playlistName} (ID: ${playlistIdToLoad})`);
+				return;
+			}
 			
 			if (tracksData) {
 				tracks = tracksData;
 				currentTracks.set(tracks);
 				originalTrackOrder.set([...tracks]);
 				currentPlaylistSnapshot.set($selectedPlaylist.snapshot_id);
-				console.log(`Successfully loaded ${tracks.length} tracks`);
+				console.log(`Successfully loaded ${tracks.length} tracks for ${playlistName}`);
 
 				const unavailableTracks = tracks.filter(track => !isTrackPlayable(track));
 				if (unavailableTracks.length > 0) {
@@ -109,25 +120,37 @@
 				currentTracks.set([]);
 			}
 		} catch (error) {
-			console.error('Failed to load tracks:', error);
-			tracks = [];
-			currentTracks.set([]);
+			if (currentLoadingPlaylistId === playlistIdToLoad) {
+				console.error('Failed to load tracks:', error);
+				tracks = [];
+				currentTracks.set([]);
+			}
 		} finally {
-			loading = false;
+			if (currentLoadingPlaylistId === playlistIdToLoad) {
+				loading = false;
+			}
 		}
 	}
 
 	async function refreshPlaylist() {
 		if (!$selectedPlaylist || $isRefreshingPlaylist) return;
 		
+		const playlistIdToRefresh = $selectedPlaylist.id;
+		const playlistName = $selectedPlaylist.name;
+		
 		isRefreshingPlaylist.set(true);
 		try {
-			console.log(`Refreshing playlist: ${$selectedPlaylist.name}`);
+			console.log(`Refreshing playlist: ${playlistName} (ID: ${playlistIdToRefresh})`);
 
 			const [playlist, tracksData] = await Promise.all([
-				handleAPIError(() => spotifyAPI.getPlaylist($selectedPlaylist.id)),
-				handleAPIError(() => spotifyAPI.getPlaylistTracks($selectedPlaylist.id))
+				handleAPIError(() => spotifyAPI.getPlaylist(playlistIdToRefresh)),
+				handleAPIError(() => spotifyAPI.getPlaylistTracks(playlistIdToRefresh))
 			]);
+
+			if ($selectedPlaylist?.id !== playlistIdToRefresh) {
+				console.log(`Ignoring stale refresh results for playlist: ${playlistName} (ID: ${playlistIdToRefresh})`);
+				return;
+			}
 			
 			if (playlist && tracksData) {
 				const oldTrackCount = tracks.length;
@@ -153,9 +176,13 @@
 				console.error('Failed to refresh playlist data');
 			}
 		} catch (error) {
-			console.error('Failed to refresh playlist:', error);
+			if ($selectedPlaylist?.id === playlistIdToRefresh) {
+				console.error('Failed to refresh playlist:', error);
+			}
 		} finally {
-			isRefreshingPlaylist.set(false);
+			if ($selectedPlaylist?.id === playlistIdToRefresh) {
+				isRefreshingPlaylist.set(false);
+			}
 		}
 	}
 
