@@ -233,6 +233,13 @@
 		await toggleTrackInLibrary($currentTrack, services);
 	}
 
+	async function cycleRepeatMode() {
+		// Cycle through repeat modes: off -> track -> once -> off
+		// off = no repeat, next track in list is played automatically; class repeat-active is removed, repeat-once is hidden
+		// track = repeat current track indefinitely; class repeat-active is added, repeat-once is hidden
+		// once = repeat current track once, then stop playback; class repeat-active is added, repeat-once is shown
+	}
+
 	async function toggleShuffle() {
 		const newShuffleState = !$isShuffleOn;
 		
@@ -403,15 +410,18 @@
 				></div>
 			</div>
 			<div class="progress-container">
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div 
-					class="playback-btn repeat-btn fa fa-repeat"
-					role="button"
-					on:click={previousTrack}
-					aria-label="Repeat"
-					title="Repeat"
-				></div>
+				<div class="repeat-container">
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div 
+						class="playback-btn repeat-btn fa fa-repeat repeat-active"
+						role="button"
+						on:click={cycleRepeatMode}
+						aria-label="Repeat"
+						title="Repeat"
+					></div>
+					<div class="repeat-once">1</div>
+				</div>
 				<span class="time">{formatTime($playbackPosition)}</span>
 				<input
 					type="range"
@@ -560,7 +570,34 @@
 		transition: color 0.3s ease;
 	}
 
-	.shuffle-active {
+	.repeat-container {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.repeat-btn {
+		font-size: 1.2rem;
+	}
+
+	.repeat-once {
+		position: absolute;
+		top: -4px;
+		right: -4px;
+		background: #1db954ff;
+		color: #000000ff;
+		font-size: 0.7rem;
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: bold;
+	}
+
+	.repeat-active, .shuffle-active {
 		color: #1db954ff !important;
 	}
 
