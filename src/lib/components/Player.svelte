@@ -174,6 +174,36 @@
 		}
 	}
 
+	// Handle track ending and auto-advance based on repeat mode
+	$: if ($isPlaying && $trackDuration > 0 && $playbackPosition >= $trackDuration - 0.5) {
+		// Track has ended (within 0.5 seconds of completion)
+		handleTrackEnd();
+	}
+
+	async function handleTrackEnd() {
+		console.log('Track ended, repeat mode:', $repeatMode);
+		
+		if ($repeatMode === 'track') {
+			// Replay the same track
+			console.log('Repeating track');
+			await nextTrack();
+		} else if ($repeatMode === 'playlist') {
+			// Continue to next track, or loop to beginning if at end
+			console.log('Playing next track in playlist (repeat mode)');
+			await nextTrack();
+		} else {
+			// 'off' mode - just continue to next track if available
+			// This maintains the current behavior where playback continues
+			if ($currentTrackIndex < $currentTracks.length - 1) {
+				console.log('Playing next track (off mode)');
+				await nextTrack();
+			} else {
+				console.log('End of playlist reached (off mode)');
+				isPlaying.set(false);
+			}
+		}
+	}
+
 	async function togglePlaybackHandler() {
 		await togglePlayback(stores, services, isPlayerReady);
 	}

@@ -168,6 +168,7 @@ export function findNextPlayableTrack(tracks: any[], startIndex: number, directi
 }
 
 import type { Writable } from 'svelte/store';
+import { get } from 'svelte/store';
 import type { SpotifyTrack } from './spotify';
 
 interface PlaybackStores {
@@ -432,6 +433,10 @@ export async function playNextTrack(
 		stores.currentTrackIndex.subscribe(value => { currentIndex = value; })();
 		stores.isPlaying.subscribe(value => { isCurrentlyPlaying = value; })();
 		
+		// Import and get repeat mode
+		const { repeatMode } = await import('./stores');
+		const currentRepeatMode = get(repeatMode);
+		
 		if (tracks.length === 0 || currentIndex < 0) {
 			console.log('No playlist context for next track');
 			return;
@@ -439,16 +444,39 @@ export async function playNextTrack(
 
 		stopPositionUpdates();
 
-		const nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
+		// Handle repeat mode
+		let nextIndex: number;
+		let nextTrack: SpotifyTrack;
 		
-		if (nextIndex === -1) {
-			console.log('No playable next track found');
-			return;
+		if (currentRepeatMode === 'track') {
+			// Repeat the current track
+			nextIndex = currentIndex;
+			nextTrack = tracks[currentIndex];
+			console.log(`Repeating current track: ${nextTrack.name} (index ${nextIndex})`);
+		} else {
+			// For 'off' and 'playlist' modes, find the next playable track
+			nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
+			
+			if (nextIndex === -1) {
+				console.log('No playable next track found');
+				
+				// If in playlist mode and we've reached the end, loop back to the beginning
+				if (currentRepeatMode === 'playlist') {
+					nextIndex = findNextPlayableTrack(tracks, -1, 1);
+					if (nextIndex === -1) {
+						console.log('No playable tracks in playlist');
+						return;
+					}
+					console.log(`Playlist repeat: looping back to track at index ${nextIndex}`);
+				} else {
+					// In 'off' mode, stop playback when we reach the end
+					return;
+				}
+			}
+			
+			nextTrack = tracks[nextIndex];
+			console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
 		}
-		
-		const nextTrack = tracks[nextIndex];
-		
-		console.log(`Playing next track: ${nextTrack.name} (index ${nextIndex})`);
 
 		stores.playbackPosition.set(0);
 		stores.currentTrackIndex.set(nextIndex);

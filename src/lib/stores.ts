@@ -19,7 +19,31 @@ export const isPlaylistSelectorOpen = writable(false);
 export const userLibrary = writable<Set<string>>(new Set());
 export const isLibraryLoading = writable(false);
 export const isShuffleOn = writable(false);
-export const repeatMode = writable<'off' | 'playlist' | 'track'>('off');
+
+function createRepeatModeStore() {
+	const storedMode = typeof localStorage !== 'undefined' 
+		? localStorage.getItem('motify-repeat-mode') 
+		: null;
+	
+	const defaultMode: 'off' | 'playlist' | 'track' = 'off';
+	const initialMode = storedMode && ['off', 'playlist', 'track'].includes(storedMode)
+		? (storedMode as 'off' | 'playlist' | 'track')
+		: defaultMode;
+
+	const { subscribe, set } = writable<'off' | 'playlist' | 'track'>(initialMode);
+
+	return {
+		subscribe,
+		set: (value: 'off' | 'playlist' | 'track') => {
+			if (typeof localStorage !== 'undefined') {
+				localStorage.setItem('motify-repeat-mode', value);
+			}
+			set(value);
+		}
+	};
+}
+
+export const repeatMode = createRepeatModeStore();
 
 export interface ScraperSettings {
 	discoverWeeklyUrl: string;
