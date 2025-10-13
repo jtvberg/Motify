@@ -30,11 +30,14 @@ function createRepeatModeStore() {
 		? (storedMode as 'off' | 'playlist' | 'track')
 		: defaultMode;
 
+	console.log('Initializing repeat mode store:', { storedMode, initialMode });
+
 	const { subscribe, set } = writable<'off' | 'playlist' | 'track'>(initialMode);
 
 	return {
 		subscribe,
 		set: (value: 'off' | 'playlist' | 'track') => {
+			console.log('Setting repeat mode to:', value);
 			if (typeof localStorage !== 'undefined') {
 				localStorage.setItem('motify-repeat-mode', value);
 			}

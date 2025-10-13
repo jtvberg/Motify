@@ -72,18 +72,67 @@
 		}
 	}
 
+	let isSyncing = false;
+	let lastSyncedMode: 'off' | 'playlist' | 'track' | null = null;
+
+	async function syncSpotifyRepeatMode() {
+		console.log('syncSpotifyRepeatMode called - isPlayerReady:', isPlayerReady, 'repeatMode:', $repeatMode);
+		
+		if (!isPlayerReady) {
+			console.log('⏸️ Skipping Spotify repeat sync - player not ready');
+			return;
+		}
+
+		if (isSyncing) {
+			console.log('⏸️ Sync already in progress, skipping');
+			return;
+		}
+
+		if (lastSyncedMode === $repeatMode) {
+			console.log('⏸️ Already synced to this mode:', $repeatMode);
+			return;
+		}
+		
+		isSyncing = true;
+		
+		try {
+			const spotifyMode = $repeatMode === 'track' ? 'track' : 'off';
+			console.log('🔄 Syncing Spotify repeat mode to:', spotifyMode, '(app mode:', $repeatMode + ')');
+			await spotifyAPI.setRepeatMode(spotifyMode);
+			lastSyncedMode = $repeatMode;
+			console.log('✅ Successfully synced Spotify repeat mode');
+
+			if ($currentTrack && $isPlaying) {
+				console.log('🔄 Resetting track end handler for mode change during playback');
+				hasHandledEnd = false;
+			}
+		} catch (error) {
+			console.error('❌ Failed to sync Spotify repeat mode:', error);
+		} finally {
+			isSyncing = false;
+		}
+	}
+
+	$: if (isPlayerReady && $repeatMode !== undefined) {
+		syncSpotifyRepeatMode();
+	}
+
 	onMount(async () => {
+		console.log('Player component mounted, current repeat mode:', $repeatMode);
+		
 		if (webPlaybackService.getDeviceId()) {
 			isPlayerReady = true;
 			console.log('Web Playback SDK already initialized');
 			startPositionUpdates();
+			await syncSpotifyRepeatMode();
 		} else {
-			const checkInitialization = setInterval(() => {
+			const checkInitialization = setInterval(async () => {
 				if (webPlaybackService.getDeviceId()) {
 					isPlayerReady = true;
 					console.log('Web Playback SDK detected as ready');
 					startPositionUpdates();
 					clearInterval(checkInitialization);
+					await syncSpotifyRepeatMode();
 				}
 			}, 100);
 
@@ -174,34 +223,51 @@
 		}
 	}
 
-	// Handle track ending and auto-advance based on repeat mode
-	$: if ($isPlaying && $trackDuration > 0 && $playbackPosition >= $trackDuration - 0.5) {
-		// Track has ended (within 0.5 seconds of completion)
-		handleTrackEnd();
+	let lastTrackedTrackId: string | null = null;
+	let lastTrackedRepeatMode: 'off' | 'playlist' | 'track' | null = null;
+	let hasHandledEnd = false;
+
+	$: if ($currentTrack) {
+		if ($currentTrack.id !== lastTrackedTrackId) {
+			lastTrackedTrackId = $currentTrack.id;
+			hasHandledEnd = false;
+			console.log('🔄 Track changed, reset hasHandledEnd');
+		}
+	}
+
+	$: if ($repeatMode !== undefined) {
+		if ($repeatMode !== lastTrackedRepeatMode) {
+			console.log('🔄 Repeat mode changed from', lastTrackedRepeatMode, 'to', $repeatMode, '- resetting hasHandledEnd');
+			lastTrackedRepeatMode = $repeatMode;
+			hasHandledEnd = false;
+		}
+	}
+
+	$: if ($isPlaying && $trackDuration > 0 && !hasHandledEnd) {
+		if ($repeatMode === 'playlist' && $playbackPosition >= $trackDuration - 2) {
+			handlePlaylistAdvance();
+		} else if ($repeatMode === 'off' && $playbackPosition >= $trackDuration - 0.5) {
+			handleTrackEnd();
+		}
+	}
+
+	async function handlePlaylistAdvance() {
+		if (hasHandledEnd) return;
+		hasHandledEnd = true;
+		
+		console.log('Advancing to next track in playlist mode');
+		await nextTrack();
 	}
 
 	async function handleTrackEnd() {
-		console.log('Track ended, repeat mode:', $repeatMode);
+		if (hasHandledEnd) return;
+		hasHandledEnd = true;
 		
-		if ($repeatMode === 'track') {
-			// Replay the same track
-			console.log('Repeating track');
-			await nextTrack();
-		} else if ($repeatMode === 'playlist') {
-			// Continue to next track, or loop to beginning if at end
-			console.log('Playing next track in playlist (repeat mode)');
-			await nextTrack();
-		} else {
-			// 'off' mode - just continue to next track if available
-			// This maintains the current behavior where playback continues
-			if ($currentTrackIndex < $currentTracks.length - 1) {
-				console.log('Playing next track (off mode)');
-				await nextTrack();
-			} else {
-				console.log('End of playlist reached (off mode)');
-				isPlaying.set(false);
-			}
-		}
+		console.log('Track ending in off mode - Spotify will stop naturally');
+
+		setTimeout(() => {
+			isPlaying.set(false);
+		}, 1000);
 	}
 
 	async function togglePlaybackHandler() {
@@ -210,10 +276,12 @@
 
 	async function previousTrack() {
 		await playPreviousTrack(stores, services, isPlayerReady, stopPositionUpdates, startPositionUpdates, updatePlaybackState);
+		await syncSpotifyRepeatMode();
 	}
 
 	async function nextTrack() {
 		await playNextTrack(stores, services, isPlayerReady, stopPositionUpdates, startPositionUpdates, updatePlaybackState);
+		await syncSpotifyRepeatMode();
 	}
 
 	async function removeCurrentTrack() {
@@ -266,13 +334,21 @@
 	async function cycleRepeatMode() {
 		let newMode: 'off' | 'playlist' | 'track';
 		if ($repeatMode === 'off') {
-			newMode = 'playlist'; // after current track is played, the next track in the playlist is played; class repeat-active is added, repeat-track is hidden
+			newMode = 'playlist';
 		} else if ($repeatMode === 'playlist') {
-			newMode = 'track'; // repeat current track until stopped; class repeat-active is added, repeat-track is shown
+			newMode = 'track';
 		} else {
-			newMode = 'off'; // play current track once and then stop; class repeat-active is removed, repeat-track is hidden
+			newMode = 'off';
 		}
+		
+		console.log('🎵 Cycling repeat mode from', $repeatMode, 'to', newMode);
+		
+		hasHandledEnd = false;
+		console.log('🔄 Reset track end handler for mode change');
+
 		repeatMode.set(newMode);
+
+		await new Promise(resolve => setTimeout(resolve, 100));
 	}
 
 	async function toggleShuffle() {

@@ -574,6 +574,12 @@ class SpotifyAPI {
 		});
 	}
 
+	async setRepeatMode(state: 'track' | 'context' | 'off'): Promise<void> {
+		await this.makeRequest(`/me/player/repeat?state=${state}`, {
+			method: 'PUT'
+		});
+	}
+
 	async getUserSavedTracks(): Promise<string[]> {
 		let allTrackIds: string[] = [];
 		let url: string | null = '/me/tracks?limit=50';

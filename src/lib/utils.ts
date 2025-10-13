@@ -432,8 +432,7 @@ export async function playNextTrack(
 		stores.currentTracks.subscribe(value => { tracks = value; })();
 		stores.currentTrackIndex.subscribe(value => { currentIndex = value; })();
 		stores.isPlaying.subscribe(value => { isCurrentlyPlaying = value; })();
-		
-		// Import and get repeat mode
+
 		const { repeatMode } = await import('./stores');
 		const currentRepeatMode = get(repeatMode);
 		
@@ -444,23 +443,19 @@ export async function playNextTrack(
 
 		stopPositionUpdates();
 
-		// Handle repeat mode
 		let nextIndex: number;
 		let nextTrack: SpotifyTrack;
 		
 		if (currentRepeatMode === 'track') {
-			// Repeat the current track
 			nextIndex = currentIndex;
 			nextTrack = tracks[currentIndex];
 			console.log(`Repeating current track: ${nextTrack.name} (index ${nextIndex})`);
 		} else {
-			// For 'off' and 'playlist' modes, find the next playable track
 			nextIndex = findNextPlayableTrack(tracks, currentIndex, 1);
 			
 			if (nextIndex === -1) {
 				console.log('No playable next track found');
-				
-				// If in playlist mode and we've reached the end, loop back to the beginning
+
 				if (currentRepeatMode === 'playlist') {
 					nextIndex = findNextPlayableTrack(tracks, -1, 1);
 					if (nextIndex === -1) {
@@ -469,7 +464,6 @@ export async function playNextTrack(
 					}
 					console.log(`Playlist repeat: looping back to track at index ${nextIndex}`);
 				} else {
-					// In 'off' mode, stop playback when we reach the end
 					return;
 				}
 			}
