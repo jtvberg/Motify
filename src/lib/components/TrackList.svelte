@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
@@ -24,6 +24,10 @@
 	$: isTrackInLibrary = (trackId: string): boolean => {
 		return $userLibrary.has(trackId);
 	};
+	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
+	$: canRemove = isUserOwner;
+	$: canMove = isUserOwner && !!$targetPlaylist;
+	$: canCopy = !!$targetPlaylist;
 
 	const dummyTrackDuration = {
 		set: () => {},
@@ -366,17 +370,26 @@
 						<span class="track-album" class:unavailable-text={!trackPlayable}>{track.album.name}</span>
 						<span class="track-duration" class:unavailable-text={!trackPlayable}>{formatDuration(track.duration_ms)}</span>
 						<div class="track-actions">							
-							<!-- svelte-ignore a11y_click_events_have_key_events -->
-							<!-- svelte-ignore a11y_interactive_supports_focus -->
-							<div 
-								class="action-btn remove-btn far fa-trash-can fa-xl" 
-								on:click={() => removeTrackHandler(track)}
-								aria-label="Remove from playlist"
-								title="Remove from playlist"
-								role="button"
-							>
-							</div>
-							{#if trackPlayable && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+							{#if canRemove}
+								<!-- svelte-ignore a11y_click_events_have_key_events -->
+								<!-- svelte-ignore a11y_interactive_supports_focus -->
+								<div 
+									class="action-btn remove-btn far fa-trash-can fa-xl" 
+									on:click={() => removeTrackHandler(track)}
+									aria-label="Remove from playlist"
+									title="Remove from playlist"
+									role="button"
+								>
+								</div>
+							{:else}
+								<div 
+									class="action-btn remove-btn far fa-trash-can fa-xl action-btn-disabled" 
+									aria-label="Remove from playlist (disabled)"
+									title="You can only remove tracks from playlists you own"
+								>
+								</div>
+							{/if}
+							{#if trackPlayable && canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
@@ -390,12 +403,12 @@
 							{:else}
 								<div 
 									class="action-btn move-btn fa fa-plus-minus fa-xl action-btn-disabled" 
-									aria-label="Move to target playlist"
-									title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+									aria-label="Move to target playlist (disabled)"
+									title={!isUserOwner ? 'You can only move tracks from playlists you own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist')}
 								>
 								</div>
 							{/if}
-							{#if trackPlayable && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+							{#if trackPlayable && canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
@@ -409,8 +422,8 @@
 							{:else}
 								<div 
 									class="action-btn copy-btn far fa-square-plus fa-xl action-btn-disabled" 
-									aria-label="Copy to target playlist"
-									title={$targetPlaylist ? 'Select a different target playlist to enable copying tracks' : 'Select a target playlist to enable copying tracks'}
+									aria-label="Copy to target playlist (disabled)"
+									title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
 								>
 								</div>
 							{/if}

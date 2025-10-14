@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
@@ -27,6 +27,10 @@
 	$: isTrackInLibrary = (trackId: string): boolean => {
 		return $userLibrary.has(trackId);
 	};
+	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
+	$: canRemove = isUserOwner;
+	$: canMove = isUserOwner && !!$targetPlaylist;
+	$: canCopy = !!$targetPlaylist;
 
 	const stores = {
 		isPlaying,
@@ -450,16 +454,24 @@
 				{/if}
 			</div>
 			<div class="control-btns">
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="track-btn track-remove far fa-trash-can fa-xl"
-					role="button"
-					on:click={removeCurrentTrack}
-					aria-label="Remove track"
-					title="Remove track from playlist"
-				></div>
-				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+				{#if canRemove}
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="track-btn track-remove far fa-trash-can fa-xl"
+						role="button"
+						on:click={removeCurrentTrack}
+						aria-label="Remove track"
+						title="Remove track from playlist"
+					></div>
+				{:else}
+					<div
+						class="track-btn track-remove far fa-trash-can fa-xl track-btn-disabled"
+						aria-label="Remove track (disabled)"
+						title="You can only remove tracks from playlists you own"
+					></div>
+				{/if}
+				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -472,8 +484,8 @@
 				{:else}
 					<div
 						class="track-btn track-move fa fa-plus-minus fa-xl track-btn-disabled" 
-						aria-label="Move track to target playlist"
-						title={$targetPlaylist ? 'Select a different target playlist to enable moving tracks' : 'Select a target playlist to enable moving tracks'}
+						aria-label="Move track to target playlist (disabled)"
+						title={!isUserOwner ? 'You can only move tracks from playlists you own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist')}
 					></div>
 				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -503,7 +515,7 @@
 					aria-label="Next track"
 					title="Next track"
 				></div>
-				{#if $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+				{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -516,8 +528,8 @@
 				{:else}
 					<div
 						class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
-						aria-label="Copy track to target playlist"
-						title={$targetPlaylist ? 'Select a different target playlist to enable copying tracks' : 'Select a target playlist to enable copying tracks'}
+						aria-label="Copy track to target playlist (disabled)"
+						title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
 					></div>
 				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
