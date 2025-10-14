@@ -702,66 +702,6 @@ export async function moveTrack(
 	}
 }
 
-export async function copyTrack(
-	track: SpotifyTrack,
-	tracks: SpotifyTrack[],
-	stores: PlaybackStores,
-	services: PlaybackServices,
-	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
-): Promise<SpotifyTrack[]> {
-	let targetPlaylist: any = null;
-	
-	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
-	
-	targetPlaylistUnsub();
-	
-	if (!targetPlaylist) {
-		console.error('No target playlist');
-		return tracks;
-	}
-	
-	try {
-		const trackWasAdded = await addTrackToPlaylist(track, targetPlaylist.id, services, handleAPIError);
-
-		try {
-			const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
-			if (updatedTargetPlaylist) {
-				stores.targetPlaylist.set(updatedTargetPlaylist);
-				console.log(`Updated target playlist "${targetPlaylist.name}" with latest data from API`);
-			}
-		} catch (error) {
-			console.warn('Failed to refresh target playlist data:', error);
-		}
-
-		if (services.toastStore) {
-			if (!trackWasAdded) {
-				services.toastStore.add({
-					message: `"${track.name}" was already in ${targetPlaylist.name}`,
-					type: 'info'
-				});
-			} else {
-				services.toastStore.add({
-					message: `Copied "${track.name}" to ${targetPlaylist.name}`,
-					type: 'success'
-				});
-			}
-		}
-
-		return tracks;
-	} catch (error) {
-		console.error('Failed to copy track:', error);
-
-		if (services.toastStore) {
-			services.toastStore.add({
-				message: `Failed to copy "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
-				type: 'error'
-			});
-		}
-		
-		return tracks;
-	}
-}
-
 export async function toggleTrackInLibrary(
 	track: SpotifyTrack,
 	services: PlaybackServices

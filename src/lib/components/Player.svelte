@@ -5,8 +5,7 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
-	import { targetPlaylistService } from '$lib/targetPlaylistService';
-	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
+	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
@@ -317,17 +316,7 @@
 
 
 	async function copyCurrentTrack() {
-		if (!$currentTrack || !$currentTracks.length) {
-			console.log('No current track to toggle in target playlist');
-			return;
-		}
-
-		if (!$targetPlaylist) {
-			console.log('No target playlist selected');
-			return;
-		}
-
-		await toggleTrackInTargetPlaylist($currentTrack, stores, services, handleAPIError);
+		await toggleTrackInTargetPlaylist($currentTrack!, stores, services, handleAPIError);
 	}
 
 	async function addCurrentTrack() {

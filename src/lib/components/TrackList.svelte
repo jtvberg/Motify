@@ -3,7 +3,7 @@
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
-	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
+	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import { targetPlaylistService } from '$lib/targetPlaylistService';
 	import type { SpotifyTrack } from '$lib/spotify';
