@@ -5,17 +5,7 @@
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
-	import { 
-		formatTime,
-		shuffleArray,
-		togglePlayback,
-		playPreviousTrack,
-		playNextTrack,
-		removeTrack,
-		moveTrack,
-		copyTrack,
-		toggleTrackInLibrary
-	} from '$lib/utils';
+	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;

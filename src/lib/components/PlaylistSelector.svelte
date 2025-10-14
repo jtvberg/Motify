@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { user, playlists, selectedPlaylist, targetPlaylist, isPlaylistSelectorOpen, playlistSelections } from '$lib/stores';
+	import { user, playlists, selectedPlaylist, targetPlaylist, isPlaylistSelectorOpen, playlistSelections, isRefreshingPlaylists } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
+	import { clearTrackPlayabilityCache } from '$lib/utils';
 	import type { SpotifyPlaylist } from '$lib/spotify';
 	import Settings from './Settings.svelte';
 	import ScraperButtons from './ScraperButtons.svelte';
@@ -121,6 +122,14 @@
 		spotifyAPI.logout();
 		window.location.reload();
 	}
+
+
+	async function refreshPlaylists() {
+		if ($isRefreshingPlaylists) return;
+		// 1. Refresh the list of playlists in each selector
+		// 2. If a target playlist is loaded, refresh its tracks
+		// 3. If a source playlist is loaded, refresh its tracks and update the currentTracks store
+	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -133,7 +142,6 @@
 				<i class="fas fa-times"></i>
 			</button>
 		</div>
-
 		<div class="playlist-selector">
 			<div class="header">
 				<div class="user-info">
@@ -149,6 +157,15 @@
 					{/if}
 				</div>
 				<div class="header-controls">
+					<button 
+						class="refresh-btn" 
+						on:click={refreshPlaylists}
+						disabled={$isRefreshingPlaylists}
+						aria-label="Refresh playlist"
+						title="Refresh source playlist"
+					>
+						<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylists}></i>
+					</button>
 					<ScraperButtons />
 					<Settings />
 					<button class="logout-btn" on:click={logout} aria-label="Logout" title="Logout">
@@ -156,7 +173,6 @@
 					</button>
 				</div>
 			</div>
-
 			<div class="selectors">
 				<div class="selector-group">
 					<label for="source-playlist">
@@ -174,7 +190,6 @@
 						{/each}
 					</select>
 				</div>
-
 				<div class="selector-group">
 					<label for="target-playlist">
 						<i class="fas fa-bullseye"></i>
@@ -310,22 +325,18 @@
 		gap: 0.75rem;
 	}
 
-	.logout-btn {
+	.logout-btn, .refresh-btn {
 		background: #ffffff1a;
 		color: #ffffffff;
 		border: 1px solid #ffffff33;
 		border-radius: 8px;
 		cursor: pointer;
-		padding-top: 3px;
+		padding-top: 2px;
 		transition: all 0.3s ease;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 		height: 34px;
-	}
-
-	.logout-btn:hover {
-		background: #ffffff33;
 	}
 
 	.selectors {
@@ -348,6 +359,16 @@
 		align-items: center;
 		gap: 0.5rem;
 		color: #e1e1e1ff;
+	}
+
+	.refresh-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		transform: none;
+	}
+
+	.spinning {
+		animation: spin 1s linear infinite;
 	}
 
 	select {
@@ -408,6 +429,14 @@
 			flex-direction: column;
 			gap: 1rem;
 			align-items: stretch;
+		}
+	}
+
+	@media (hover: hover) {
+		.refresh-btn:hover:not(:disabled), .logout-btn:hover {
+			background: #ffffff33;
+			border-color: #ffffff4d;
+			transform: translateY(-1px);
 		}
 	}
 </style>

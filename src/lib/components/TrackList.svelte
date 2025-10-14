@@ -1,18 +1,9 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isRefreshingPlaylist, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn, user } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
-	import { 
-		formatDuration, 
-		isTrackPlayable,
-		clearTrackPlayabilityCache,
-		togglePlayPause,
-		removeTrack,
-		moveTrack,
-		copyTrack,
-		toggleTrackInLibrary
-	} from '$lib/utils';
+	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import type { SpotifyTrack } from '$lib/spotify';
 
@@ -136,60 +127,6 @@
 		}
 	}
 
-	async function refreshPlaylist() {
-		if (!$selectedPlaylist || $isRefreshingPlaylist) return;
-		
-		const playlistIdToRefresh = $selectedPlaylist.id;
-		const playlistName = $selectedPlaylist.name;
-		
-		isRefreshingPlaylist.set(true);
-		try {
-			console.log(`Refreshing playlist: ${playlistName} (ID: ${playlistIdToRefresh})`);
-
-			const [playlist, tracksData] = await Promise.all([
-				handleAPIError(() => spotifyAPI.getPlaylist(playlistIdToRefresh)),
-				handleAPIError(() => spotifyAPI.getPlaylistTracks(playlistIdToRefresh))
-			]);
-
-			if ($selectedPlaylist?.id !== playlistIdToRefresh) {
-				console.log(`Ignoring stale refresh results for playlist: ${playlistName} (ID: ${playlistIdToRefresh})`);
-				return;
-			}
-			
-			if (playlist && tracksData) {
-				const oldTrackCount = tracks.length;
-				tracks = tracksData;
-				currentTracks.set(tracks);
-				originalTrackOrder.set([...tracks]);
-				isShuffleOn.set(false);
-				currentPlaylistSnapshot.set(playlist.snapshot_id);
-
-				clearTrackPlayabilityCache();
-
-				if ($currentTrack) {
-					const newIndex = tracks.findIndex(t => t.id === $currentTrack.id);
-					if (newIndex >= 0 && newIndex !== $currentTrackIndex) {
-						currentTrackIndex.set(newIndex);
-					} else if (newIndex < 0) {
-						console.log('Current track no longer in playlist');
-					}
-				}
-				
-				console.log(`Playlist refreshed: ${oldTrackCount} → ${tracks.length} tracks`);
-			} else {
-				console.error('Failed to refresh playlist data');
-			}
-		} catch (error) {
-			if ($selectedPlaylist?.id === playlistIdToRefresh) {
-				console.error('Failed to refresh playlist:', error);
-			}
-		} finally {
-			if ($selectedPlaylist?.id === playlistIdToRefresh) {
-				isRefreshingPlaylist.set(false);
-			}
-		}
-	}
-
 	async function togglePlayPauseHandler(track: SpotifyTrack) {
 		await togglePlayPause(track, tracks, stores, services);
 	}
@@ -242,17 +179,6 @@
 						<div class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</div>
 						<div class="playlist-track-count">{tracks.length > 0 ? tracks.length + ' tracks' : ''}</div>
 					</div>
-						<!-- <div class="playlist-actions">
-							<button 
-								class="refresh-btn" 
-								on:click={refreshPlaylist}
-								disabled={$isRefreshingPlaylist}
-								aria-label="Refresh playlist"
-								title="Refresh source playlist"
-							>
-								<i class="fas fa-sync-alt" class:spinning={$isRefreshingPlaylist}></i>
-							</button>
-						</div> -->
 				</div>
 				<div class="playlist-separator fa fa-angles-right"></div>
 				<div class="playlist-target-info">
@@ -556,26 +482,6 @@
 		gap: 1rem;
 	}
 
-	.refresh-btn, .playlist-selector-btn {
-		background: #1db95433;
-		color: #1db954ff;
-		border: 1px solid #1db95433;
-		padding: 0.5rem;
-		border-radius: 5px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		display: flex;
-		font-size: .75rem;
-		align-items: center;
-		font-weight: 500;
-	}
-
-	.refresh-btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-	}
-
 	.no-playlist-icon {
 		margin-bottom: 1rem;
 		color: #1db954ff;
@@ -599,10 +505,6 @@
 
 	.loading i {
 		color: #1db954ff;
-	}
-
-	.spinning {
-		animation: spin 1s linear infinite;
 	}
 
 	@keyframes spin {
@@ -884,12 +786,6 @@
 
 		.track-item:hover {
 			background: #ffffff0d;
-		}
-
-		.refresh-btn:hover:not(:disabled), .playlist-selector-btn:hover {
-			background: #ffffff33;
-			border-color: #ffffff4d;
-			transform: translateY(-1px);
 		}
 	}
 
