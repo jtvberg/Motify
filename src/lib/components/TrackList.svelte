@@ -707,6 +707,7 @@
 		cursor: pointer;
 		transition: all 0.3s ease;
 		display: flex;
+		gap: 0.25rem;
 		font-size: .75rem;
 		align-items: center;
 		font-weight: 500;
