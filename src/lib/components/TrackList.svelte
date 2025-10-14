@@ -334,7 +334,7 @@
 								>
 								</div>
 							{/if}
-							{#if trackPlayable && canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+							{#if trackPlayable && canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !isTrackInPlaylist(track.id)}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 

@@ -465,7 +465,7 @@
 						title="You can only remove tracks from playlists you own"
 					></div>
 				{/if}
-				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !isTrackInPlaylist($currentTrack.id)}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
