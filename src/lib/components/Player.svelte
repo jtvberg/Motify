@@ -76,10 +76,20 @@
 	let lastSyncedMode: 'off' | 'playlist' | 'track' | null = null;
 
 	async function syncSpotifyRepeatMode() {
-		console.log('syncSpotifyRepeatMode called - isPlayerReady:', isPlayerReady, 'repeatMode:', $repeatMode);
+		console.log('syncSpotifyRepeatMode called - isPlayerReady:', isPlayerReady, 'isPlaying:', $isPlaying, 'currentTrack:', $currentTrack?.name, 'repeatMode:', $repeatMode);
 		
 		if (!isPlayerReady) {
 			console.log('⏸️ Skipping Spotify repeat sync - player not ready');
+			return;
+		}
+
+		if (!$currentTrack) {
+			console.log('⏸️ Skipping Spotify repeat sync - no track loaded');
+			return;
+		}
+
+		if (!$isPlaying) {
+			console.log('⏸️ Skipping Spotify repeat sync - playback not active');
 			return;
 		}
 
@@ -113,7 +123,7 @@
 		}
 	}
 
-	$: if (isPlayerReady && $repeatMode !== undefined) {
+	$: if (isPlayerReady && $currentTrack && $isPlaying && $repeatMode !== undefined) {
 		syncSpotifyRepeatMode();
 	}
 
