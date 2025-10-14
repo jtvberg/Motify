@@ -62,6 +62,10 @@ export interface SpotifyPlaylist {
 	images: { url: string }[];
 	snapshot_id: string;
 	uri?: string;
+	owner?: {
+		id: string;
+		display_name: string;
+	};
 }
 
 export interface SpotifyUser {

@@ -7,11 +7,15 @@
 	import ScraperButtons from './ScraperButtons.svelte';
 
 	let userPlaylists: SpotifyPlaylist[] = [];
+	let targetPlaylists: SpotifyPlaylist[] = [];
 	let selectedId = '';
 	let targetId = '';
 	let hasLoadedUserData = false;
 
 	$: userPlaylists = $playlists;
+	$: targetPlaylists = $playlists.filter(playlist => 
+		playlist.owner && $user && playlist.owner.id === $user.id
+	);
 	$: selectedId = $selectedPlaylist?.id || '';
 	$: targetId = $targetPlaylist?.id || '';
 
@@ -83,7 +87,7 @@
 	}
 
 	function handleTargetPlaylistChange() {
-		const playlist = userPlaylists.find(p => p.id === targetId);
+		const playlist = targetPlaylists.find(p => p.id === targetId);
 		const newPlaylist = playlist || null;
 
 		if ($targetPlaylist?.id !== newPlaylist?.id) {
@@ -182,7 +186,7 @@
 						on:change={handleTargetPlaylistChange}
 					>
 						<option value="">Select destination playlist</option>
-						{#each userPlaylists as playlist}
+						{#each targetPlaylists as playlist}
 							<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 						{/each}
 					</select>
