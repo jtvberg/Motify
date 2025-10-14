@@ -15,6 +15,9 @@
 	$: isTrackInLibrary = (trackId: string): boolean => {
 		return $userLibrary.has(trackId);
 	};
+	$: isTrackInPlaylist = (trackId: string): boolean => {
+		return false;
+	};
 	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
 	$: canRemove = isUserOwner;
 	$: canMove = isUserOwner && !!$targetPlaylist;
@@ -319,7 +322,7 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn move-btn fa fa-plus-minus fa-xl" 
+									class="action-btn move-btn fa fa-plus-minus fa-xl"
 									on:click={() => moveTrackHandler(track)}
 									aria-label="Move to target playlist"
 									title="Move to target playlist"
@@ -338,7 +341,8 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn copy-btn far fa-square-plus fa-xl" 
+									class="action-btn copy-btn {isTrackInPlaylist(track.id) ? 'fas' : 'far'} fa-square-plus fa-xl" 
+									class:in-playlist={isTrackInPlaylist(track.id)}
 									on:click={() => copyTrackHandler(track)}
 									aria-label="Copy to target playlist"
 									title="Copy to target playlist"
@@ -655,6 +659,10 @@
 	}
 
 	.add-btn.in-library {
+		color: #1db954ff;
+	}
+
+	.copy-btn.in-playlist {
 		color: #1db954ff;
 	}
 
