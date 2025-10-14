@@ -6,7 +6,7 @@
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
 	import { targetPlaylistService } from '$lib/targetPlaylistService';
-	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
+	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
 	let isDragging = false;
@@ -318,7 +318,7 @@
 
 	async function copyCurrentTrack() {
 		if (!$currentTrack || !$currentTracks.length) {
-			console.log('No current track to move');
+			console.log('No current track to toggle in target playlist');
 			return;
 		}
 
@@ -327,7 +327,7 @@
 			return;
 		}
 
-		const updatedTracks = await copyTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
+		await toggleTrackInTargetPlaylist($currentTrack, stores, services, handleAPIError);
 	}
 
 	async function addCurrentTrack() {
@@ -513,17 +513,17 @@
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
-						class="track-btn track-copy {isTrackInPlaylist($currentTrack.id) ? 'fas' : 'far'} fa-square-plus fa-xl"
+						class="track-btn track-copy {isTrackInPlaylist($currentTrack.id) ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl"
 						class:in-playlist={isTrackInPlaylist($currentTrack.id)}
 						role="button"
 						on:click={copyCurrentTrack}
-						aria-label="Copy track to target playlist"
-						title="Copy track to target playlist"
+						aria-label={isTrackInPlaylist($currentTrack.id) ? 'Remove from target playlist' : 'Add to target playlist'}
+						title={isTrackInPlaylist($currentTrack.id) ? 'Remove from target playlist' : 'Add to target playlist'}
 					></div>
 				{:else}
 					<div
 						class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
-						aria-label="Copy track to target playlist (disabled)"
+						aria-label="Add to target playlist (disabled)"
 						title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
 					></div>
 				{/if}

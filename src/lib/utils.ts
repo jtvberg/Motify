@@ -794,3 +794,98 @@ export async function toggleTrackInLibrary(
 		throw error;
 	}
 }
+
+export async function toggleTrackInTargetPlaylist(
+	track: SpotifyTrack,
+	stores: PlaybackStores,
+	services: PlaybackServices,
+	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
+): Promise<boolean> {
+	const { targetPlaylistService } = await import('./targetPlaylistService');
+	const { getOperationalUri, isTrackRelinked } = await import('./spotify');
+	
+	let targetPlaylist: any = null;
+	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
+	targetPlaylistUnsub();
+	
+	if (!targetPlaylist) {
+		console.error('No target playlist');
+		return false;
+	}
+	
+	try {
+		const isInPlaylist = targetPlaylistService.isTrackInTargetPlaylist(track.id);
+		const operationalUri = getOperationalUri(track);
+		const isRelinked = isTrackRelinked(track);
+		
+		if (isInPlaylist) {
+			console.log(`Removing track "${track.name}" from target playlist - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+			await services.spotifyAPI.removeTrackFromPlaylist(targetPlaylist.id, operationalUri);
+			targetPlaylistService.removeTrackFromCache(track.id);
+
+			try {
+				const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
+				if (updatedTargetPlaylist) {
+					stores.targetPlaylist.set(updatedTargetPlaylist);
+				}
+			} catch (error) {
+				console.warn('Failed to refresh target playlist data:', error);
+			}
+			
+			if (services.toastStore) {
+				services.toastStore.add({
+					message: `Removed "${track.name}" from ${targetPlaylist.name}`,
+					type: 'success'
+				});
+			}
+			
+			return false;
+		} else {
+			console.log(`Adding track "${track.name}" to target playlist - Relinked: ${isRelinked}, Using URI: ${operationalUri}${isRelinked ? ` (original: ${track.uri})` : ''}`);
+
+			const targetTracks = await handleAPIError(() => services.spotifyAPI.getPlaylistTracks(targetPlaylist.id));
+			const trackAlreadyExists = targetTracks && Array.isArray(targetTracks) && targetTracks.some((t: SpotifyTrack) => t.id === track.id);
+			
+			if (!trackAlreadyExists) {
+				await services.spotifyAPI.addTrackToPlaylist(targetPlaylist.id, operationalUri);
+				targetPlaylistService.addTrackToCache(track.id);
+			}
+
+			try {
+				const updatedTargetPlaylist = await handleAPIError(() => services.spotifyAPI.getPlaylist(targetPlaylist.id));
+				if (updatedTargetPlaylist) {
+					stores.targetPlaylist.set(updatedTargetPlaylist);
+				}
+			} catch (error) {
+				console.warn('Failed to refresh target playlist data:', error);
+			}
+			
+			if (services.toastStore) {
+				if (trackAlreadyExists) {
+					services.toastStore.add({
+						message: `"${track.name}" was already in ${targetPlaylist.name}`,
+						type: 'info'
+					});
+				} else {
+					services.toastStore.add({
+						message: `Added "${track.name}" to ${targetPlaylist.name}`,
+						type: 'success'
+					});
+				}
+			}
+			
+			return true;
+		}
+	} catch (error) {
+		console.error('Failed to toggle track in target playlist:', error);
+		
+		if (services.toastStore) {
+			services.toastStore.add({
+				message: `Failed to update "${track.name}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+				type: 'error'
+			});
+		}
+		
+		throw error;
+	}
+}

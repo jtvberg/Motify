@@ -3,7 +3,7 @@
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
-	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
+	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary, toggleTrackInTargetPlaylist } from '$lib/utils';
 	import { toastStore } from '$lib/toast';
 	import { targetPlaylistService } from '$lib/targetPlaylistService';
 	import type { SpotifyTrack } from '$lib/spotify';
@@ -160,7 +160,7 @@
 	}
 
 	async function copyTrackHandler(track: SpotifyTrack) {
-		await copyTrack(track, tracks, stores, services, handleAPIError);
+		await toggleTrackInTargetPlaylist(track, stores, services, handleAPIError);
 	}
 
 	async function addTrackHandler(track: SpotifyTrack) {
@@ -357,18 +357,18 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn copy-btn {isTrackInPlaylist(track.id) ? 'fas' : 'far'} fa-square-plus fa-xl" 
+									class="action-btn copy-btn {isTrackInPlaylist(track.id) ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl" 
 									class:in-playlist={isTrackInPlaylist(track.id)}
 									on:click={() => copyTrackHandler(track)}
-									aria-label="Copy to target playlist"
-									title="Copy to target playlist"
+									aria-label={isTrackInPlaylist(track.id) ? 'Remove from target playlist' : 'Add to target playlist'}
+									title={isTrackInPlaylist(track.id) ? 'Remove from target playlist' : 'Add to target playlist'}
 									role="button"
 								>
 								</div>
 							{:else}
 								<div 
 									class="action-btn copy-btn far fa-square-plus fa-xl action-btn-disabled" 
-									aria-label="Copy to target playlist (disabled)"
+									aria-label="Add to target playlist (disabled)"
 									title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
 								>
 								</div>
