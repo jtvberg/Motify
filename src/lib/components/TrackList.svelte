@@ -698,6 +698,20 @@
 		opacity: 0.5;
 	}
 
+	.playlist-selector-btn {
+		background: #1db95433;
+		color: #1db954ff;
+		border: 1px solid #1db95433;
+		padding: 0.5rem;
+		border-radius: 5px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		font-size: .75rem;
+		align-items: center;
+		font-weight: 500;
+	}
+
 	@media (max-width: 1024px) {
 		.track-header, .track-item {
 			grid-template-columns: 40px 2fr 1fr 80px 120px;

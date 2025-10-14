@@ -126,9 +126,82 @@
 
 	async function refreshPlaylists() {
 		if ($isRefreshingPlaylists) return;
-		// 1. Refresh the list of playlists in each selector
-		// 2. If a target playlist is loaded, refresh its tracks
-		// 3. If a source playlist is loaded, refresh its tracks and update the currentTracks store
+		
+		isRefreshingPlaylists.set(true);
+		console.log('Refreshing playlists...');
+		
+		try {
+			// 1. Refresh the list of playlists in each selector
+			const playlistsData = await spotifyAPI.getUserPlaylists();
+			playlists.set(playlistsData);
+			console.log(`Refreshed playlists: ${playlistsData.length} playlists found`);
+			
+			// 3. Check if current source playlist still exists
+			if ($selectedPlaylist) {
+				const sourceStillExists = playlistsData.find(p => p.id === $selectedPlaylist?.id);
+				
+				if (!sourceStillExists) {
+					console.log('Source playlist no longer exists, clearing selection');
+					selectedPlaylist.set(null);
+					selectedId = '';
+					playlistSelections.update(selections => ({
+						...selections,
+						source: ''
+					}));
+					
+					// Clear tracks since source playlist is gone
+					clearTrackPlayabilityCache();
+					
+					// Import stores to update track-related state
+					const { currentTracks: currentTracksStore, originalTrackOrder: originalTrackOrderStore } = await import('$lib/stores');
+					currentTracksStore.set([]);
+					originalTrackOrderStore.set([]);
+				} else {
+					// 2. If source playlist still exists, refresh its tracks
+					console.log('Refreshing tracks for source playlist:', $selectedPlaylist.name);
+					const updatedPlaylist = sourceStillExists;
+					selectedPlaylist.set(updatedPlaylist);
+					
+					// Refresh tracks and update the currentTracks store
+					const tracksData = await spotifyAPI.getPlaylistTracks(updatedPlaylist.id);
+					console.log(`Refreshed ${tracksData.length} tracks for source playlist`);
+					
+					clearTrackPlayabilityCache();
+					
+					const { currentTracks: currentTracksStore, originalTrackOrder: originalTrackOrderStore, isShuffleOn: isShuffleOnStore, currentPlaylistSnapshot: currentPlaylistSnapshotStore } = await import('$lib/stores');
+					currentTracksStore.set(tracksData);
+					originalTrackOrderStore.set([...tracksData]);
+					isShuffleOnStore.set(false);
+					currentPlaylistSnapshotStore.set(updatedPlaylist.snapshot_id);
+				}
+			}
+			
+			// 3. Check if current target playlist still exists
+			if ($targetPlaylist) {
+				const targetStillExists = playlistsData.find(p => p.id === $targetPlaylist?.id);
+				
+				if (!targetStillExists) {
+					console.log('Target playlist no longer exists, clearing selection');
+					targetPlaylist.set(null);
+					targetId = '';
+					playlistSelections.update(selections => ({
+						...selections,
+						target: ''
+					}));
+				} else {
+					// Update target playlist with fresh data
+					const updatedTargetPlaylist = targetStillExists;
+					targetPlaylist.set(updatedTargetPlaylist);
+				}
+			}
+			
+			console.log('Playlist refresh complete');
+		} catch (error) {
+			console.error('Failed to refresh playlists:', error);
+			// Optionally show an error toast
+		} finally {
+			isRefreshingPlaylists.set(false);
+		}
 	}
 </script>
 
