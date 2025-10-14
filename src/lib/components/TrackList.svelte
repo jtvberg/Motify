@@ -658,11 +658,7 @@
 		color: #f3f3f3ff;
 	}
 
-	.add-btn.in-library {
-		color: #1db954ff;
-	}
-
-	.copy-btn.in-playlist {
+	.add-btn.in-library, .copy-btn.in-playlist {
 		color: #1db954ff;
 	}
 
