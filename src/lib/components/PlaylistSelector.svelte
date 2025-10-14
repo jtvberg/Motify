@@ -257,7 +257,7 @@
 						bind:value={selectedId} 
 						on:change={handleSelectedPlaylistChange}
 					>
-						<option value="">Select a playlist to manage</option>
+						<option value="">Select a Playlist</option>
 						{#each userPlaylists as playlist}
 							<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 						{/each}
@@ -273,7 +273,7 @@
 						bind:value={targetId} 
 						on:change={handleTargetPlaylistChange}
 					>
-						<option value="">Select destination playlist</option>
+						<option value="">Select a Playlist</option>
 						{#each targetPlaylists as playlist}
 							<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 						{/each}
