@@ -585,54 +585,49 @@ class SpotifyAPI {
 	}
 
 	async getUserSavedTracks(): Promise<string[]> {
-		let allTrackIds: string[] = [];
-		let url: string | null = '/me/tracks?limit=50';
-		let pageCount = 0;
-		
 		console.log('Fetching user saved tracks...');
+
+		const firstResponse = await this.makeRequest('/me/tracks?limit=50&fields=items(track(id)),next,total');
 		
-		try {
-			while (url) {
-				pageCount++;
-				
-				const response = await this.makeRequest(url);
-				
-				if (!response || !response.items) {
-					console.warn('Invalid response while fetching saved tracks');
-					break;
-				}
-				
-				const trackIds = response.items
-					.map((item: any) => item.track?.id)
-					.filter((id: string) => id !== null && id !== undefined);
-				
-				allTrackIds = allTrackIds.concat(trackIds);
+		if (!firstResponse || !firstResponse.items) {
+			return [];
+		}
+		
+		let allTrackIds = firstResponse.items
+			.map((item: any) => item.track?.id)
+			.filter((id: string) => id !== null && id !== undefined);
+		
+		const total = firstResponse.total || 0;
+		console.log(`Total saved tracks: ${total}`);
 
-				if (response.next) {
-					try {
-						const nextUrl = new URL(response.next);
-						let path = nextUrl.pathname;
-						if (path.startsWith('/v1')) {
-							path = path.substring(3);
-						}
-						url = path + nextUrl.search;
-						console.log(`Fetching next page of saved tracks (page ${pageCount + 1})...`);
-					} catch (urlError) {
-						console.error('Failed to parse next saved tracks URL:', response.next, urlError);
-						break;
+		const remainingPages = Math.ceil((total - 50) / 50);
+		
+		if (remainingPages > 0) {
+			const offsets = Array.from({ length: remainingPages }, (_, i) => (i + 1) * 50);
+			const batchSize = 5;
+			for (let i = 0; i < offsets.length; i += batchSize) {
+				const batch = offsets.slice(i, i + batchSize);
+				const requests = batch.map(offset => 
+					this.makeRequest(`/me/tracks?limit=50&offset=${offset}&fields=items(track(id))`)
+						.catch(err => {
+							console.error(`Failed to fetch offset ${offset}:`, err);
+							return { items: [] };
+						})
+				);
+				
+				const responses = await Promise.all(requests);
+				
+				responses.forEach(response => {
+					if (response?.items) {
+						const trackIds = response.items
+							.map((item: any) => item.track?.id)
+							.filter((id: string) => id !== null && id !== undefined);
+						allTrackIds = allTrackIds.concat(trackIds);
 					}
-				} else {
-					url = null;
-				}
-
-				if (pageCount > 50) {
-					console.warn('Reached maximum page count for saved tracks');
-					break;
-				}
+				});
+				
+				console.log(`Fetched ${allTrackIds.length}/${total} saved tracks...`);
 			}
-		} catch (error) {
-			console.error('Error during saved tracks pagination:', error);
-			throw error;
 		}
 		
 		console.log(`Finished fetching all ${allTrackIds.length} saved tracks`);
