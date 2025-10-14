@@ -2,6 +2,7 @@ import { spotifyAPI } from './spotify';
 import { webPlaybackService } from './webPlayback';
 import { tokenManager } from './tokenManager';
 import { libraryService } from './libraryService';
+import { targetPlaylistService } from './targetPlaylistService';
 import { isAuthenticated, user, playlists, selectedPlaylist, targetPlaylist, playlistSelections } from './stores';
 import type { SpotifyPlaylist } from './spotify';
 
@@ -119,6 +120,9 @@ class InitializationService {
                 if (targetPlaylistData) {
                     console.log('Restored target playlist:', targetPlaylistData.name);
                     targetPlaylist.set(targetPlaylistData);
+                    targetPlaylistService.loadTargetPlaylistTracks(targetPlaylistData.id).catch(error => {
+                        console.error('Failed to load target playlist tracks in background:', error);
+                    });
                 }
             }
         } catch (error) {
@@ -172,6 +176,7 @@ class InitializationService {
         selectedPlaylist.set(null);
         targetPlaylist.set(null);
         libraryService.clearLibrary();
+        targetPlaylistService.clearTargetPlaylist();
         
         console.log('Initialization service reset');
     }

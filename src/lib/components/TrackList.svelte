@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn, user } from '$lib/stores';
+	import { selectedPlaylist, targetPlaylist, currentTracks, originalTrackOrder, currentTrackIndex, currentTrack, isPlaying, playbackPosition, currentPlaylistSnapshot, isPlaylistSelectorOpen, userLibrary, isLibraryLoading, isShuffleOn, user, targetPlaylistTracks } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { tokenManager } from '$lib/tokenManager';
 	import { formatDuration, isTrackPlayable, togglePlayPause, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
 	import { toastStore } from '$lib/toast';
+	import { targetPlaylistService } from '$lib/targetPlaylistService';
 	import type { SpotifyTrack } from '$lib/spotify';
 
 	let tracks: SpotifyTrack[] = [];
@@ -16,7 +17,7 @@
 		return $userLibrary.has(trackId);
 	};
 	$: isTrackInPlaylist = (trackId: string): boolean => {
-		return false;
+		return $targetPlaylistTracks.has(trackId);
 	};
 	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
 	$: canRemove = isUserOwner;
@@ -48,6 +49,22 @@
 
 	$: if ($selectedPlaylist) {
 		loadTracks();
+	}
+
+	$: if ($targetPlaylist) {
+		loadTargetPlaylistTracks();
+	} else {
+		targetPlaylistService.clearTargetPlaylist();
+	}
+
+	async function loadTargetPlaylistTracks() {
+		if (!$targetPlaylist) return;
+		
+		try {
+			await targetPlaylistService.loadTargetPlaylistTracks($targetPlaylist.id);
+		} catch (error) {
+			console.error('Failed to load target playlist tracks:', error);
+		}
 	}
 
 	async function handleAPIError<T>(apiCall: () => Promise<T>): Promise<T | null> {
@@ -147,7 +164,6 @@
 	}
 
 	async function addTrackHandler(track: SpotifyTrack) {
-		console.log(isTrackInLibrary(track.id));
 		await toggleTrackInLibrary(track, services);
 	}
 

@@ -19,6 +19,8 @@ export const isPlaylistSelectorOpen = writable(false);
 export const userLibrary = writable<Set<string>>(new Set());
 export const isLibraryLoading = writable(false);
 export const isShuffleOn = writable(false);
+export const targetPlaylistTracks = writable<Set<string>>(new Set());
+export const isTargetPlaylistLoading = writable(false);
 
 function createRepeatModeStore() {
 	const storedMode = typeof localStorage !== 'undefined' 

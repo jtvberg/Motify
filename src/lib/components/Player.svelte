@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode, user } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode, user, targetPlaylistTracks } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
 	import { tokenManager } from '$lib/tokenManager';
+	import { targetPlaylistService } from '$lib/targetPlaylistService';
 	import { formatTime, shuffleArray, togglePlayback, playPreviousTrack, playNextTrack, removeTrack, moveTrack, copyTrack, toggleTrackInLibrary } from '$lib/utils';
 
 	let progressBar: HTMLInputElement;
@@ -18,7 +19,7 @@
 		return $userLibrary.has(trackId);
 	};
 	$: isTrackInPlaylist = (trackId: string): boolean => {
-		return false;
+		return $targetPlaylistTracks.has(trackId);
 	};
 	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
 	$: canRemove = isUserOwner;

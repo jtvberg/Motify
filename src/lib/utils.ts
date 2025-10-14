@@ -512,6 +512,7 @@ async function addTrackToPlaylist(
 	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
 ): Promise<boolean> {
 	const { getOperationalUri, isTrackRelinked } = await import('./spotify');
+	const { targetPlaylistService } = await import('./targetPlaylistService');
 	
 	const operationalUri = getOperationalUri(track);
 	const isRelinked = isTrackRelinked(track);
@@ -522,6 +523,7 @@ async function addTrackToPlaylist(
 	
 	if (!trackAlreadyExists) {
 		await services.spotifyAPI.addTrackToPlaylist(playlistId, operationalUri);
+		targetPlaylistService.addTrackToCache(track.id);
 		return true;
 	}
 	
