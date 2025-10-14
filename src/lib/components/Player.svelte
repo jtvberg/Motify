@@ -14,8 +14,8 @@
 	let isPlayerReady = false;
 
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
-	$: isTrackInLibrary = (trackId: string): boolean => {
-		return $userLibrary.has(trackId);
+	$: isTrackInLibrary = (trackId: string, linkedFromId?: string): boolean => {
+		return $userLibrary.has(trackId) || (linkedFromId ? $userLibrary.has(linkedFromId) : false);
 	};
 	$: isTrackInPlaylist = (trackId: string): boolean => {
 		return $targetPlaylistTracks.has(trackId);
@@ -517,14 +517,14 @@
 					></div>
 				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && isTrackInLibrary($currentTrack.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && isTrackInLibrary($currentTrack.id) ? 'in-library' : '')}"
-					role="button"
-					on:click={$isLibraryLoading ? null : addCurrentTrack}
-					aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id) ? 'Remove from library' : 'Add to library')}
-					title={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id) ? 'Remove from library' : 'Add to library')}
-				></div>
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<div
+				class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'in-library' : '')}"
+				role="button"
+				on:click={$isLibraryLoading ? null : addCurrentTrack}
+				aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'Remove from library' : 'Add to library')}
+				title={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'Remove from library' : 'Add to library')}
+			></div>
 			</div>
 			<div class="progress-container">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->

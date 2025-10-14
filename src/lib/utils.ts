@@ -709,7 +709,8 @@ export async function toggleTrackInLibrary(
 	const { libraryService } = await import('./libraryService');
 	
 	try {
-		const isNowInLibrary = await libraryService.toggleTrackInLibrary(track.id);
+		const linkedFromId = track.linked_from?.id;
+		const isNowInLibrary = await libraryService.toggleTrackInLibrary(track.id, linkedFromId);
 		
 		if (services.toastStore) {
 			services.toastStore.add({

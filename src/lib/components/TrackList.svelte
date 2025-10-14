@@ -13,8 +13,8 @@
 	let currentLoadingPlaylistId: string | null = null;
 
 	$: tracks = $currentTracks;
-	$: isTrackInLibrary = (trackId: string): boolean => {
-		return $userLibrary.has(trackId);
+	$: isTrackInLibrary = (trackId: string, linkedFromId?: string): boolean => {
+		return $userLibrary.has(trackId) || (linkedFromId ? $userLibrary.has(linkedFromId) : false);
 	};
 	$: isTrackInPlaylist = (trackId: string): boolean => {
 		return $targetPlaylistTracks.has(trackId);
@@ -376,10 +376,10 @@
 							<!-- svelte-ignore a11y_click_events_have_key_events -->
 							<!-- svelte-ignore a11y_interactive_supports_focus -->
 							<div 
-								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (isTrackInLibrary(track.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + (isTrackInLibrary(track.id) ? 'in-library' : '')}" 
+								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + (isTrackInLibrary(track.id, track.linked_from?.id) ? 'in-library' : '')}" 
 								on:click={$isLibraryLoading ? null : () => addTrackHandler(track)}
-								aria-label={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library')}
-								title={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id) ? 'Remove from library' : 'Add to library')}
+								aria-label={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'Remove from library' : 'Add to library')}
+								title={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'Remove from library' : 'Add to library')}
 								role="button"
 							>
 							</div>
