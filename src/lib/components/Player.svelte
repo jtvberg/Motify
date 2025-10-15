@@ -14,12 +14,6 @@
 	let isPlayerReady = false;
 
 	$: progress = $trackDuration > 0 ? ($playbackPosition / $trackDuration) * 100 : 0;
-	$: isTrackInLibrary = (trackId: string, linkedFromId?: string): boolean => {
-		return $userLibrary.has(trackId) || (linkedFromId ? $userLibrary.has(linkedFromId) : false);
-	};
-	$: isTrackInPlaylist = (trackId: string): boolean => {
-		return $targetPlaylistTracks.has(trackId);
-	};
 	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
 	$: canRemove = isUserOwner;
 	$: canMove = isUserOwner && !!$targetPlaylist;
@@ -425,7 +419,6 @@
 				class="album-cover"
 			/>
 		</div>
-
 		<div class="player-controls">
 			<div class="track-details">
 				<div class="track-name">{$currentTrack.name}</div>
@@ -454,7 +447,7 @@
 						title="You can only remove tracks from playlists you own"
 					></div>
 				{/if}
-				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !isTrackInPlaylist($currentTrack.id)}
+				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !$currentTrack._isInTargetPlaylist}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -502,12 +495,12 @@
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
-						class="track-btn track-copy {isTrackInPlaylist($currentTrack.id) ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl"
-						class:in-playlist={isTrackInPlaylist($currentTrack.id)}
+						class="track-btn track-copy {$currentTrack._isInTargetPlaylist ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl"
+						class:in-playlist={$currentTrack._isInTargetPlaylist}
 						role="button"
 						on:click={copyCurrentTrack}
-						aria-label={isTrackInPlaylist($currentTrack.id) ? 'Remove from target playlist' : 'Add to target playlist'}
-						title={isTrackInPlaylist($currentTrack.id) ? 'Remove from target playlist' : 'Add to target playlist'}
+						aria-label={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
+						title={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
 					></div>
 				{:else}
 					<div
@@ -519,11 +512,11 @@
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<div
-				class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'in-library' : '')}"
+				class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && $currentTrack._isInLibrary ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && $currentTrack._isInLibrary ? 'in-library' : '')}"
 				role="button"
 				on:click={$isLibraryLoading ? null : addCurrentTrack}
-				aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'Remove from library' : 'Add to library')}
-				title={$isLibraryLoading ? 'Loading library...' : ($currentTrack && isTrackInLibrary($currentTrack.id, $currentTrack.linked_from?.id) ? 'Remove from library' : 'Add to library')}
+				aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
+				title={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
 			></div>
 			</div>
 			<div class="progress-container">

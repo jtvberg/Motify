@@ -78,13 +78,16 @@ class LibraryService {
 	}
 
 	async toggleTrackInLibrary(trackId: string, linkedFromId?: string): Promise<boolean> {
+		const library = get(userLibrary);
 		const isInLibrary = this.isTrackInLibrary(trackId, linkedFromId);
 		
 		if (isInLibrary) {
-			await this.removeTrackFromLibrary(trackId);
+			const idToRemove = library.has(trackId) ? trackId : linkedFromId!;
+			await this.removeTrackFromLibrary(idToRemove);
 			return false;
 		} else {
-			await this.addTrackToLibrary(trackId);
+			const idToAdd = linkedFromId || trackId;
+			await this.addTrackToLibrary(idToAdd);
 			return true;
 		}
 	}

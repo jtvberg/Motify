@@ -41,6 +41,8 @@ export interface SpotifyTrack {
 			spotify: string;
 		};
 	};
+	_isInLibrary?: boolean;
+	_isInTargetPlaylist?: boolean;
 }
 
 export function getOperationalUri(track: SpotifyTrack): string {
@@ -587,14 +589,19 @@ class SpotifyAPI {
 	async getUserSavedTracks(): Promise<string[]> {
 		console.log('Fetching user saved tracks...');
 
-		const firstResponse = await this.makeRequest('/me/tracks?limit=50&fields=items(track(id)),next,total');
+		const firstResponse = await this.makeRequest('/me/tracks?limit=50&fields=items(track(id,linked_from(id))),next,total');
 		
 		if (!firstResponse || !firstResponse.items) {
 			return [];
 		}
 		
 		let allTrackIds = firstResponse.items
-			.map((item: any) => item.track?.id)
+			.flatMap((item: any) => {
+				const ids: string[] = [];
+				if (item.track?.id) ids.push(item.track.id);
+				if (item.track?.linked_from?.id) ids.push(item.track.linked_from.id);
+				return ids;
+			})
 			.filter((id: string) => id !== null && id !== undefined);
 		
 		const total = firstResponse.total || 0;
@@ -608,7 +615,7 @@ class SpotifyAPI {
 			for (let i = 0; i < offsets.length; i += batchSize) {
 				const batch = offsets.slice(i, i + batchSize);
 				const requests = batch.map(offset => 
-					this.makeRequest(`/me/tracks?limit=50&offset=${offset}&fields=items(track(id))`)
+					this.makeRequest(`/me/tracks?limit=50&offset=${offset}&fields=items(track(id,linked_from(id)))`)
 						.catch(err => {
 							console.error(`Failed to fetch offset ${offset}:`, err);
 							return { items: [] };
@@ -620,17 +627,22 @@ class SpotifyAPI {
 				responses.forEach(response => {
 					if (response?.items) {
 						const trackIds = response.items
-							.map((item: any) => item.track?.id)
+							.flatMap((item: any) => {
+								const ids: string[] = [];
+								if (item.track?.id) ids.push(item.track.id);
+								if (item.track?.linked_from?.id) ids.push(item.track.linked_from.id);
+								return ids;
+							})
 							.filter((id: string) => id !== null && id !== undefined);
 						allTrackIds = allTrackIds.concat(trackIds);
 					}
 				});
 				
-				console.log(`Fetched ${allTrackIds.length}/${total} saved tracks...`);
+				console.log(`Fetched ${allTrackIds.length} IDs from saved tracks (including relinks)...`);
 			}
 		}
 		
-		console.log(`Finished fetching all ${allTrackIds.length} saved tracks`);
+		console.log(`Finished fetching all track IDs from ${total} saved tracks (total IDs including relinks: ${allTrackIds.length})`);
 		return allTrackIds;
 	}
 

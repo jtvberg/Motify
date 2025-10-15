@@ -57,6 +57,22 @@
 		targetPlaylistService.clearTargetPlaylist();
 	}
 
+	$: if (tracks.length > 0 && ($userLibrary || $targetPlaylistTracks)) {
+		tracks = tracks.map(track => ({
+			...track,
+			_isInLibrary: isTrackInLibrary(track.id, track.linked_from?.id),
+			_isInTargetPlaylist: isTrackInPlaylist(track.id)
+		}));
+		currentTracks.set(tracks);
+		
+		if ($currentTrack) {
+			const updatedCurrentTrack = tracks.find(t => t.id === $currentTrack.id);
+			if (updatedCurrentTrack) {
+				currentTrack.set(updatedCurrentTrack);
+			}
+		}
+	}
+
 	async function loadTargetPlaylistTracks() {
 		if (!$targetPlaylist) return;
 		
@@ -119,7 +135,12 @@
 			}
 			
 			if (tracksData) {
-				tracks = tracksData;
+				tracks = tracksData.map(track => ({
+					...track,
+					_isInLibrary: isTrackInLibrary(track.id, track.linked_from?.id),
+					_isInTargetPlaylist: isTrackInPlaylist(track.id)
+				}));
+				
 				currentTracks.set(tracks);
 				originalTrackOrder.set([...tracks]);
 				currentPlaylistSnapshot.set($selectedPlaylist.snapshot_id);
@@ -334,7 +355,7 @@
 								>
 								</div>
 							{/if}
-							{#if trackPlayable && canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !isTrackInPlaylist(track.id)}
+							{#if trackPlayable && canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !track._isInTargetPlaylist}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
@@ -357,11 +378,11 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
 								<div 
-									class="action-btn copy-btn {isTrackInPlaylist(track.id) ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl" 
-									class:in-playlist={isTrackInPlaylist(track.id)}
+									class="action-btn copy-btn {track._isInTargetPlaylist ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl" 
+									class:in-playlist={track._isInTargetPlaylist}
 									on:click={() => copyTrackHandler(track)}
-									aria-label={isTrackInPlaylist(track.id) ? 'Remove from target playlist' : 'Add to target playlist'}
-									title={isTrackInPlaylist(track.id) ? 'Remove from target playlist' : 'Add to target playlist'}
+									aria-label={track._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
+									title={track._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
 									role="button"
 								>
 								</div>
@@ -376,10 +397,10 @@
 							<!-- svelte-ignore a11y_click_events_have_key_events -->
 							<!-- svelte-ignore a11y_interactive_supports_focus -->
 							<div 
-								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'fas' : 'far') + ' fa-heart fa-xl ' + (isTrackInLibrary(track.id, track.linked_from?.id) ? 'in-library' : '')}" 
+								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (track._isInLibrary ? 'fas' : 'far') + ' fa-heart fa-xl ' + (track._isInLibrary ? 'in-library' : '')}" 
 								on:click={$isLibraryLoading ? null : () => addTrackHandler(track)}
-								aria-label={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'Remove from library' : 'Add to library')}
-								title={$isLibraryLoading ? 'Loading library...' : (isTrackInLibrary(track.id, track.linked_from?.id) ? 'Remove from library' : 'Add to library')}
+								aria-label={$isLibraryLoading ? 'Loading library...' : (track._isInLibrary ? 'Remove from library' : 'Add to library')}
+								title={$isLibraryLoading ? 'Loading library...' : (track._isInLibrary ? 'Remove from library' : 'Add to library')}
 								role="button"
 							>
 							</div>
