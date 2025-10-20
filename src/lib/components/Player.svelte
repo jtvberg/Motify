@@ -438,13 +438,13 @@
 						role="button"
 						on:click={removeCurrentTrack}
 						aria-label="Remove track"
-						title="Remove track from playlist"
+						title="Remove Track from Playlist"
 					></div>
 				{:else}
 					<div
 						class="track-btn track-remove far fa-trash-can fa-xl track-btn-disabled"
 						aria-label="Remove track (disabled)"
-						title="You can only remove tracks from playlists you own"
+						title="You Can Only Remove Tracks from Playlists You Own"
 					></div>
 				{/if}
 				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !$currentTrack._isInTargetPlaylist}
@@ -455,13 +455,13 @@
 						role="button"
 						on:click={moveCurrentTrack}
 						aria-label="Move track to target playlist"
-						title="Move track to target playlist"
+						title="Move Track to Target Playlist"
 					></div>
 				{:else}
 					<div
 						class="track-btn track-move fa fa-plus-minus fa-xl track-btn-disabled" 
 						aria-label="Move track to target playlist (disabled)"
-						title={!isUserOwner ? 'You can only move tracks from playlists you own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist')}
+						title={!isUserOwner ? 'You Can Only Move Tracks from Playlists You Own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist')}
 					></div>
 				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -471,7 +471,7 @@
 					role="button"
 					on:click={previousTrack}
 					aria-label="Previous track"
-					title="Previous track"
+					title="Previous Track"
 				></div>
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -489,7 +489,7 @@
 					role="button"
 					on:click={nextTrack}
 					aria-label="Next track"
-					title="Next track"
+					title="Next Track"
 				></div>
 				{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -500,13 +500,13 @@
 						role="button"
 						on:click={copyCurrentTrack}
 						aria-label={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
-						title={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
+						title={$currentTrack._isInTargetPlaylist ? 'Remove from Target Playlist' : 'Add to Target Playlist'}
 					></div>
 				{:else}
 					<div
 						class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
 						aria-label="Add to target playlist (disabled)"
-						title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
+						title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist'}
 					></div>
 				{/if}
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -516,7 +516,7 @@
 				role="button"
 				on:click={$isLibraryLoading ? null : addCurrentTrack}
 				aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
-				title={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
+				title={$isLibraryLoading ? 'Loading Library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from Library' : 'Add to Library')}
 			></div>
 			</div>
 			<div class="progress-container">
@@ -556,7 +556,7 @@
 					role="button"
 					on:click={toggleShuffle}
 					aria-label="Shuffle playlist"
-					title="Shuffle {$isShuffleOn ? 'on' : 'off'}"
+					title="Toggle Shuffle {$isShuffleOn ? 'Off' : 'On'}"
 				></div>
 			</div>
 		</div>

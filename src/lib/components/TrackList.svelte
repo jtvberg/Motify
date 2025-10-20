@@ -205,6 +205,7 @@
 							src={$selectedPlaylist.images[0].url} 
 							alt="Playlist cover"
 							class="playlist-cover"
+							title="Change Source Playlist"
 							on:click={openPlaylistSelector}
 						/>
 					{:else}
@@ -216,11 +217,11 @@
 					{/if}
 					<div class="playlist-info">
 						<div class="playlist-title" title="{$selectedPlaylist.name}">{$selectedPlaylist.name}</div>
-						<div class="playlist-description" title="{$selectedPlaylist.description || 'No description'}">{$selectedPlaylist.description || 'No description'}</div>
-						<div class="playlist-track-count">{tracks.length > 0 ? tracks.length + ' tracks' : ''}</div>
+						<div class="playlist-description" title="{$selectedPlaylist.description || 'No Description'}">{$selectedPlaylist.description || 'No Description'}</div>
+						<div class="playlist-track-count">{tracks.length > 0 ? tracks.length + ' Tracks' : ''}</div>
 					</div>
 				</div>
-				<div class="playlist-separator fa fa-angles-right"></div>
+				<div class="playlist-separator"><i class="fa fa-angles-right"></i></div>
 				<div class="playlist-target-info">
 					{#if $targetPlaylist && $targetPlaylist.images?.[0]?.url}
 						<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -229,6 +230,7 @@
 							src={$targetPlaylist.images[0].url} 
 							alt="Playlist cover"
 							class="playlist-cover"
+							title="Change Target Playlist"
 							on:click={openPlaylistSelector}
 						/>
 					{:else}
@@ -240,8 +242,8 @@
 					{/if}
 					<div class="playlist-info">
 						<div class="playlist-title" title="{$targetPlaylist?.name || ''}">{$targetPlaylist ? $targetPlaylist.name : ''}</div>
-						<div class="playlist-description" title="{$targetPlaylist?.description || 'No description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No description') : ''}</div>
-						<div class="playlist-track-count">{$targetPlaylist ? ($targetPlaylist.tracks?.total || 0) + ' tracks' : ''}</div>
+						<div class="playlist-description" title="{$targetPlaylist?.description || 'No Description'}">{$targetPlaylist ? ($targetPlaylist.description || 'No Description') : ''}</div>
+						<div class="playlist-track-count">{$targetPlaylist ? ($targetPlaylist.tracks?.total || 0) + ' Tracks' : ''}</div>
 					</div>
 				</div>
 			</div>
@@ -298,7 +300,7 @@
 								<div 
 									class="action-btn play-btn fas fa-ban disabled"
 									aria-label="Track unavailable"
-									title="This track is not available for playback"
+									title="This Track Is Not Available for Playback"
 								>
 								</div>
 							{/if}
@@ -335,7 +337,7 @@
 						<span class="track-artist" class:unavailable-text={!trackPlayable}>{track.artists.map(a => a.name).join(', ')}</span>
 						<span class="track-album" class:unavailable-text={!trackPlayable}>{track.album.name}</span>
 						<span class="track-duration" class:unavailable-text={!trackPlayable}>{formatDuration(track.duration_ms)}</span>
-						<div class="track-actions">							
+						<div class="track-actions">
 							{#if canRemove}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
 								<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -343,7 +345,7 @@
 									class="action-btn remove-btn far fa-trash-can fa-xl" 
 									on:click={() => removeTrackHandler(track)}
 									aria-label="Remove from playlist"
-									title="Remove from playlist"
+									title="Remove from Playlist"
 									role="button"
 								>
 								</div>
@@ -351,7 +353,7 @@
 								<div 
 									class="action-btn remove-btn far fa-trash-can fa-xl action-btn-disabled" 
 									aria-label="Remove from playlist (disabled)"
-									title="You can only remove tracks from playlists you own"
+									title="You Can Only Remove Tracks from Playlists You Own"
 								>
 								</div>
 							{/if}
@@ -362,7 +364,7 @@
 									class="action-btn move-btn fa fa-plus-minus fa-xl"
 									on:click={() => moveTrackHandler(track)}
 									aria-label="Move to target playlist"
-									title="Move to target playlist"
+									title="Move to Target Playlist"
 									role="button"
 								>
 								</div>
@@ -370,7 +372,7 @@
 								<div 
 									class="action-btn move-btn fa fa-plus-minus fa-xl action-btn-disabled" 
 									aria-label="Move to target playlist (disabled)"
-									title={!isUserOwner ? 'You can only move tracks from playlists you own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist')}
+									title={!isUserOwner ? 'You Can Only Move Tracks from Playlists You Own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist')}
 								>
 								</div>
 							{/if}
@@ -382,7 +384,7 @@
 									class:in-playlist={track._isInTargetPlaylist}
 									on:click={() => copyTrackHandler(track)}
 									aria-label={track._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
-									title={track._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
+									title={track._isInTargetPlaylist ? 'Remove from Target Playlist' : 'Add to Target Playlist'}
 									role="button"
 								>
 								</div>
@@ -390,7 +392,7 @@
 								<div 
 									class="action-btn copy-btn far fa-square-plus fa-xl action-btn-disabled" 
 									aria-label="Add to target playlist (disabled)"
-									title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a different target playlist' : 'Select a target playlist') : 'Select a target playlist'}
+									title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist'}
 								>
 								</div>
 							{/if}
@@ -400,7 +402,7 @@
 								class="action-btn add-btn {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl action-btn-disabled' : (track._isInLibrary ? 'fas' : 'far') + ' fa-heart fa-xl ' + (track._isInLibrary ? 'in-library' : '')}" 
 								on:click={$isLibraryLoading ? null : () => addTrackHandler(track)}
 								aria-label={$isLibraryLoading ? 'Loading library...' : (track._isInLibrary ? 'Remove from library' : 'Add to library')}
-								title={$isLibraryLoading ? 'Loading library...' : (track._isInLibrary ? 'Remove from library' : 'Add to library')}
+								title={$isLibraryLoading ? 'Loading Library...' : (track._isInLibrary ? 'Remove from Library' : 'Add to Library')}
 								role="button"
 							>
 							</div>
@@ -447,7 +449,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.playlist-separator {
@@ -455,8 +457,13 @@
 		align-items: center;
 		justify-content: center;
 		height: clamp(142px, 15vw, 300px);
-		color: #b3b3b3ff;
 		font-size: clamp(2rem, 6vw, 60px);
+	}
+
+	.playlist-separator > i {
+		color: transparent;
+		background-clip: text;
+		background-image: linear-gradient(135deg, #1db95424, #1db954ff);
 	}
 
 	.playlist-cover {
@@ -805,6 +812,10 @@
 	}
 
 	@media (hover: hover) {
+		.playlist-separator > i:hover {
+			animation: fa-fade 1s infinite linear;
+		}
+
 		.action-btn-disabled:hover {
 			color: gray !important;
 			transform: none !important;
@@ -824,11 +835,11 @@
 			transform: scale(1.1);
 		}
 
-		.track-number-btn:hover .track-number-index {
+		.track-item:hover .track-number-index {
 			display: none;
 		}
 
-		.track-number-btn:hover .track-number-icon {
+		.track-item:hover .track-number-icon {
 			display: inline;
 		}
 
