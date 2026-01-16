@@ -464,15 +464,17 @@
 						title={!isUserOwner ? 'You Can Only Move Tracks from Playlists You Own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist')}
 					></div>
 				{/if}
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="control-btn fas fa-step-backward fa-xl"
-					role="button"
-					on:click={previousTrack}
-					aria-label="Previous track"
-					title="Previous Track"
-				></div>
+				<div class="track-back">
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="control-btn fas fa-step-backward fa-xl"
+						role="button"
+						on:click={previousTrack}
+						aria-label="Previous track"
+						title="Previous Track"
+					></div>
+				</div>
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div 
@@ -482,15 +484,17 @@
 					aria-label={$isPlaying ? 'Pause' : 'Play'}
 					title={$isPlaying ? 'Pause' : 'Play'}
 				></div>
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="control-btn fas fa-step-forward fa-xl"
-					role="button"
-					on:click={nextTrack}
-					aria-label="Next track"
-					title="Next Track"
-				></div>
+				<div class="track-forward">
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div
+						class="control-btn fas fa-step-forward fa-xl"
+						role="button"
+						on:click={nextTrack}
+						aria-label="Next track"
+						title="Next Track"
+					></div>
+				</div>
 				{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -643,7 +647,7 @@
 	.play-btn {
 		color: #1db954ff;
 		transition: all 0.3s ease;
-		font-size: 3rem;
+		font-size: 3em;
 		cursor: pointer;
 	}
 
@@ -653,22 +657,20 @@
 		transition: color 0.3s ease;
 	}
 
-	.track-remove, .track-move {
-		margin-right: 1rem;
-	}
-
-	.track-copy, .track-add {
-		margin-left: 1rem;
-	}
-
 	.track-btn-disabled {
 		opacity: 0.5;
 		cursor: not-allowed !important;
 		color: #666666ff !important;
 	}
 
-	.track-add.in-library, .track-copy.in-playlist {
-		color: #1db954ff;
+	.track-back, .track-forward {
+		display: flex;
+		width: 5em;
+		justify-content: flex-end;
+	}
+
+	.track-forward {
+		justify-content: flex-start;
 	}
 
 	.progress-container {
@@ -679,7 +681,7 @@
 
 	.playback-btn {
 		color: #b3b3b3ff;
-		font-size: 1.2rem;
+		font-size: 1.2em;
 		cursor: pointer;
 		transition: color 0.3s ease;
 	}
@@ -689,10 +691,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-	}
-
-	.repeat-btn {
-		font-size: 1.2rem;
 	}
 
 	.repeat-track {
@@ -716,7 +714,7 @@
 	}
 
 	.time {
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		color: #b3b3b3ff;
 		min-width: 40px;
 		text-align: center;
@@ -759,8 +757,9 @@
 			gap: 1rem;
 		}
 
-		.track-info {
-			width: 100%;
+		.control-btns {
+			font-size: 1.3rem;
+			justify-content: space-between;
 		}
 
 		.track-details {
