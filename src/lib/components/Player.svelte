@@ -430,41 +430,43 @@
 				{/if}
 			</div>
 			<div class="control-btns">
-				{#if canRemove}
-					<!-- svelte-ignore a11y_interactive_supports_focus -->
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<div
-						class="track-btn track-remove far fa-trash-can fa-xl"
-						role="button"
-						on:click={removeCurrentTrack}
-						aria-label="Remove track"
-						title="Remove Track from Playlist"
-					></div>
-				{:else}
-					<div
-						class="track-btn track-remove far fa-trash-can fa-xl track-btn-disabled"
-						aria-label="Remove track (disabled)"
-						title="You Can Only Remove Tracks from Playlists You Own"
-					></div>
-				{/if}
-				{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !$currentTrack._isInTargetPlaylist}
-					<!-- svelte-ignore a11y_interactive_supports_focus -->
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<div
-						class="track-btn track-move fa fa-plus-minus fa-xl"
-						role="button"
-						on:click={moveCurrentTrack}
-						aria-label="Move track to target playlist"
-						title="Move Track to Target Playlist"
-					></div>
-				{:else}
-					<div
-						class="track-btn track-move fa fa-plus-minus fa-xl track-btn-disabled" 
-						aria-label="Move track to target playlist (disabled)"
-						title={!isUserOwner ? 'You Can Only Move Tracks from Playlists You Own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist')}
-					></div>
-				{/if}
-				<div class="track-back">
+				<div class="playback-btns">
+					{#if canRemove}
+						<!-- svelte-ignore a11y_interactive_supports_focus -->
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<div
+							class="track-btn track-remove far fa-trash-can fa-xl"
+							role="button"
+							on:click={removeCurrentTrack}
+							aria-label="Remove track"
+							title="Remove Track from Playlist"
+						></div>
+					{:else}
+						<div
+							class="track-btn track-remove far fa-trash-can fa-xl track-btn-disabled"
+							aria-label="Remove track (disabled)"
+							title="You Can Only Remove Tracks from Playlists You Own"
+						></div>
+					{/if}
+					{#if canMove && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id && !$currentTrack._isInTargetPlaylist}
+						<!-- svelte-ignore a11y_interactive_supports_focus -->
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<div
+							class="track-btn track-move fa fa-plus-minus fa-xl"
+							role="button"
+							on:click={moveCurrentTrack}
+							aria-label="Move track to target playlist"
+							title="Move Track to Target Playlist"
+						></div>
+					{:else}
+						<div
+							class="track-btn track-move fa fa-plus-minus fa-xl track-btn-disabled" 
+							aria-label="Move track to target playlist (disabled)"
+							title={!isUserOwner ? 'You Can Only Move Tracks from Playlists You Own' : ($targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist')}
+						></div>
+					{/if}
+				</div>	
+				<div class="playback-btns">
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -474,17 +476,15 @@
 						aria-label="Previous track"
 						title="Previous Track"
 					></div>
-				</div>
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div 
-					class="play-btn fas fa-2xl' {$isPlaying ? 'fa-circle-pause' : 'fa-circle-play'}"
-					role="button"
-					on:click={togglePlaybackHandler}
-					aria-label={$isPlaying ? 'Pause' : 'Play'}
-					title={$isPlaying ? 'Pause' : 'Play'}
-				></div>
-				<div class="track-forward">
+					<!-- svelte-ignore a11y_interactive_supports_focus -->
+					<!-- svelte-ignore a11y_click_events_have_key_events -->
+					<div 
+						class="play-btn fas fa-2xl' {$isPlaying ? 'fa-circle-pause' : 'fa-circle-play'}"
+						role="button"
+						on:click={togglePlaybackHandler}
+						aria-label={$isPlaying ? 'Pause' : 'Play'}
+						title={$isPlaying ? 'Pause' : 'Play'}
+					></div>
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -495,33 +495,35 @@
 						title="Next Track"
 					></div>
 				</div>
-				{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+				<div class="playback-btns">
+					{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
+						<!-- svelte-ignore a11y_interactive_supports_focus -->
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<div
+							class="track-btn track-copy {$currentTrack._isInTargetPlaylist ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl"
+							class:in-playlist={$currentTrack._isInTargetPlaylist}
+							role="button"
+							on:click={copyCurrentTrack}
+							aria-label={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
+							title={$currentTrack._isInTargetPlaylist ? 'Remove from Target Playlist' : 'Add to Target Playlist'}
+						></div>
+					{:else}
+						<div
+							class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
+							aria-label="Add to target playlist (disabled)"
+							title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist'}
+						></div>
+					{/if}
 					<!-- svelte-ignore a11y_interactive_supports_focus -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
-						class="track-btn track-copy {$currentTrack._isInTargetPlaylist ? 'fas fa-square-minus' : 'far fa-square-plus'} fa-xl"
-						class:in-playlist={$currentTrack._isInTargetPlaylist}
+						class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && $currentTrack._isInLibrary ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && $currentTrack._isInLibrary ? 'in-library' : '')}"
 						role="button"
-						on:click={copyCurrentTrack}
-						aria-label={$currentTrack._isInTargetPlaylist ? 'Remove from target playlist' : 'Add to target playlist'}
-						title={$currentTrack._isInTargetPlaylist ? 'Remove from Target Playlist' : 'Add to Target Playlist'}
+						on:click={$isLibraryLoading ? null : addCurrentTrack}
+						aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
+						title={$isLibraryLoading ? 'Loading Library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from Library' : 'Add to Library')}
 					></div>
-				{:else}
-					<div
-						class="track-btn track-copy far fa-square-plus fa-xl track-btn-disabled" 
-						aria-label="Add to target playlist (disabled)"
-						title={$targetPlaylist ? ($targetPlaylist.id === $selectedPlaylist?.id ? 'Select a Different Target Playlist' : 'Select a Target Playlist') : 'Select a Target Playlist'}
-					></div>
-				{/if}
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<div
-				class="track-btn track-add {$isLibraryLoading ? 'fas fa-spinner fa-spin-pulse fa-xl track-btn-disabled' : ($currentTrack && $currentTrack._isInLibrary ? 'fas' : 'far') + ' fa-heart fa-xl ' + ($currentTrack && $currentTrack._isInLibrary ? 'in-library' : '')}"
-				role="button"
-				on:click={$isLibraryLoading ? null : addCurrentTrack}
-				aria-label={$isLibraryLoading ? 'Loading library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from library' : 'Add to library')}
-				title={$isLibraryLoading ? 'Loading Library...' : ($currentTrack && $currentTrack._isInLibrary ? 'Remove from Library' : 'Add to Library')}
-			></div>
+				</div>
 			</div>
 			<div class="progress-container">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -628,20 +630,27 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		width: 1px;
+		width: 100%;
 	}
 
 	.control-btns {
 		display: flex;
-		justify-content: center;
+		justify-content: space-between;
 		align-items: center;
-		gap: 1rem;
+		gap: 3%;
 	}
 
 	.control-btn {
 		cursor: pointer;
 		color: #ffffffff;
 		transition: all 0.3s ease;
+	}
+
+	.playback-btns {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
 	.play-btn {
@@ -661,16 +670,6 @@
 		opacity: 0.5;
 		cursor: not-allowed !important;
 		color: #666666ff !important;
-	}
-
-	.track-back, .track-forward {
-		display: flex;
-		width: 5em;
-		justify-content: flex-end;
-	}
-
-	.track-forward {
-		justify-content: flex-start;
 	}
 
 	.progress-container {
@@ -754,12 +753,12 @@
 	@media (max-width: 768px) {
 		.player {
 			flex-direction: column;
+			padding: 1rem;
 			gap: 1rem;
 		}
 
 		.control-btns {
-			font-size: 1.3rem;
-			justify-content: space-between;
+			font-size: 1.2rem;
 		}
 
 		.track-details {
@@ -772,10 +771,6 @@
 
 		.track-name, .artist-name {
 			text-align: center;
-		}
-
-		.player-controls {
-			width: 100%;
 		}
 	}
 
