@@ -582,8 +582,8 @@
 		display: grid;
 		grid-template-columns: 50px 2fr 1.5fr 1.5fr 100px 150px;
 		gap: 1rem;
-		padding: 1rem 2rem;
 		align-items: center;
+		padding-inline: 0.5rem;
 	}
 
 	.track-header {
@@ -593,12 +593,14 @@
 		text-transform: uppercase;
 		font-size: 0.85rem;
 		letter-spacing: 0.5px;
+		padding-block: 1rem;
 	}
 
 	.track-item {
 		border-bottom: 1px solid #1e1e1eff;
 		transition: background-color 0.2s ease;
 		content-visibility: auto;
+		padding-block: 0.5rem;
 	}
 
 	.track-item.current-track {
@@ -659,7 +661,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		color: #b3b3b3ff;
-		padding-bottom: 1px;
 	}
 
 	.track-name {
@@ -765,7 +766,6 @@
 		.track-header, .track-item {
 			grid-template-columns: 40px 2fr 1fr 80px 120px;
 			gap: 0.5rem;
-			padding: 1rem;
 		}
 
 		.track-album {
@@ -778,6 +778,11 @@
 			grid-template-columns: 1fr 200px;
 			gap: 1rem;
 			align-items: unset;
+			padding-inline: 1rem;
+		}
+
+		.track-item {
+			padding-block: 1rem;
 		}
 
 		.track-number, .track-artist, .track-duration {
