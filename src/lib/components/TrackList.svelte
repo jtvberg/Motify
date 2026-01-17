@@ -826,13 +826,11 @@
 		}
 
 		.action-btn:hover {
-			color: #00ff0dcc;
-			transform: scale(1.1);
+			color: #1db954ff;
 		}
 
 		.play-btn:hover {
-			background: #1ed760ff;
-			transform: scale(1.1);
+			background: #1db954ff;
 		}
 
 		.track-item:hover .track-number-index {

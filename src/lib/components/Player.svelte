@@ -528,20 +528,13 @@
 			<div class="progress-container">
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div class="playback-btn repeat-container"
+				<div
+					class="playback-btn shuffle-btn fa fa-shuffle {$isShuffleOn ? 'shuffle-active' : ''}"
 					role="button"
-					on:click={cycleRepeatMode}
-					aria-label="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
-					title="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
-				>
-					<div 
-						class="repeat-btn fa fa-repeat"
-						class:repeat-active={$repeatMode === 'track' || $repeatMode === 'playlist'}
-					></div>
-					{#if $repeatMode === 'track'}
-						<div class="repeat-track">1</div>
-					{/if}
-				</div>
+					on:click={toggleShuffle}
+					aria-label="Shuffle playlist"
+					title="Toggle Shuffle {$isShuffleOn ? 'Off' : 'On'}"
+				></div>
 				<span class="time">{formatTime($playbackPosition)}</span>
 				<input
 					type="range"
@@ -557,13 +550,20 @@
 				<span class="time">{formatTime($trackDuration)}</span>
 				<!-- svelte-ignore a11y_interactive_supports_focus -->
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					class="playback-btn shuffle-btn fa fa-shuffle {$isShuffleOn ? 'shuffle-active' : ''}"
+				<div class="playback-btn repeat-container"
 					role="button"
-					on:click={toggleShuffle}
-					aria-label="Shuffle playlist"
-					title="Toggle Shuffle {$isShuffleOn ? 'Off' : 'On'}"
-				></div>
+					on:click={cycleRepeatMode}
+					aria-label="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
+					title="{$repeatMode === 'off' ? 'Play Track Once' : $repeatMode === 'track' ? 'Repeat Track' : 'Play Next Track in Playlist'}"
+				>
+					<div 
+						class="repeat-btn fa fa-repeat"
+						class:repeat-active={$repeatMode === 'track' || $repeatMode === 'playlist'}
+					></div>
+					{#if $repeatMode === 'track'}
+						<div class="repeat-track">1</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -597,6 +597,9 @@
 	}
 
 	.track-details {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 		min-width: 0;
 		flex: 1;
 	}
@@ -607,8 +610,7 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		margin-bottom: 0.25rem;
-		width: 100%;
+		line-height: 1;
 	}
 
 	.artist-name {
@@ -616,13 +618,13 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		width: 100%;
+		line-height: 1;
 	}
 
 	.playlist-position {
 		color: #1db954ff;
 		font-size: 0.8rem;
-		margin-top: 0.25rem;
+		line-height: 1;
 	}
 
 	.player-controls {
