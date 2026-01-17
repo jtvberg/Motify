@@ -22,30 +22,59 @@ export const isShuffleOn = writable(false);
 export const targetPlaylistTracks = writable<Set<string>>(new Set());
 export const isTargetPlaylistLoading = writable(false);
 
+export type RepeatMode = 'off' | 'playlist' | 'track';
+
 function createRepeatModeStore() {
-	const storedMode = typeof localStorage !== 'undefined' 
-		? localStorage.getItem('motify-repeat-mode') 
-		: null;
-	
-	const defaultMode: 'off' | 'playlist' | 'track' = 'off';
-	const initialMode = storedMode && ['off', 'playlist', 'track'].includes(storedMode)
-		? (storedMode as 'off' | 'playlist' | 'track')
-		: defaultMode;
+    // Safely retrieve stored mode with error handling
+    let storedMode: string | null = null;
+    try {
+        storedMode = typeof localStorage !== 'undefined' 
+            ? localStorage.getItem('motify-repeat-mode') 
+            : null;
+    } catch (e) {
+        console.warn('Failed to read repeat mode from storage:', e);
+    }
+    
+    const defaultMode: RepeatMode = 'off';
+    const initialMode = storedMode && ['off', 'playlist', 'track'].includes(storedMode)
+        ? (storedMode as RepeatMode)
+        : defaultMode;
 
-	console.log('Initializing repeat mode store:', { storedMode, initialMode });
+    console.log('Initializing repeat mode store:', { storedMode, initialMode });
 
-	const { subscribe, set } = writable<'off' | 'playlist' | 'track'>(initialMode);
+    const { subscribe, set, update } = writable<RepeatMode>(initialMode);
 
-	return {
-		subscribe,
-		set: (value: 'off' | 'playlist' | 'track') => {
-			console.log('Setting repeat mode to:', value);
-			if (typeof localStorage !== 'undefined') {
-				localStorage.setItem('motify-repeat-mode', value);
-			}
-			set(value);
-		}
-	};
+    return {
+        subscribe,
+        set: (value: RepeatMode) => {
+            console.log('Setting repeat mode to:', value);
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('motify-repeat-mode', value);
+                }
+            } catch (e) {
+                console.warn('Failed to save repeat mode to storage:', e);
+            }
+            set(value);
+        },
+        cycle: () => {
+            update((current) => {
+                const modes: RepeatMode[] = ['off', 'playlist', 'track'];
+                const nextIndex = (modes.indexOf(current) + 1) % modes.length;
+                const nextMode = modes[nextIndex];
+                
+                console.log('Cycling repeat mode to:', nextMode);
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem('motify-repeat-mode', nextMode);
+                    }
+                } catch (e) {
+                    console.warn('Failed to save repeat mode to storage:', e);
+                }
+                return nextMode;
+            });
+        }
+    };
 }
 
 export const repeatMode = createRepeatModeStore();

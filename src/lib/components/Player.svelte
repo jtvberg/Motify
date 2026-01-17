@@ -322,25 +322,16 @@
 		await toggleTrackInLibrary($currentTrack, services);
 	}
 
-	async function cycleRepeatMode() {
-		let newMode: 'off' | 'playlist' | 'track';
-		if ($repeatMode === 'off') {
-			newMode = 'playlist';
-		} else if ($repeatMode === 'playlist') {
-			newMode = 'track';
-		} else {
-			newMode = 'off';
-		}
-		
-		console.log('🎵 Cycling repeat mode from', $repeatMode, 'to', newMode);
-		
-		hasHandledEnd = false;
-		console.log('🔄 Reset track end handler for mode change');
+    async function cycleRepeatMode() {
+        console.log('🎵 Cycling repeat mode action triggered');
+        
+        hasHandledEnd = false;
+        console.log('🔄 Reset track end handler for mode change');
 
-		repeatMode.set(newMode);
+        repeatMode.cycle();
 
-		await new Promise(resolve => setTimeout(resolve, 100));
-	}
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
 	async function toggleShuffle() {
 		const newShuffleState = !$isShuffleOn;
@@ -430,7 +421,7 @@
 				{/if}
 			</div>
 			<div class="control-btns">
-				<div class="playback-btns">
+				<div class="playlist-action-btns">
 					{#if canRemove}
 						<!-- svelte-ignore a11y_interactive_supports_focus -->
 						<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -495,7 +486,7 @@
 						title="Next Track"
 					></div>
 				</div>
-				<div class="playback-btns">
+				<div class="playlist-action-btns">
 					{#if canCopy && $targetPlaylist && $targetPlaylist.id !== $selectedPlaylist?.id}
 						<!-- svelte-ignore a11y_interactive_supports_focus -->
 						<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -648,6 +639,13 @@
 		transition: all 0.3s ease;
 	}
 
+	.playlist-action-btns {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.7rem;
+	}
+	
 	.playback-btns {
 		display: flex;
 		justify-content: center;

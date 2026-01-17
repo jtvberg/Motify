@@ -581,7 +581,6 @@
 	.track-header, .track-item {
 		display: grid;
 		grid-template-columns: 50px 2fr 1.5fr 1.5fr 100px 150px;
-		gap: 1rem;
 		align-items: center;
 		padding-inline: 0.5rem;
 	}
@@ -625,7 +624,7 @@
 	.track-title {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.5rem;
 		min-width: 0;
 		cursor: pointer;
 	}
