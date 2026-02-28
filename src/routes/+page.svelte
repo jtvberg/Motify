@@ -28,10 +28,7 @@
 	<main class="main-app">
 		<div class="container">
 			<header class="app-header">
-				<h1>
-					<i class="fab fa-spotify"></i>
-					Motify
-				</h1>
+				<h1>Motify</h1>
 			</header>
 
 			{#if $isPlaylistSelectorOpen}
@@ -65,18 +62,12 @@
 	.app-header h1 {
 		font-size: 3rem;
 		font-weight: 700;
-		background: linear-gradient(45deg, #1db954ff, #1ed760ff);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		font-family: 'Bungee Hairline';
+		color: #1db954ff;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		margin: 0;
-	}
-
-	.app-header i {
-		color: #1db954ff;
 	}
 
 	@media (max-width: 768px) {
