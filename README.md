@@ -11,6 +11,24 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 - 🌙 **Dark Theme**: Beautiful dark interface with glassmorphism design
 - 📱 **Responsive**: Works on desktop and mobile devices
 
+## Screenshots
+
+#### Main View
+
+<img src="/static/screenshots/expanded-view.png" width="600"/>
+
+#### Compact View
+
+<img src="/static/screenshots/compact-view.png" width="600"/>
+
+#### Settings
+
+<img src="/static/screenshots/settings-view.png" width="600"/>
+
+#### Mobile
+
+<img src="/static/screenshots/mobile-view.png" width="600"/>
+
 ## Prerequisites
 
 1. **Spotify Developer Account**: You need to create a Spotify app to get client credentials
