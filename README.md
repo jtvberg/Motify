@@ -117,7 +117,7 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 ### Discover Weekly & Release Radar
 Spotify's Web API no longer returns tracks for Spotify-generated playlists, so Motify reads them from the public playlist page instead:
 - Your share link contains the ID of *your* copy of the playlist, so no extra authentication is needed
-- The `/api/scrape-spotify?id=<playlistId>` server route fetches `https://open.spotify.com/playlist/<playlistId>` using a link-preview crawler user agent
+- The `/api/scrape-spotify?id=<playlistId>` server route fetches `https://open.spotify.com/playlist/<playlistId>` with a plain GET
 - Track IDs are read, in playlist order, from the page's `<meta name="music:song">` tags
 - Only tracks not already in the source playlist are added
 
