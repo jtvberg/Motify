@@ -1,10 +1,10 @@
 <footer class="app-footer">
     <p>
         Developed by
-        <a href="https://jtvberg.com" target="_blank" rel="noopener noreferrer">jtvberg</a>.
+        <a href="https://threethirty.one" target="_blank" rel="noopener noreferrer">three31</a>.
         Source code on
         <a href="https://github.com/jtvberg/Motify" target="_blank" rel="noopener noreferrer">GitHub</a>.
-        Ver. 0.6.1
+        Ver. 0.7.0
     </p>
 </footer>
 <style>

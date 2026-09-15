@@ -43,8 +43,10 @@
 			
 			console.log(`Found ${trackIds.length} tracks in ${playlistName}`);
 
-			const currentTrackIds = $currentTracks.map(track => track.id);
-			const newTrackIds = trackIds.filter(id => !currentTrackIds.includes(id));
+			const currentTrackIds = new Set(
+				$currentTracks.flatMap(track => [track.id, track.linked_from?.id].filter(Boolean))
+			);
+			const newTrackIds = trackIds.filter(id => !currentTrackIds.has(id));
 			
 			if (newTrackIds.length === 0) {
 				toastStore.add({
