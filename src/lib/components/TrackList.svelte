@@ -706,7 +706,6 @@
 		color: #1db954ff;
 	}
 
-	/* Unavailable track styles */
 	.unavailable-track {
 		opacity: 0.5;
 		background: #ffffff05 !important;

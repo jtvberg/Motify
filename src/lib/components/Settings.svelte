@@ -91,7 +91,7 @@
 	>
 		<div class="settings-content">
 			<div class="settings-header">
-				<h3 id="settings-title">EveryNoise Scraper Settings</h3>
+				<h3 id="settings-title">Spotify Scraper Settings</h3>
 				<button class="close-btn" on:click={cancelSettings} aria-label="Close settings">
 					<i class="fas fa-times"></i>
 				</button>
@@ -112,7 +112,7 @@
 						id="discover-weekly"
 						type="url" 
 						bind:value={discoverWeeklyUrl}
-						placeholder="https://open.spotify.com/playlist/37i9dQZEVXcQ9BlMOo4hbb?si=..."
+						placeholder="https://open.spotify.com/playlist/37i9dQZEVXcQ9BlMOo4hbb"
 						class:invalid={!discoverWeeklyValid}
 					/>
 					{#if !discoverWeeklyValid}
@@ -129,7 +129,7 @@
 						id="release-radar"
 						type="url" 
 						bind:value={releaseRadarUrl}
-						placeholder="https://open.spotify.com/playlist/37i9dQZEVXcQ9BlMOo4hbb?si=..."
+						placeholder="https://open.spotify.com/playlist/37i9dQZEVXbnordsbHwniv"
 						class:invalid={!releaseRadarValid}
 					/>
 					{#if !releaseRadarValid}

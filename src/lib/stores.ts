@@ -25,7 +25,6 @@ export const isTargetPlaylistLoading = writable(false);
 export type RepeatMode = 'off' | 'playlist' | 'track';
 
 function createRepeatModeStore() {
-    // Safely retrieve stored mode with error handling
     let storedMode: string | null = null;
     try {
         storedMode = typeof localStorage !== 'undefined' 

@@ -7,6 +7,7 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 - 🎵 **Spotify Integration**: Connect with your Spotify account
 - 📋 **Playlist Management**: View and manage your playlists
 - 🎵 **Track Operations**: Play, remove, and transfer tracks between playlists
+- 🧭 **Discover Weekly & Release Radar**: Pull tracks from your personalized Spotify playlists into any playlist
 - 🎮 **Media Controls**: Full playback control with scrubber and track navigation
 - 🌙 **Dark Theme**: Beautiful dark interface with glassmorphism design
 - 📱 **Responsive**: Works on desktop and mobile devices
@@ -91,6 +92,9 @@ A modern web application built with SvelteKit for managing your Spotify playlist
    - 🗑️ Remove tracks from the current playlist
    - ➡️ Move tracks to the target playlist (if selected)
 4. **Playback Control**: Use the player controls to play/pause, skip tracks, and scrub through songs
+5. **Add Discover Weekly / Release Radar Tracks**:
+   - Open Settings and paste the share links for your Discover Weekly and Release Radar playlists
+   - Select a source playlist, then click **DW** or **RR** to add any new tracks from that playlist
 
 ## Features in Detail
 
@@ -109,6 +113,13 @@ A modern web application built with SvelteKit for managing your Spotify playlist
 - **Play**: Start playing any track immediately
 - **Remove**: Remove tracks from the current playlist
 - **Move**: Transfer tracks from source to target playlist
+
+### Discover Weekly & Release Radar
+Spotify's Web API no longer returns tracks for Spotify-generated playlists, so Motify reads them from the public playlist page instead:
+- Your share link contains the ID of *your* copy of the playlist, so no extra authentication is needed
+- The `/api/scrape-spotify?id=<playlistId>` server route fetches `https://open.spotify.com/playlist/<playlistId>` using a link-preview crawler user agent
+- Track IDs are read, in playlist order, from the page's `<meta name="music:song">` tags
+- Only tracks not already in the source playlist are added
 
 ## Technologies Used
 
@@ -213,6 +224,11 @@ The app will automatically detect the environment and use the correct redirect U
    - Spotify Premium is required for playback control features
 
 6. **Missing Tracks**: Some tracks may not be available due to regional restrictions or licensing
+
+7. **Discover Weekly / Release Radar Scraping Fails**:
+   - Make sure the Settings URLs are the share links for *your* playlists (`https://open.spotify.com/playlist/...`)
+   - "No tracks found in Spotify playlist page" means Spotify returned the page without track metadata; it may have changed how it serves crawlers
+   - Test a playlist ID directly on the `/debug` page
 
 ## License
 

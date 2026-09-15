@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { selectedPlaylist, currentTracks, scraperSettings, playlists } from '$lib/stores';
-	import { scrapeEveryNoiseTrackIds, extractPlaylistIdFromUrl } from '$lib/utils';
+	import { scrapeSpotifyTrackIds, extractPlaylistIdFromUrl } from '$lib/utils';
 	import { spotifyAPI } from '$lib/spotify';
 	import { toastStore } from '$lib/toast';
 	
@@ -31,7 +31,7 @@
 		
 		try {
 			console.log(`Scraping ${playlistName} (${playlistId})...`);
-			const trackIds = await scrapeEveryNoiseTrackIds(playlistId);
+			const trackIds = await scrapeSpotifyTrackIds(playlistId);
 			
 			if (trackIds.length === 0) {
 				toastStore.add({

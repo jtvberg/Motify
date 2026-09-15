@@ -30,71 +30,21 @@ export function isValidSpotifyPlaylistId(id: string): boolean {
 	return /^[a-zA-Z0-9]{22}$/.test(id);
 }
 
-export async function scrapeEveryNoiseTrackIds(playlistId: string): Promise<string[]> {
+export async function scrapeSpotifyTrackIds(playlistId: string): Promise<string[]> {
 	try {
-		const response = await fetch(`/api/scrape-everynoise?id=${encodeURIComponent(playlistId)}`);
-		
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-		
+		const response = await fetch(`/api/scrape-spotify?id=${encodeURIComponent(playlistId)}`);
 		const data = await response.json();
-		
-		if (data.error) {
-			throw new Error(data.error);
-		}
-		
-		console.log('Scraped track IDs:', data.trackIds);
-		console.log('HTML sample:', data.sampleHtml);
-		
-		return data.trackIds || [];
-		
-	} catch (error) {
-		console.error('Error scraping everynoise data:', error);
-		
-		const url = `https://everynoise.com/playlistprofile.cgi?id=${playlistId}`;
-		console.log('Due to scraping limitations, you may need to run this manually in the browser console:');
-		console.log(`1. Go to: ${url}`);
-		console.log('2. Wait a couple of seconds for the page to load');
-		console.log('3. Run this in the console:');
-		console.log(`
-let trackList = [];
-document.querySelectorAll('.trackrow').forEach(t => trackList.push(t.id));
-console.log('Track IDs:', trackList);
-		`);
-		
-		throw error;
-	}
-}
 
-export async function scrapeEveryNoiseTrackIdsWithProxy(playlistId: string): Promise<string[]> {
-	const url = `https://everynoise.com/playlistprofile.cgi?id=${playlistId}`;
-	const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-	
-	try {
-		const response = await fetch(proxyUrl);
-		
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
+		if (!response.ok || data.error) {
+			throw new Error(data.error || `HTTP error! status: ${response.status}`);
 		}
-		
-		const html = await response.text();
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(html, 'text/html');
-		const trackList: string[] = [];
-		const trackRows = doc.querySelectorAll('.trackrow');
-		
-		trackRows.forEach(t => {
-			if (t.id) {
-				trackList.push(t.id);
-			}
-		});
-		
-		console.log('Scraped track IDs via proxy:', trackList);
-		return trackList;
-		
+
+		console.log('Scraped track IDs:', data.trackIds);
+
+		return data.trackIds || [];
+
 	} catch (error) {
-		console.error('Error scraping everynoise data via proxy:', error);
+		console.error('Error scraping Spotify playlist:', error);
 		throw error;
 	}
 }

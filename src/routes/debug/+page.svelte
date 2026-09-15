@@ -4,12 +4,12 @@
 	import { currentTrack, isPlaying, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { initializationService } from '$lib/initializationService';
-	import { scrapeEveryNoiseTrackIds } from '$lib/utils';
+	import { scrapeSpotifyTrackIds } from '$lib/utils';
 
 	let logs: string[] = [];
 	let playbackState: any = null;
 	let availableDevices: any = null;
-	let everynoiseTrackIds: string[] = [];
+	let scrapedTrackIds: string[] = [];
 	let testPlaylistId = '37i9dQZEVXcQ9BlMOo4hbb'; // Default test playlist ID
 
 	function addLog(message: string) {
@@ -111,11 +111,11 @@
 		}
 	}
 
-	async function testEveryNoiseScraper() {
+	async function testSpotifyScraper() {
 		try {
-			addLog(`Testing EveryNoise scraper with playlist ID: ${testPlaylistId}`);
-			const trackIds = await scrapeEveryNoiseTrackIds(testPlaylistId);
-			everynoiseTrackIds = trackIds;
+			addLog(`Testing Spotify scraper with playlist ID: ${testPlaylistId}`);
+			const trackIds = await scrapeSpotifyTrackIds(testPlaylistId);
+			scrapedTrackIds = trackIds;
 			addLog(`Successfully scraped ${trackIds.length} track IDs`);
 			console.log('Track IDs array:', trackIds);
 		} catch (error) {
@@ -135,8 +135,8 @@
 		<button on:click={testPause}>Test Pause</button>
 	</div>
 
-	<div class="everynoise-section">
-		<h2>EveryNoise Track Scraper Test</h2>
+	<div class="scraper-section">
+		<h2>Spotify Track Scraper Test</h2>
 		<div class="input-group">
 			<label for="playlist-id">Playlist ID:</label>
 			<input 
@@ -146,13 +146,13 @@
 				placeholder="Enter Spotify playlist ID"
 			/>
 		</div>
-		<button on:click={testEveryNoiseScraper}>Test EveryNoise Scraper</button>
+		<button on:click={testSpotifyScraper}>Test Spotify Scraper</button>
 		
-		{#if everynoiseTrackIds.length > 0}
+		{#if scrapedTrackIds.length > 0}
 			<div class="track-ids-result">
-				<h3>Scraped Track IDs ({everynoiseTrackIds.length}):</h3>
+				<h3>Scraped Track IDs ({scrapedTrackIds.length}):</h3>
 				<div class="track-ids-list">
-					{#each everynoiseTrackIds as trackId, index}
+					{#each scrapedTrackIds as trackId, index}
 						<div class="track-id-item">{index + 1}. {trackId}</div>
 					{/each}
 				</div>
@@ -249,7 +249,7 @@
 		color: #ffffffff;
 	}
 
-	.everynoise-section {
+	.scraper-section {
 		margin: 20px 0;
 		padding: 20px;
 		background: #1a1a1aff;
@@ -257,7 +257,7 @@
 		border: 1px solid #333333ff;
 	}
 
-	.everynoise-section h2 {
+	.scraper-section h2 {
 		margin-top: 0;
 		color: #1db954ff;
 	}
