@@ -7,8 +7,8 @@
 	import { scrapeSpotifyTrackIds } from '$lib/utils';
 
 	let logs: string[] = [];
-	let playbackState: any = null;
-	let availableDevices: any = null;
+	let playbackState: Awaited<ReturnType<typeof webPlaybackService.getCurrentState>> = null;
+	let availableDevices: Awaited<ReturnType<typeof spotifyAPI.getAvailableDevices>> | null = null;
 	let scrapedTrackIds: string[] = [];
 	let testPlaylistId = '37i9dQZEVXcQ9BlMOo4hbb'; // Default test playlist ID
 
@@ -152,7 +152,7 @@
 			<div class="track-ids-result">
 				<h3>Scraped Track IDs ({scrapedTrackIds.length}):</h3>
 				<div class="track-ids-list">
-					{#each scrapedTrackIds as trackId, index}
+					{#each scrapedTrackIds as trackId, index (trackId)}
 						<div class="track-id-item">{index + 1}. {trackId}</div>
 					{/each}
 				</div>
@@ -162,7 +162,7 @@
 
 	<div class="logs">
 		<h2>Logs:</h2>
-		{#each logs as log}
+		{#each logs as log, i (i)}
 			<div class="log-entry">{log}</div>
 		{/each}
 	</div>

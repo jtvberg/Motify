@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { spotifyAPI } from '$lib/spotify';
 	import { initializationService } from '$lib/initializationService';
 
@@ -15,7 +16,7 @@
 		if (error) {
 			console.error('Spotify auth error:', { error, errorDescription });
 			alert(`Spotify authentication failed: ${error}\n${errorDescription || ''}`);
-			goto('/');
+			goto(resolve('/'));
 			return;
 		}
 
@@ -27,16 +28,16 @@
 				
 				await initializationService.handleAuthentication(accessToken);
 				
-				goto('/');
+				goto(resolve('/'));
 			} catch (exchangeError) {
 				console.error('Token exchange failed:', exchangeError);
 				alert(`Token exchange failed: ${exchangeError}`);
-				goto('/');
+				goto(resolve('/'));
 			}
 		} else {
 			console.error('No authorization code received');
 			alert('No authorization code received from Spotify');
-			goto('/');
+			goto(resolve('/'));
 		}
 	});
 </script>

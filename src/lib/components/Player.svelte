@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, userLibrary, isLibraryLoading, isShuffleOn, repeatMode, user, targetPlaylistTracks } from '$lib/stores';
+	import { isPlaying, currentTrack, playbackPosition, trackDuration, currentTracks, originalTrackOrder, currentTrackIndex, selectedPlaylist, targetPlaylist, isLibraryLoading, isShuffleOn, repeatMode, user } from '$lib/stores';
 	import { spotifyAPI } from '$lib/spotify';
 	import { webPlaybackService } from '$lib/webPlayback';
 	import { toastStore } from '$lib/toast';
@@ -105,6 +105,7 @@
 
 			if ($currentTrack && $isPlaying) {
 				console.log('🔄 Resetting track end handler for mode change during playback');
+				// eslint-disable-next-line svelte/infinite-reactive-loop -- only runs after a repeat mode change; the end-of-track block re-checks playback position before acting
 				hasHandledEnd = false;
 			}
 		} catch (error) {
@@ -246,6 +247,7 @@
 
 	$: if ($isPlaying && $trackDuration > 0 && !hasHandledEnd) {
 		if ($repeatMode === 'playlist' && $playbackPosition >= $trackDuration - 2) {
+			// eslint-disable-next-line svelte/infinite-reactive-loop -- guarded by hasHandledEnd and the playback position check
 			handlePlaylistAdvance();
 		} else if ($repeatMode === 'off' && $playbackPosition >= $trackDuration - 0.5) {
 			handleTrackEnd();
@@ -257,6 +259,7 @@
 		hasHandledEnd = true;
 		
 		console.log('Advancing to next track in playlist mode');
+		// eslint-disable-next-line svelte/infinite-reactive-loop -- guarded by hasHandledEnd; next track resets playback position
 		await nextTrack();
 	}
 
@@ -282,6 +285,7 @@
 
 	async function nextTrack() {
 		await playNextTrack(stores, services, isPlayerReady, stopPositionUpdates, startPositionUpdates, updatePlaybackState);
+		// eslint-disable-next-line svelte/infinite-reactive-loop -- sync is a no-op unless the repeat mode changed
 		await syncSpotifyRepeatMode();
 	}
 
@@ -291,7 +295,7 @@
 			return;
 		}
 
-		const updatedTracks = await removeTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
+		await removeTrack($currentTrack, $currentTracks, stores, services);
 	}
 
 	async function moveCurrentTrack() {
@@ -305,7 +309,7 @@
 			return;
 		}
 
-		const updatedTracks = await moveTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
+		await moveTrack($currentTrack, $currentTracks, stores, services, handleAPIError);
 	}
 
 

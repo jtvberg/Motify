@@ -11,8 +11,6 @@
 	let targetPlaylists: SpotifyPlaylist[] = [];
 	let selectedId = '';
 	let targetId = '';
-	let hasLoadedUserData = false;
-
 	$: userPlaylists = $playlists;
 	$: targetPlaylists = $playlists.filter(playlist => 
 		playlist.owner && $user && playlist.owner.id === $user.id
@@ -34,8 +32,6 @@
 
 					restorePlaylistSelections(playlistsData);
 				}
-				
-				hasLoadedUserData = true;
 			} catch (error) {
 				console.error('Failed to load user data:', error);
 			}
@@ -196,7 +192,6 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="modal-backdrop" on:click={handleBackdropClick} on:keydown={handleKeydown}>
 	<div class="modal-content">
@@ -249,7 +244,7 @@
 						on:change={handleSelectedPlaylistChange}
 					>
 						<option value="">Select a Playlist</option>
-						{#each userPlaylists as playlist}
+						{#each userPlaylists as playlist (playlist.id)}
 							<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 						{/each}
 					</select>
@@ -265,7 +260,7 @@
 						on:change={handleTargetPlaylistChange}
 					>
 						<option value="">Select a Playlist</option>
-						{#each targetPlaylists as playlist}
+						{#each targetPlaylists as playlist (playlist.id)}
 							<option value={playlist.id} title={playlist.name}>{playlist.name}</option>
 						{/each}
 					</select>

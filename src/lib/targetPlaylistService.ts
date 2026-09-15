@@ -1,5 +1,5 @@
 import { spotifyAPI } from './spotify';
-import { targetPlaylistTracks, isTargetPlaylistLoading, targetPlaylist } from './stores';
+import { targetPlaylistTracks, isTargetPlaylistLoading } from './stores';
 import { get } from 'svelte/store';
 
 class TargetPlaylistService {

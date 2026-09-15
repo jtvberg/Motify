@@ -51,7 +51,7 @@ export async function scrapeSpotifyTrackIds(playlistId: string): Promise<string[
 
 const trackPlayabilityCache = new Map<string, boolean>();
 
-export function isTrackPlayable(track: any): boolean {
+export function isTrackPlayable(track: SpotifyTrack | null | undefined): boolean {
 	if (!track || !track.id || !track.name) {
 		return false;
 	}
@@ -89,7 +89,7 @@ export function clearTrackPlayabilityCache(): void {
 	trackPlayabilityCache.clear();
 }
 
-export function findNextPlayableTrack(tracks: any[], startIndex: number, direction: 1 | -1 = 1): number {
+export function findNextPlayableTrack(tracks: SpotifyTrack[], startIndex: number, direction: 1 | -1 = 1): number {
 	if (tracks.length === 0) return -1;
 	
 	let currentIndex = startIndex;
@@ -119,7 +119,9 @@ export function findNextPlayableTrack(tracks: any[], startIndex: number, directi
 
 import type { Writable } from 'svelte/store';
 import { get } from 'svelte/store';
-import type { SpotifyTrack } from './spotify';
+import type { SpotifyPlaylist, SpotifyTrack, spotifyAPI } from './spotify';
+import type { webPlaybackService } from './webPlayback';
+import type { toastStore } from './toast';
 
 interface PlaybackStores {
 	isPlaying: Writable<boolean>;
@@ -128,14 +130,14 @@ interface PlaybackStores {
 	currentTrackIndex: Writable<number>;
 	playbackPosition: Writable<number>;
 	trackDuration: Writable<number>;
-	selectedPlaylist: Writable<any>;
-	targetPlaylist: Writable<any>;
+	selectedPlaylist: Writable<SpotifyPlaylist | null>;
+	targetPlaylist: Writable<SpotifyPlaylist | null>;
 }
 
 interface PlaybackServices {
-	spotifyAPI: any;
-	webPlaybackService: any;
-	toastStore?: any;
+	spotifyAPI: typeof spotifyAPI;
+	webPlaybackService: typeof webPlaybackService;
+	toastStore?: typeof toastStore;
 }
 
 export async function playTrack(
@@ -163,10 +165,7 @@ export async function playTrack(
 	stores.isPlaying.set(true);
 	
 	let playSuccessful = false;
-	let lastError: any = null;
-	let selectedPlaylist: any = null;
-	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
-	selectedPlaylistUnsub();
+	let lastError: unknown = null;
 	
 	try {
 		if (deviceId) {
@@ -484,24 +483,17 @@ export async function removeTrack(
 	track: SpotifyTrack,
 	tracks: SpotifyTrack[],
 	stores: PlaybackStores,
-	services: PlaybackServices,
-	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
+	services: PlaybackServices
 ): Promise<SpotifyTrack[]> {
-	let selectedPlaylist: any = null;
-	let currentTrack: SpotifyTrack | null = null;
-	
-	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
-	const currentTrackUnsub = stores.currentTrack.subscribe((value: SpotifyTrack | null) => { currentTrack = value; });
-	
-	selectedPlaylistUnsub();
-	currentTrackUnsub();
-	
+	const selectedPlaylist = get(stores.selectedPlaylist);
+	const currentTrack = get(stores.currentTrack);
+
 	if (!selectedPlaylist) {
 		console.error('No selected playlist');
 		return tracks;
 	}
-	
-	const isCurrentlyPlaying = (currentTrack as unknown as SpotifyTrack)?.id === track.id;
+
+	const isCurrentlyPlaying = currentTrack?.id === track.id;
 	const currentIndex = tracks.findIndex(t => t.id === track.id);
 	
 	try {
@@ -562,24 +554,16 @@ export async function moveTrack(
 	services: PlaybackServices,
 	handleAPIError: <T>(apiCall: () => Promise<T>) => Promise<T | null>
 ): Promise<SpotifyTrack[]> {
-	let selectedPlaylist: any = null;
-	let targetPlaylist: any = null;
-	let currentTrack: SpotifyTrack | null = null;
-	
-	const selectedPlaylistUnsub = stores.selectedPlaylist.subscribe((value: any) => { selectedPlaylist = value; });
-	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
-	const currentTrackUnsub = stores.currentTrack.subscribe((value: SpotifyTrack | null) => { currentTrack = value; });
-	
-	selectedPlaylistUnsub();
-	targetPlaylistUnsub();
-	currentTrackUnsub();
-	
+	const selectedPlaylist = get(stores.selectedPlaylist);
+	const targetPlaylist = get(stores.targetPlaylist);
+	const currentTrack = get(stores.currentTrack);
+
 	if (!targetPlaylist || !selectedPlaylist) {
 		console.error('No target or selected playlist');
 		return tracks;
 	}
-	
-	const isCurrentlyPlaying = (currentTrack as unknown as SpotifyTrack)?.id === track.id;
+
+	const isCurrentlyPlaying = currentTrack?.id === track.id;
 	const currentIndex = tracks.findIndex(t => t.id === track.id);
 	
 	try {
@@ -695,9 +679,7 @@ export async function toggleTrackInTargetPlaylist(
 	const { targetPlaylistService } = await import('./targetPlaylistService');
 	const { getOperationalUri, isTrackRelinked } = await import('./spotify');
 	
-	let targetPlaylist: any = null;
-	const targetPlaylistUnsub = stores.targetPlaylist.subscribe((value: any) => { targetPlaylist = value; });
-	targetPlaylistUnsub();
+	const targetPlaylist = get(stores.targetPlaylist);
 	
 	if (!targetPlaylist) {
 		console.error('No target playlist');

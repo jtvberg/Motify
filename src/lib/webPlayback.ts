@@ -15,6 +15,7 @@ declare global {
 	}
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- the Web Playback SDK ships no types; event payloads and SDK track objects are left loose */
 interface SpotifyPlayer {
 	addListener(event: string, callback: (...args: any[]) => void): void;
 	removeListener(event: string, callback?: (...args: any[]) => void): void;
@@ -46,6 +47,7 @@ interface SpotifyPlaybackState {
 		next_tracks: any[];
 	};
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 class WebPlaybackService {
     private player: SpotifyPlayer | null = null;
@@ -205,7 +207,7 @@ class WebPlaybackService {
 			const devicesResponse = await spotifyAPI.getAvailableDevices();
 			console.log('Available devices:', devicesResponse.devices);
 
-			const mobileDevices = devicesResponse.devices?.filter((d: any) => 
+			const mobileDevices = devicesResponse.devices?.filter((d) => 
 				d.type === 'Smartphone' && d.is_active
 			);
 			
@@ -213,7 +215,7 @@ class WebPlaybackService {
 				console.warn('Active mobile devices detected:', mobileDevices);
 			}
 			
-			const ourDevice = devicesResponse.devices?.find((d: any) => d.id === this.deviceId);
+			const ourDevice = devicesResponse.devices?.find((d) => d.id === this.deviceId);
 			
 			if (!ourDevice) {
 				console.warn('Our device not found in available devices list');
@@ -228,7 +230,7 @@ class WebPlaybackService {
 			await new Promise(resolve => setTimeout(resolve, 800));
 			
 			const updatedDevicesResponse = await spotifyAPI.getAvailableDevices();
-			const updatedDevice = updatedDevicesResponse.devices?.find((d: any) => d.id === this.deviceId);
+			const updatedDevice = updatedDevicesResponse.devices?.find((d) => d.id === this.deviceId);
 			
 			if (updatedDevice?.is_active) {
 				console.log('Device activated successfully');

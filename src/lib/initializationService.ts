@@ -5,6 +5,7 @@ import { libraryService } from './libraryService';
 import { targetPlaylistService } from './targetPlaylistService';
 import { isAuthenticated, user, playlists, selectedPlaylist, targetPlaylist, playlistSelections } from './stores';
 import type { SpotifyPlaylist } from './spotify';
+import { get } from 'svelte/store';
 
 class InitializationService {
     private isInitialized = false;
@@ -96,8 +97,7 @@ class InitializationService {
 
     private async restorePlaylistSelections(playlistsData: SpotifyPlaylist[]): Promise<void> {
         try {
-            let selections: any;
-            playlistSelections.subscribe(value => { selections = value; })();
+            const selections = get(playlistSelections);
 
             if (selections.source) {
                 const sourcePlaylist = playlistsData.find(p => 

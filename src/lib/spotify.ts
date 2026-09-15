@@ -45,6 +45,24 @@ export interface SpotifyTrack {
 	_isInTargetPlaylist?: boolean;
 }
 
+export interface SpotifyDevice {
+	id: string | null;
+	is_active: boolean;
+	name: string;
+	type: string;
+	volume_percent: number | null;
+}
+
+export interface SpotifyPlayerState {
+	is_playing: boolean;
+	progress_ms: number;
+	item?: SpotifyTrack | null;
+}
+
+interface SavedTrackIdItem {
+	track?: { id?: string; linked_from?: { id?: string } } | null;
+}
+
 export function getOperationalUri(track: SpotifyTrack): string {
 	return track.linked_from?.uri || track.uri;
 }
@@ -255,6 +273,7 @@ class SpotifyAPI {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- raw Spotify Web API JSON; each public method declares its own return type
 	private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
 		const token = await this.ensureValidToken();
 		if (!token) {
@@ -304,7 +323,7 @@ class SpotifyAPI {
 		
 		try {
 			return JSON.parse(text);
-		} catch (e) {
+		} catch {
 			console.warn('Failed to parse response as JSON:', text);
 			return {};
 		}
@@ -388,8 +407,8 @@ class SpotifyAPI {
 				}
 				
 				const tracks = response.items
-					.map((item: any) => item.track)
-					.filter((track: any) => track !== null && track !== undefined);
+					.map((item: { track: SpotifyTrack | null }) => item.track)
+					.filter((track: SpotifyTrack | null): track is SpotifyTrack => track !== null && track !== undefined);
 				
 				allTracks = allTracks.concat(tracks);
 
@@ -457,7 +476,7 @@ class SpotifyAPI {
 	async playFromContext(contextUri: string, offset: number, deviceId?: string): Promise<void> {
 		console.log('SpotifyAPI.playFromContext called with:', { contextUri, offset, deviceId });
 		
-		const body: any = {
+		const body = {
 			context_uri: contextUri,
 			offset: { position: offset }
 		};
@@ -498,14 +517,15 @@ class SpotifyAPI {
 				body: JSON.stringify(body)
 			});
 			console.log('Play request successful');
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Play request failed:', error);
+			const { status, message } = error as { status?: number; message?: string };
 
-			if (error.status === 403 && error.message?.includes('Premium')) {
+			if (status === 403 && message?.includes('Premium')) {
 				throw new Error('Spotify Premium is required for playback. Please upgrade your account to use this feature.');
 			}
 
-			if (error.status === 404 && deviceId) {
+			if (status === 404 && deviceId) {
 				console.warn('Device not found, attempting to activate device first');
 				try {
 					await this.transferPlayback(deviceId);
@@ -536,7 +556,7 @@ class SpotifyAPI {
 		});
 	}
 
-	async getAvailableDevices(): Promise<any> {
+	async getAvailableDevices(): Promise<{ devices: SpotifyDevice[] }> {
 		return this.makeRequest('/me/player/devices');
 	}
 
@@ -552,7 +572,7 @@ class SpotifyAPI {
 		});
 	}
 
-	async getPlaybackState(): Promise<any> {
+	async getPlaybackState(): Promise<SpotifyPlayerState> {
 		return this.makeRequest('/me/player');
 	}
 
@@ -596,7 +616,7 @@ class SpotifyAPI {
 		}
 		
 		let allTrackIds = firstResponse.items
-			.flatMap((item: any) => {
+			.flatMap((item: SavedTrackIdItem) => {
 				const ids: string[] = [];
 				if (item.track?.id) ids.push(item.track.id);
 				if (item.track?.linked_from?.id) ids.push(item.track.linked_from.id);
@@ -627,7 +647,7 @@ class SpotifyAPI {
 				responses.forEach(response => {
 					if (response?.items) {
 						const trackIds = response.items
-							.flatMap((item: any) => {
+							.flatMap((item: SavedTrackIdItem) => {
 								const ids: string[] = [];
 								if (item.track?.id) ids.push(item.track.id);
 								if (item.track?.linked_from?.id) ids.push(item.track.linked_from.id);

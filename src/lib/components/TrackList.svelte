@@ -13,12 +13,12 @@
 	let currentLoadingPlaylistId: string | null = null;
 
 	$: tracks = $currentTracks;
-	$: isTrackInLibrary = (trackId: string, linkedFromId?: string): boolean => {
+	function isTrackInLibrary(trackId: string, linkedFromId?: string): boolean {
 		return $userLibrary.has(trackId) || (linkedFromId ? $userLibrary.has(linkedFromId) : false);
-	};
-	$: isTrackInPlaylist = (trackId: string): boolean => {
+	}
+	function isTrackInPlaylist(trackId: string): boolean {
 		return $targetPlaylistTracks.has(trackId);
-	};
+	}
 	$: isUserOwner = $selectedPlaylist?.owner?.id === $user?.id;
 	$: canRemove = isUserOwner;
 	$: canMove = isUserOwner && !!$targetPlaylist;
@@ -173,7 +173,7 @@
 	}
 
 	async function removeTrackHandler(track: SpotifyTrack) {
-		await removeTrack(track, tracks, stores, services, handleAPIError);
+		await removeTrack(track, tracks, stores, services);
 	}
 
 	async function moveTrackHandler(track: SpotifyTrack) {
@@ -268,6 +268,7 @@
 					<span class="track-duration">Duration</span>
 					<span class="track-actions">Actions</span>
 				</div>
+				<!-- eslint-disable-next-line svelte/require-each-key -- playlists can contain the same track more than once, so track.id isn't a unique key -->
 				{#each tracks as track, index}
 					{@const isCurrentTrack = $currentTrack && $currentTrack.id === track.id}
 					{@const trackPlayable = isTrackPlayable(track)}
